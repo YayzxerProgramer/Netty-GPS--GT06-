@@ -3,7 +3,6 @@ com\servidortpc\servidor_tpc\Model\GPSData.class
 com\servidortpc\servidor_tpc\Controller\DataController.class
 com\servidortpc\servidor_tpc\netty\ServerTcp.class
 com\servidortpc\servidor_tpc\netty\GT06Utils.class
-com\servidortpc\servidor_tpc\Infra\SendHTTP.class
 com\servidortpc\servidor_tpc\netty\GpsInitializer.class
 com\servidortpc\servidor_tpc\netty\GpsServerHandler.class
 com\servidortpc\servidor_tpc\ServidorTpcApplication.class
