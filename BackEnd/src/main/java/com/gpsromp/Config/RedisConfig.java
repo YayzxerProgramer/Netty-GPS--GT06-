@@ -1,4 +1,4 @@
-package com.gpsromp.config;
+package com.gpsromp.Config;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
