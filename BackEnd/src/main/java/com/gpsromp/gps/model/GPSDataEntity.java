@@ -1,40 +1,39 @@
 package com.gpsromp.gps.model;
 
-import lombok.*;
-import org.springframework.data.annotation.Id;
+import java.time.Instant;
+
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Document(collection = "gps_data")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class GPSDataEntity {
 
     @Id
     private String id;
 
-    private String timestamp;
+    @Indexed
+    private String imei;
 
     private double latitud;
-
     private double longitud;
-
     private int velocidad;
-
     private boolean gpsValido;
-
     private boolean acc;
-
     private boolean corteMotor;
 
     @Indexed
-    @Field("created_at")
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Field("registrado_en")
+    private Instant registradosEn;
 
+    @Builder.Default
+    @Field("creados_en")
+    private Instant creadosEn = Instant.now();
 }

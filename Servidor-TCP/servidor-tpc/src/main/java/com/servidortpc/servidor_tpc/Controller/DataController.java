@@ -24,7 +24,7 @@ public class DataController {
         try {
             GPSData dato = restTemplate.getForObject(BACKEND_URL, GPSData.class);
             return dato != null ? ResponseEntity.ok(dato) : ResponseEntity.noContent().build();
-        } catch (Exception e) {
+        } catch (Exception e) { 
             return ResponseEntity.internalServerError().build();
         }
     }

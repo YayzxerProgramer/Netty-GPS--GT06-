@@ -1,4 +1,4 @@
-package com.gpsromp.user.model;
+package com.gpsromp.usuario.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,41 +9,41 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "Usuarios")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(unique = true, nullable = false, length = 50)
-    private String username;
+    private String usuario;
 
     @Column(nullable = false)
-    private String password;
+    private String contraseña;
 
     @Column(unique = true, length = 100)
-    private String email;
+    private String correo;
 
     @Column(length = 20)
     @Builder.Default
-    private String role = "USER";
+    private String rol= "USER";
 
     @Builder.Default
-    private boolean active = true;
+    private boolean activo = true;
 
     @CreationTimestamp
     @Column(updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime creadoEn;
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private LocalDateTime actualizadoEn;
 
-    public enum Role {
+    public enum Rol {
         ADMIN,
         USER,
         VIEWER
