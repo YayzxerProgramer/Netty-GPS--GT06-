@@ -28,15 +28,15 @@ public class UsuarioService {
     }
 
     public Optional<Usuario> obtenerUsuariosPorUsuario(String usuario) {
-        return usuarioRepository.buscarPorUsuario(usuario);
+        return usuarioRepository.findByUsuario(usuario);
     }
 
     public boolean existeUsuario(String usuario) {
-        return usuarioRepository.existeUsuario(usuario);
+        return usuarioRepository.existsByUsuario(usuario);
     }
 
     public boolean existeCorreo(String correo) {
-        return usuarioRepository.existeCorreo(correo);
+        return usuarioRepository.existsByCorreo(correo);
     }
 
     @Transactional
@@ -81,7 +81,7 @@ public class UsuarioService {
     }
 
     public boolean login(String usuario, String contraseña) {
-        return usuarioRepository.buscarPorUsuario(usuario)
+        return usuarioRepository.findByUsuario(usuario)
                 .map(u -> u.isActivo() &&
                         passwordEncoder.matches(contraseña, u.getContraseña()))
                 .orElse(false);

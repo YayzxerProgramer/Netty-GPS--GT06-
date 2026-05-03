@@ -31,7 +31,7 @@ public class GPSDataEntity {
 
     @Indexed
     @Field("registrado_en")
-    private Instant registradosEn;
+    private Instant registradoEn;
 
     @Builder.Default
     @Field("creados_en")
