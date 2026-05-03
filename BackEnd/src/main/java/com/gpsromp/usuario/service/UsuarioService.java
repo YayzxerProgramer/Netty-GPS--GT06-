@@ -3,7 +3,6 @@ package com.gpsromp.usuario.service;
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +16,6 @@ import java.util.UUID;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public List<Usuario> ObtenerUsuarios() {
         return usuarioRepository.findAll();
@@ -41,7 +39,6 @@ public class UsuarioService {
 
     @Transactional
     public Usuario crearUsuario(Usuario usuario) {
-        usuario.setContraseña(passwordEncoder.encode(usuario.getContraseña()));
         return usuarioRepository.save(usuario);
     }
 
@@ -56,8 +53,8 @@ public class UsuarioService {
         if (usuarioDetalles.getCorreo() != null) {
             usuario.setCorreo(usuarioDetalles.getCorreo());
         }
-        if (usuarioDetalles.getContraseña() != null && !usuarioDetalles.getContraseña().isEmpty()) {
-            usuario.setContraseña(passwordEncoder.encode(usuarioDetalles.getContraseña()));
+        if (usuarioDetalles.getContrasena() != null && !usuarioDetalles.getContrasena().isEmpty()) {
+            usuario.setContrasena(usuarioDetalles.getContrasena());
         }
         if (usuarioDetalles.getRol() != null) {
             usuario.setRol(usuarioDetalles.getRol());
@@ -80,10 +77,10 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
-    public boolean login(String usuario, String contraseña) {
+    public boolean login(String usuario, String contrasena) {
         return usuarioRepository.findByUsuario(usuario)
                 .map(u -> u.isActivo() &&
-                        passwordEncoder.matches(contraseña, u.getContraseña()))
+                        u.getContrasena() != null && u.getContrasena().equals(contrasena))
                 .orElse(false);
     }
 }

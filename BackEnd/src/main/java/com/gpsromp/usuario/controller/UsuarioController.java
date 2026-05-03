@@ -82,15 +82,15 @@ public class UsuarioController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
-        String usuario = credenciales.get("username");
-        String contraseña = credenciales.get("password");
+        String usuario = credenciales.get("usuario");
+        String contrasena = credenciales.get("contrasena");
 
-        if (usuario == null || contraseña == null) {
+        if (usuario == null || contrasena == null) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Username y password son requeridos"));
+                    .body(Map.of("error", "Usuario y contraseña son requeridos"));
         }
 
-        if (usuarioService.login(usuario, contraseña)) {
+        if (usuarioService.login(usuario, contrasena)) {
             return usuarioService.obtenerUsuariosPorUsuario(usuario)
                     .map(user -> ResponseEntity.ok(Map.of(
                             "success", true,

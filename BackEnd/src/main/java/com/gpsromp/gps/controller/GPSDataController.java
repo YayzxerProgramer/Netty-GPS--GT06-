@@ -18,24 +18,15 @@ import java.util.Optional;
 public class GPSDataController {
 
     private final GPSDataService gpsDataService;
-    /**
-     * Guarda un nuevo registro GPS
-     */
     @PostMapping
     public ResponseEntity<GPSDataEntity> saveGPSData(@RequestBody GPSDataEntity gpsData) {
-        log.info("Received GPS data");
         GPSDataEntity saved = gpsDataService.save(gpsData);
         return ResponseEntity.ok(saved);
     }
-
-    /**
-     * Obtiene la última posición del GPS
-     */
     @GetMapping("/last/{imei}")
     public ResponseEntity<GPSDataEntity> getLastPosition(@PathVariable String imei) {
         Optional<GPSDataEntity> result = gpsDataService.getLastPosition(imei);
-        return result.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return result.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
 }
