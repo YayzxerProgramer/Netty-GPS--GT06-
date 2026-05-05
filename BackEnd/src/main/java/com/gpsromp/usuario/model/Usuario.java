@@ -20,17 +20,22 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NonNull
     @Column(unique = true, nullable = false, length = 50)
     private String usuario;
 
+    @NonNull
     @Column(nullable = false)
     private String contrasena;
 
+    @NonNull
     @Column(unique = true, length = 100)
     private String correo;
 
+    
     @Column(length = 20)
     @Builder.Default
+    @NonNull
     private String rol= "USER";
 
     @Builder.Default

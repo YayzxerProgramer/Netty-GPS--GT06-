@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.service.UsuarioService;
 
@@ -45,7 +44,7 @@ public class UsuarioController {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "El nombre de usuario ya existe"));
         }
-        if (usuario.getCorreo() != null && usuarioService.existeCorreo(usuario.getCorreo())) {
+        if (usuarioService.existeCorreo(usuario.getCorreo())) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "El email ya está registrado"));
         }

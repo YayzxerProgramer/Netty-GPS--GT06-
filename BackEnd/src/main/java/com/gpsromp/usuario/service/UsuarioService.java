@@ -47,18 +47,6 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        if (usuarioDetalles.getUsuario() != null) {
-            usuario.setUsuario(usuarioDetalles.getUsuario());
-        }
-        if (usuarioDetalles.getCorreo() != null) {
-            usuario.setCorreo(usuarioDetalles.getCorreo());
-        }
-        if (usuarioDetalles.getContrasena() != null && !usuarioDetalles.getContrasena().isEmpty()) {
-            usuario.setContrasena(usuarioDetalles.getContrasena());
-        }
-        if (usuarioDetalles.getRol() != null) {
-            usuario.setRol(usuarioDetalles.getRol());
-        }
         usuario.setActivo(usuarioDetalles.isActivo());
 
         return usuarioRepository.save(usuario);
@@ -79,8 +67,8 @@ public class UsuarioService {
 
     public boolean login(String usuario, String contrasena) {
         return usuarioRepository.findByUsuario(usuario)
-                .map(u -> u.isActivo() &&
-                        u.getContrasena() != null && u.getContrasena().equals(contrasena))
+                .map(u -> u.isActivo()
+                && u.getContrasena() != null && u.getContrasena().equals(contrasena))
                 .orElse(false);
     }
 }

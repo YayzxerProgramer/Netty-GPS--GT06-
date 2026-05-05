@@ -27,9 +27,11 @@ public class Vehiculo {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NonNull
     @Column(unique = true, nullable = false, length = 6)
     private String placa;
 
+    @NonNull
     @Column(unique = true, nullable = false)
     private String imei;
 
@@ -51,8 +53,7 @@ public class Vehiculo {
 
     public enum tipo {
         MOTO,
-        CARRO,
-        VI
+        CARRO
     }
 
 }
