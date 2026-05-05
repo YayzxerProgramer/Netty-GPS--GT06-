@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/usuario")
+@RequestMapping("/usuario")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class UsuarioController {
@@ -93,9 +93,9 @@ public class UsuarioController {
         if (usuarioService.login(usuario, contrasena)) {
             return usuarioService.obtenerUsuariosPorUsuario(usuario)
                     .map(user -> ResponseEntity.ok(Map.of(
-                            "success", true,
-                            "user", user
-                    )))
+                    "success", true,
+                    "user", user
+            )))
                     .orElse(ResponseEntity.internalServerError().build());
         }
 

@@ -13,8 +13,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Document(collection = "gps_data")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class GPSDataEntity {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class GPSData {
 
     @Id
     private String id;

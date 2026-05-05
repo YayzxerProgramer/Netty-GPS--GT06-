@@ -1,32 +1,32 @@
 package com.gpsromp.gps.controller;
 
-import com.gpsromp.gps.model.GPSDataEntity;
+import com.gpsromp.gps.model.GPSData;
 import com.gpsromp.gps.service.GPSDataService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/gps")
+@RequestMapping("/gps")
 @RequiredArgsConstructor
-@Slf4j
 @CrossOrigin(origins = "*")
 public class GPSDataController {
 
     private final GPSDataService gpsDataService;
+
     @PostMapping
-    public ResponseEntity<GPSDataEntity> saveGPSData(@RequestBody GPSDataEntity gpsData) {
-        GPSDataEntity saved = gpsDataService.save(gpsData);
-        return ResponseEntity.ok(saved);
+    public ResponseEntity<GPSData> saveGPSData(@RequestBody GPSData gpsData) {
+        GPSData data = gpsDataService.save(gpsData);
+        return ResponseEntity.ok(data);
     }
+
     @GetMapping("/last/{imei}")
-    public ResponseEntity<GPSDataEntity> getLastPosition(@PathVariable String imei) {
-        Optional<GPSDataEntity> result = gpsDataService.getLastPosition(imei);
-        return result.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<GPSData> getLastPosition(@PathVariable String imei) {
+        Optional<GPSData> resultado = gpsDataService.getLastPosition(imei);
+        return resultado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
 }

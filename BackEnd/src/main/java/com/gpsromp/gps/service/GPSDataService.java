@@ -1,6 +1,6 @@
 package com.gpsromp.gps.service;
 
-import com.gpsromp.gps.model.GPSDataEntity;
+import com.gpsromp.gps.model.GPSData;
 import com.gpsromp.gps.repository.GPSDataRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,8 +20,8 @@ public class GPSDataService {
     /**
      * Guarda un nuevo registro GPS en MongoDB
      */
-    public GPSDataEntity save(GPSDataEntity gpsData) {
-    GPSDataEntity entity = GPSDataEntity.builder()
+    public GPSData save(GPSData gpsData) {
+    GPSData entity = GPSData.builder()
             .imei(gpsData.getImei())
             .latitud(gpsData.getLatitud())
             .longitud(gpsData.getLongitud())
@@ -38,7 +38,7 @@ public class GPSDataService {
     /**
      * Obtiene la última posición conocida del GPS
      */
-    public Optional<GPSDataEntity> getLastPosition(String imei) {
+    public Optional<GPSData> getLastPosition(String imei) {
         return repository.findFirstByImeiOrderByRegistradoEnDesc(imei);
     }
 }
