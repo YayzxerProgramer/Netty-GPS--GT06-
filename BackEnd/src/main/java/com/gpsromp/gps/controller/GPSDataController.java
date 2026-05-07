@@ -18,13 +18,13 @@ public class GPSDataController {
     private final GPSDataService gpsDataService;
 
     @PostMapping
-    public ResponseEntity<GPSData> saveGPSData(@RequestBody GPSData gpsData) {
+    public ResponseEntity<GPSData> guardarDatosGPS(@RequestBody GPSData gpsData) {
         GPSData data = gpsDataService.save(gpsData);
         return ResponseEntity.ok(data);
     }
 
-    @GetMapping("/last/{imei}") 
-    public ResponseEntity<GPSData> getLastPosition(@PathVariable String imei) {
+    @GetMapping("/ultima-posicion/{imei}") 
+    public ResponseEntity<GPSData> obtenerUltimaPosicionPorImei(@PathVariable String imei) {
         Optional<GPSData> resultado = gpsDataService.getLastPosition(imei);
         return resultado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }

@@ -39,7 +39,8 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
+    public ResponseEntity<?
+    > crearUsuario(@RequestBody Usuario usuario) {
         if (usuarioService.existeUsuario(usuario.getUsuario())) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "El nombre de usuario ya existe"));
