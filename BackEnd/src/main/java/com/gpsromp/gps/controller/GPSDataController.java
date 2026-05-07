@@ -23,7 +23,7 @@ public class GPSDataController {
         return ResponseEntity.ok(data);
     }
 
-    @GetMapping("/last/{imei}")
+    @GetMapping("/last/{imei}") 
     public ResponseEntity<GPSData> getLastPosition(@PathVariable String imei) {
         Optional<GPSData> resultado = gpsDataService.getLastPosition(imei);
         return resultado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
