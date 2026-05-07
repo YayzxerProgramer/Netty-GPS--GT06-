@@ -1,8 +1,9 @@
 package com.servidortpc.servidor_tpc.netty;
 
-import com.servidortpc.servidor_tpc.Service.GpsDataService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import com.servidortpc.servidor_tpc.Service.GpsDataService;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.EventLoopGroup;
@@ -17,7 +18,9 @@ public class ServerTcp {
     private final GpsInitializer gpsInitializer;
     private EventLoopGroup aceptarConexiones;
     private EventLoopGroup procesaDatos;
+    @SuppressWarnings("unused")
     private final GpsDataService gpsDataService;
+    @SuppressWarnings("unused")
     private final RestTemplate restTemplate;
 
     public ServerTcp(GpsDataService gpsDataService, RestTemplate restTemplate) {
