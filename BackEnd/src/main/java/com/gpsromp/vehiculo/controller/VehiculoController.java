@@ -42,14 +42,14 @@ public class VehiculoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/vehiculo/{placa}")
+    @GetMapping("/placa/{placa}")
     public ResponseEntity<Vehiculo> obtenerVehiculoPorPlaca(@PathVariable String placa) {
         return vehiculoService.ObtenerVehiculoPorPlaca(placa)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/vehiculo/{imei}")
+    @GetMapping("/imei/{imei}")
     public ResponseEntity<Vehiculo> obtenerVehiculoPorImei(@PathVariable String imei) {
         return vehiculoService.obtenerVehiculoPorImei(imei)
                 .map(ResponseEntity::ok)

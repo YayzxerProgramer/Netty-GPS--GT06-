@@ -32,7 +32,6 @@ public class Usuario {
     @Column(unique = true, length = 100)
     private String correo;
 
-    
     @Column(length = 20)
     @Builder.Default
     @NonNull

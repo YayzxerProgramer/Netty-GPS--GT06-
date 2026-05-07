@@ -5,9 +5,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
-import com.gpsromp.vehiculo.repository.VehiculoRepository;
-import jakarta.transaction.Transactional;
+
 import com.gpsromp.vehiculo.model.Vehiculo;
+import com.gpsromp.vehiculo.repository.VehiculoRepository;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -45,21 +47,25 @@ public class VehiculoService {
     @Transactional
     public Vehiculo actualizarVehiculo(UUID id, Vehiculo vehiculoDetalles) {
         Vehiculo vehiculo = vehiculoRepository.findById(id).orElseThrow(() -> new RuntimeException("No se pudo encontrar el Vehiculo"));
+        vehiculo.setPlaca(vehiculoDetalles.getPlaca());
+        vehiculo.setImei(vehiculoDetalles.getImei());
+        vehiculo.setModelo(vehiculoDetalles.getModelo());
+        vehiculo.setTipo(vehiculoDetalles.getTipo());
 
         vehiculo.setActivo(vehiculoDetalles.isActivo());
 
         return vehiculoRepository.save(vehiculo);
     }
 
-
     @Transactional
     public void eliminarVehiculo(UUID id) {
         vehiculoRepository.deleteById(id);
     }
 
+    
     @Transactional
     public void cambiarEstado(UUID id) {
-        Vehiculo vehiculo = vehiculoRepository.findById(id)
+                Vehiculo vehiculo = vehiculoRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("No se encontro el Vehiculo"));
 
         vehiculo.setActivo(!vehiculo.isActivo());
