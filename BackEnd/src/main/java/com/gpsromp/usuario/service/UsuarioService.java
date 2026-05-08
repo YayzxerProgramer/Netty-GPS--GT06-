@@ -46,12 +46,16 @@ public class UsuarioService {
 
     @Transactional
     public Usuario actualizarUsuario(UUID id, Usuario usuarioDetalles) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        if (id != null) {
+            Usuario usuario = usuarioRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        usuario.setActivo(usuarioDetalles.isActivo());
+            usuario.setActivo(usuarioDetalles.getActivo());
 
-        return usuarioRepository.save(usuario);
+            return usuarioRepository.save(usuario);
+        } else {
+            throw new RuntimeException("ID de usuario no proporcionado");
+        }
     }
 
     @Transactional
@@ -63,13 +67,13 @@ public class UsuarioService {
     public void cambiarEstado(UUID id) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        usuario.setActivo(!usuario.isActivo());
+        usuario.setActivo(!usuario.getActivo());
         usuarioRepository.save(usuario);
     }
 
     public boolean login(String usuario, String contrasena) {
         return usuarioRepository.findByUsuario(usuario)
-                .map(u -> u.isActivo() && u.getContrasena().equals(contrasena))
+                .map(u -> u.getActivo() && u.getContrasena().equals(contrasena))
                 .orElse(false);
     }
 }

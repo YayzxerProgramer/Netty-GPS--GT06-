@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.service.UsuarioService;
+import com.gpsromp.vehiculo.model.Vehiculo;
 
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,14 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/vehiculos/{usuarioId}")
+    public ResponseEntity<List<Vehiculo>> obtenerVehiculosPorUsuario(@PathVariable UUID usuarioId) {
+        return usuarioService.ObtenerUsuariosPorId(usuarioId)
+                .map(usuario -> ResponseEntity.ok(usuario.getVehiculos()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
