@@ -18,7 +18,7 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     private final GpsDataService gpsDataService;
     private final RestTemplate restTemplate;
-    private static final String BACKEND_URL = "http://localhost:8081/api/gps";
+    private static final String BACKEND_URL = "http://localhost:8081/gps";
 
     public GpsServerHandler(GpsDataService gpsDataService, RestTemplate restTemplate) {
         this.gpsDataService = gpsDataService;
@@ -29,7 +29,6 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private final boolean corteMotor = false;
 
     String imei = "";
-
 
     // Login
     private void login(ChannelHandlerContext contexto, ByteBuf paquete) {
@@ -107,8 +106,8 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 latitud, longitud, velocidad, gpsValido
         );
 
-        String tiempo = "Año: " + year + " Mes: " + mes +
-        " Dia: " + dia + " Hora: " + hora + " Minuto: " + minuto + " Segundo:" + segundo;
+        String tiempo = "Año: " + year + " Mes: " + mes
+                + " Dia: " + dia + " Hora: " + hora + " Minuto: " + minuto + " Segundo:" + segundo;
 
         GPSData gps = new GPSData(
                 imei,
