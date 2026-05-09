@@ -1,7 +1,7 @@
 package com.servidortpc.servidor_tpc.netty;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.servidortpc.servidor_tpc.Model.GPSData;
@@ -11,7 +11,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-
 @Component
 @ChannelHandler.Sharable
 public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
@@ -125,11 +124,8 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
         // Enviar al backend para que guarde en MongoDB
         try {
-            ResponseEntity<Void> response = restTemplate.postForEntity(BACKEND_URL, gps, Void.class);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("Datos enviados al backend correctamente");
-            }
-        } catch (Exception e) {
+            restTemplate.postForEntity(BACKEND_URL, gps, Void.class);
+        } catch (RestClientException e) {
             System.out.println("Error al enviar datos al backend: " + e.getMessage());
         }
 
