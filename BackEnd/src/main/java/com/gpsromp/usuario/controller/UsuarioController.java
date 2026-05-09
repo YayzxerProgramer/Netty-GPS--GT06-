@@ -42,12 +42,10 @@ public class UsuarioController {
     @PostMapping
     public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         if (usuarioService.existeUsuario(usuario.getUsuario())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "El nombre de usuario ya existe"));
+            return ResponseEntity.badRequest().body(Map.of("error", "El nombre de usuario ya existe"));
         }
         if (usuario.getCorreo() != null && usuarioService.existeCorreo(usuario.getCorreo())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "El email ya está registrado"));
+            return ResponseEntity.badRequest().body(Map.of("error", "El email ya está registrado"));
         }
 
         Usuario nuevoUsuario = usuarioService.crearUsuario(usuario);
@@ -86,21 +84,16 @@ public class UsuarioController {
         String contrasena = credenciales.get("contrasena");
 
         if (usuario == null || contrasena == null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Usuario y contraseña son requeridos"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Usuario y contraseña son requeridos"));
         }
 
         if (usuarioService.login(usuario, contrasena)) {
             return usuarioService.obtenerUsuariosPorUsuario(usuario)
-                    .map(user -> ResponseEntity.ok(Map.of(
-                            "success", true,
-                            "user", user
-                    )))
-                    .orElse(ResponseEntity.internalServerError().build());
+                    .map(user -> ResponseEntity.ok(Map.of("success", true, "user", user))
+                    ).orElse(ResponseEntity.internalServerError().build());
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Credenciales inválidas"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));
     }
 
     @GetMapping("/exists/usuario/{usuario}")

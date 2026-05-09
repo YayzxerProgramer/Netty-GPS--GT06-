@@ -1,4 +1,4 @@
-package com.gpsromp.Config;
+package com.gpsromp.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.CacheManager;
@@ -26,8 +26,7 @@ public class RedisConfig {
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.findAndRegisterModules();
 
-                Jackson2JsonRedisSerializer<Object> valueSerializer = new Jackson2JsonRedisSerializer<>(mapper,
-                                Object.class);
+                GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer(mapper);
 
                 template.setKeySerializer(keySerializer);
                 template.setValueSerializer(valueSerializer);
