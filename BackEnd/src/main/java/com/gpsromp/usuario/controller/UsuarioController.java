@@ -1,11 +1,16 @@
 package com.gpsromp.usuario.controller;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import com.gpsromp.usuario.model.Usuario;
+import com.gpsromp.usuario.service.UsuarioService;
+import com.gpsromp.vehiculo.model.Vehiculo;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +21,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.gpsromp.usuario.model.Usuario;
-import com.gpsromp.usuario.service.UsuarioService;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/usuario")
@@ -52,8 +52,7 @@ public class UsuarioController {
     @PostMapping
     public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         if (usuarioService.existeUsuario(usuario.getUsuario())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "El nombre de usuario ya existe"));
+            return ResponseEntity.badRequest().body(Map.of("error", "El nombre de usuario ya existe"));
         }
         if (usuarioService.existeCorreo(usuario.getCorreo())) {
             return ResponseEntity.badRequest()
@@ -90,27 +89,31 @@ public class UsuarioController {
         }
     }
 
+    @GetMapping("/vehiculos/{usuarioId}")
+    public ResponseEntity<List<Vehiculo>> obtenerVehiculosPorUsuario(@PathVariable UUID usuarioId) {
+        return usuarioService.ObtenerUsuariosPorId(usuarioId)
+                .map(usuario -> ResponseEntity.ok(usuario.getVehiculos()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
         String usuario = credenciales.get("usuario");
         String contrasena = credenciales.get("contrasena");
 
         if (usuario == null || contrasena == null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Usuario y contraseña son requeridos"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Usuario y contraseña son requeridos"));
         }
 
         if (usuarioService.login(usuario, contrasena)) {
             return usuarioService.obtenerUsuariosPorUsuario(usuario)
                     .map(user -> ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "user", user
-            )))
+                            "success", true,
+                            "user", user)))
                     .orElse(ResponseEntity.internalServerError().build());
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Credenciales inválidas"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));
     }
 
     @GetMapping("/exists/usuario/{usuario}")

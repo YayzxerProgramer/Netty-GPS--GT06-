@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
+import com.gpsromp.vehiculo.model.Vehiculo;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -13,32 +14,24 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NonNull
-    @Column(unique = true, nullable = false, length = 50)
     private String usuario;
 
-    @NonNull
-    @Column(nullable = false)
     private String contrasena;
 
-    @NonNull
-    @Column(unique = true, length = 100)
     private String correo;
 
-    @Column(length = 20)
-    @Builder.Default
-    @NonNull
-    private String rol= "USER";
+    private String rol = "USER";
 
-    @Builder.Default
-    private boolean activo = true;
+    private Boolean activo = true;
+
+    @OneToMany(mappedBy = "id_usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Vehiculo> vehiculos;
 
     @CreationTimestamp
     @Column(updatable = false)

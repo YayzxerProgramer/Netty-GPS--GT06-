@@ -25,7 +25,7 @@ public class GPSDataController {
     private final GPSDataService gpsDataService;
 
     @PostMapping
-    public ResponseEntity<GPSData> guardarGPSData(@RequestBody GPSData gpsData) {
+    public ResponseEntity<GPSData> guardarDatosGPS(@RequestBody GPSData gpsData) {
         GPSData data = gpsDataService.save(gpsData);
         return ResponseEntity.ok(data);
     }

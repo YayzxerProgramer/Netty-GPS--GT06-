@@ -26,8 +26,7 @@ public class RedisConfig {
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.findAndRegisterModules();
 
-                Jackson2JsonRedisSerializer<Object> valueSerializer = new Jackson2JsonRedisSerializer<>(mapper,
-                                Object.class);
+                GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer(mapper);
 
                 template.setKeySerializer(keySerializer);
                 template.setValueSerializer(valueSerializer);

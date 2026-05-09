@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.gpsromp.vehiculo.VehiculoService;
 import com.gpsromp.vehiculo.model.Vehiculo;
+import com.gpsromp.vehiculo.service.VehiculoService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

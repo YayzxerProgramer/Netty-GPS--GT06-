@@ -1,4 +1,4 @@
-package com.gpsromp.vehiculo;
+package com.gpsromp.vehiculo.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +51,8 @@ public class VehiculoService {
         vehiculo.setImei(vehiculoDetalles.getImei());
         vehiculo.setModelo(vehiculoDetalles.getModelo());
         vehiculo.setTipo(vehiculoDetalles.getTipo());
-
-        vehiculo.setActivo(vehiculoDetalles.isActivo());
+        vehiculo.setActivo(vehiculoDetalles.getActivo());
+        vehiculo.setId_usuario(vehiculoDetalles.getId_usuario());
 
         return vehiculoRepository.save(vehiculo);
     }
@@ -62,13 +62,12 @@ public class VehiculoService {
         vehiculoRepository.deleteById(id);
     }
 
-    
     @Transactional
     public void cambiarEstado(UUID id) {
-                Vehiculo vehiculo = vehiculoRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("No se encontro el Vehiculo"));
+        Vehiculo vehiculo = vehiculoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontro el Vehiculo"));
 
-        vehiculo.setActivo(!vehiculo.isActivo());
+        vehiculo.setActivo(!vehiculo.getActivo());
 
         vehiculoRepository.save(vehiculo);
     }

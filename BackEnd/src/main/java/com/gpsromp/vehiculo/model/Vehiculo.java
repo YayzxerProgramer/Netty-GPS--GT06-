@@ -42,7 +42,10 @@ public class Vehiculo {
     private String tipo;
 
     @Builder.Default
-    private boolean activo = true;
+    private Boolean activo = true;
+
+    @Column(name = "usuario_id")
+    private UUID id_usuario;
 
     @CreationTimestamp
     @Column(updatable = false)
