@@ -1,5 +1,4 @@
-import React from "react";
-import "./FloatingButton.css";
+import "../Styles/Footer.css";
 
 function Footer() {
     return (

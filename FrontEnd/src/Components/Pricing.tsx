@@ -1,3 +1,5 @@
+import "../Styles/Pricing.css";
+
 function Pricing() {
     return (
         <section className="seccion-precios" id="pricing">

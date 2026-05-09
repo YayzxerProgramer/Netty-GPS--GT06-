@@ -1,3 +1,5 @@
+import "../Styles/Nosotros.css";
+
 function Nosotros() {
     return (
         <section className="seccion-nosotros" id="nosotros">

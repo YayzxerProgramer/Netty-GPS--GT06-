@@ -1,7 +1,6 @@
-import React from "react";
-import "./FloatingButton.css";
+import "../Styles/FloatingButton.css";
 
-function Footer() {
+function FloatingButton() {
     return (
         <footer className="pie-pagina">
 
@@ -37,4 +36,4 @@ function Footer() {
     )
 }
 
-export default Footer
+export default FloatingButton

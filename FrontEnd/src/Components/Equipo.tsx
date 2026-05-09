@@ -1,7 +1,6 @@
-import React from "react";
-import "./Equipo.css";
+import "../Styles/Equipo.css";
 
-let miembros = [
+const miembros = [
     {
         nombre: "Alex Rivera",
         cargo: "UI/UX Lead",

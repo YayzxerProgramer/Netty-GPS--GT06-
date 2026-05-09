@@ -1,3 +1,5 @@
+import "../Styles/NavBar.css";
+
 function Navbar() {
     return (
         <nav className="barra-navegacion">
