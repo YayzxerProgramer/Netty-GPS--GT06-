@@ -33,12 +33,12 @@ function Producto() {
                     <h2 className="titulo-producto">
                         LA UNIDAD <br />
                         DE CONTROL
-                        <span> CORE-X.</span>
+                        <span> GNXIS.</span>
                     </h2>
 
                     <p className="descripcion-producto">
                         Diseñado para flotas profesionales y activos
-                        de alto valor. El Core-X integra conectividad
+                        de alto valor. El GNXIS integra conectividad
                         global multibanda con sensores inerciales avanzados.
                     </p>
 
