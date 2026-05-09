@@ -5,6 +5,7 @@ import Producto from "./Components/Producto";
 import Pricing from "./Components/Pricing";
 import Equipo from "./Components/Equipo";
 import Footer from "./Components/Footer";     
+import "./index.css";
 
 
 function App() {
