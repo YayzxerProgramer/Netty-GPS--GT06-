@@ -1,13 +1,20 @@
 package com.gpsromp.gps.controller;
 
+import java.util.Optional;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.gpsromp.gps.model.GPSData;
 import com.gpsromp.gps.service.GPSDataService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/gps")
@@ -18,13 +25,13 @@ public class GPSDataController {
     private final GPSDataService gpsDataService;
 
     @PostMapping
-    public ResponseEntity<GPSData> saveGPSData(@RequestBody GPSData gpsData) {
+    public ResponseEntity<GPSData> guardarGPSData(@RequestBody GPSData gpsData) {
         GPSData data = gpsDataService.save(gpsData);
         return ResponseEntity.ok(data);
     }
 
-    @GetMapping("/last/{imei}") 
-    public ResponseEntity<GPSData> getLastPosition(@PathVariable String imei) {
+    @GetMapping("/ultima-posicion/{imei}") 
+    public ResponseEntity<GPSData> obtenerUltimaPosicionPorImei(@PathVariable String imei) {
         Optional<GPSData> resultado = gpsDataService.getLastPosition(imei);
         return resultado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
