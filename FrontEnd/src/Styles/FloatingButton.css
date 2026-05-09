@@ -1,0 +1,28 @@
+.boton-flotante {
+    position: fixed;
+    right: 40px;
+    bottom: 40px;
+    width: 68px;
+    height: 68px;
+    border: none;
+    border-radius: 50%;
+    background:
+        linear-gradient(to bottom right,
+            #b2cea8,
+            #354d2f);
+    color: #24331f;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow:
+        0 20px 40px rgba(178, 206, 168, 0.2);
+    transition:
+        transform 0.3s ease,
+        filter 0.3s ease;
+}
+
+.boton-flotante:hover {
+    transform: scale(1.08);
+    filter: brightness(1.08);
+}
