@@ -1,4 +1,4 @@
-package com.gpsromp.vehiculo;
+package com.gpsromp.vehiculo.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class VehiculoService {
         vehiculo.setModelo(vehiculoDetalles.getModelo());
         vehiculo.setTipo(vehiculoDetalles.getTipo());
         vehiculo.setActivo(vehiculoDetalles.getActivo());
-        vehiculo.setUsuario(vehiculoDetalles.getUsuario());
+        vehiculo.setId_usuario(vehiculoDetalles.getId_usuario());
 
         return vehiculoRepository.save(vehiculo);
     }

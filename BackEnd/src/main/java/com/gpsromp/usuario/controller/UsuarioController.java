@@ -40,8 +40,7 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<?
-    > crearUsuario(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
         if (usuarioService.existeUsuario(usuario.getUsuario())) {
             return ResponseEntity.badRequest().body(Map.of("error", "El nombre de usuario ya existe"));
         }
@@ -87,7 +86,6 @@ public class UsuarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
         String usuario = credenciales.get("usuario");
@@ -100,9 +98,8 @@ public class UsuarioController {
         if (usuarioService.login(usuario, contrasena)) {
             return usuarioService.obtenerUsuariosPorUsuario(usuario)
                     .map(user -> ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "user", user
-            )))
+                            "success", true,
+                            "user", user)))
                     .orElse(ResponseEntity.internalServerError().build());
         }
 

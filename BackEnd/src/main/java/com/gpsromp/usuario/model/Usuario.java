@@ -1,4 +1,5 @@
 package com.gpsromp.usuario.model;
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -29,7 +30,7 @@ public class Usuario {
 
     private Boolean activo = true;
 
-    @OneToMany(mappedBy = "usuario")
+    @OneToMany(mappedBy = "id_usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Vehiculo> vehiculos;
 
     @CreationTimestamp
