@@ -11,7 +11,7 @@ function Producto() {
                     <div className="caja-imagen-producto">
 
                         <img
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjXnAELGVttFTtn_-wnaMWerivZTUhhmO6q1IL_1NlZDnz0Dv3KAfsfOmgXX2xbNYMWYwZwi6Ih8sk1yBdDMoky1pc3bKo1cre33jK_Hfg4_6hZSa3Zeq0hTolpYwO_IE6Q-gbyq4bZ8c3CowsUF3MoKydFsYP0HZlok7mDSQ9Ux-GbsHfQArkCD0DalqC4GbdCuvCsO1jtxGog1awDWi1rh-dvdPmRN7Jwr1DqgIO6pE2lxnj9b8DdjCKzZqwTCGmr-wRBHHEzHY"
+                            src="../Image/GPS.png"
                             alt="Hardware"
                         />
 
