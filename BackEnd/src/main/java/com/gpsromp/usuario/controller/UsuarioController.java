@@ -4,16 +4,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.service.UsuarioService;
+import com.gpsromp.vehiculo.model.Vehiculo;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/usuario")
+@RequestMapping("/usuario")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class UsuarioController {
@@ -40,12 +40,14 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
+    public ResponseEntity<?
+    > crearUsuario(@RequestBody Usuario usuario) {
         if (usuarioService.existeUsuario(usuario.getUsuario())) {
             return ResponseEntity.badRequest().body(Map.of("error", "El nombre de usuario ya existe"));
         }
-        if (usuario.getCorreo() != null && usuarioService.existeCorreo(usuario.getCorreo())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El email ya está registrado"));
+        if (usuarioService.existeCorreo(usuario.getCorreo())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "El email ya está registrado"));
         }
 
         Usuario nuevoUsuario = usuarioService.crearUsuario(usuario);
@@ -78,6 +80,14 @@ public class UsuarioController {
         }
     }
 
+    @GetMapping("/vehiculos/{usuarioId}")
+    public ResponseEntity<List<Vehiculo>> obtenerVehiculosPorUsuario(@PathVariable UUID usuarioId) {
+        return usuarioService.ObtenerUsuariosPorId(usuarioId)
+                .map(usuario -> ResponseEntity.ok(usuario.getVehiculos()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
         String usuario = credenciales.get("usuario");
@@ -89,8 +99,11 @@ public class UsuarioController {
 
         if (usuarioService.login(usuario, contrasena)) {
             return usuarioService.obtenerUsuariosPorUsuario(usuario)
-                    .map(user -> ResponseEntity.ok(Map.of("success", true, "user", user))
-                    ).orElse(ResponseEntity.internalServerError().build());
+                    .map(user -> ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "user", user
+            )))
+                    .orElse(ResponseEntity.internalServerError().build());
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));

@@ -1,14 +1,16 @@
 package com.gpsromp.usuario.service;
 
-import com.gpsromp.usuario.model.Usuario;
-import com.gpsromp.usuario.repository.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.gpsromp.usuario.model.Usuario;
+import com.gpsromp.usuario.repository.UsuarioRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -44,24 +46,16 @@ public class UsuarioService {
 
     @Transactional
     public Usuario actualizarUsuario(UUID id, Usuario usuarioDetalles) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        if (id != null) {
+            Usuario usuario = usuarioRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        if (usuarioDetalles.getUsuario() != null) {
-            usuario.setUsuario(usuarioDetalles.getUsuario());
-        }
-        if (usuarioDetalles.getCorreo() != null) {
-            usuario.setCorreo(usuarioDetalles.getCorreo());
-        }
-        if (usuarioDetalles.getContrasena() != null && !usuarioDetalles.getContrasena().isEmpty()) {
-            usuario.setContrasena(usuarioDetalles.getContrasena());
-        }
-        if (usuarioDetalles.getRol() != null) {
-            usuario.setRol(usuarioDetalles.getRol());
-        }
-        usuario.setActivo(usuarioDetalles.isActivo());
+            usuario.setActivo(usuarioDetalles.getActivo());
 
-        return usuarioRepository.save(usuario);
+            return usuarioRepository.save(usuario);
+        } else {
+            throw new RuntimeException("ID de usuario no proporcionado");
+        }
     }
 
     @Transactional
@@ -73,14 +67,13 @@ public class UsuarioService {
     public void cambiarEstado(UUID id) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        usuario.setActivo(!usuario.isActivo());
+        usuario.setActivo(!usuario.getActivo());
         usuarioRepository.save(usuario);
     }
 
     public boolean login(String usuario, String contrasena) {
         return usuarioRepository.findByUsuario(usuario)
-                .map(u -> u.isActivo() &&
-                        u.getContrasena() != null && u.getContrasena().equals(contrasena))
+                .map(u -> u.getActivo() && u.getContrasena().equals(contrasena))
                 .orElse(false);
     }
 }
