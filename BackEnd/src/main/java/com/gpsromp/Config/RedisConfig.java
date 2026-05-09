@@ -1,4 +1,4 @@
-package com.gpsromp.config;
+package com.gpsromp.Config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.CacheManager;
