@@ -1,4 +1,5 @@
 import "../Styles/Producto.css";
+import gpsImage from "../Image/GPS.png";
 
 function Producto() {
     return (
@@ -11,7 +12,7 @@ function Producto() {
                     <div className="caja-imagen-producto">
 
                         <img
-                            src="../Image/GPS.png"
+                            src={gpsImage}
                             alt="Hardware"
                         />
 
