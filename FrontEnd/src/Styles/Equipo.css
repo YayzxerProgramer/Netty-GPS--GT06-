@@ -1,0 +1,65 @@
+.seccion-equipo {
+    padding: 180px 80px;
+    background: #0d0f0d;
+}
+
+.contenedor-equipo {
+    max-width: 1400px;
+    margin: auto;
+}
+
+.encabezado-equipo {
+    display: flex;
+    justify-content: space-between;
+    gap: 60px;
+    margin-bottom: 100px;
+}
+
+.cuadricula-equipo {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 2px;
+}
+
+.tarjeta-miembro {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+}
+
+.tarjeta-miembro img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(100%);
+    transition: 0.8s ease;
+}
+
+.tarjeta-miembro:hover img {
+    transform: scale(1.08);
+    filter: grayscale(0%);
+}
+
+.superposicion-miembro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 40px;
+    background:
+        linear-gradient(to top,
+            rgba(0,0,0,0.88),
+            transparent 60%);
+    opacity: 0;
+    transition: 0.5s ease;
+}
+
+.tarjeta-miembro:hover .superposicion-miembro {
+    opacity: 1;
+}
+
+.superposicion-miembro h3 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+}

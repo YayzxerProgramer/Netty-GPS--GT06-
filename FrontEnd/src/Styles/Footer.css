@@ -1,0 +1,38 @@
+.pie-pagina {
+    padding: 60px 80px;
+    background: #0b0d0b;
+    border-top: 1px solid rgba(178,206,168,0.06);
+}
+
+.contenedor-pie {
+    max-width: 1400px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.logo-pie {
+    color: #f5fff1;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.enlaces-pie {
+    display: flex;
+    gap: 34px;
+}
+
+.enlaces-pie a {
+    color: rgba(255,255,255,0.38);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.derechos-pie {
+    color: rgba(255,255,255,0.35);
+    font-size: 11px;
+}

@@ -1,0 +1,94 @@
+.seccion-precios {
+    padding: 180px 80px;
+    background: #111411;
+}
+
+.contenedor-precios {
+    max-width: 1200px;
+    margin: auto;
+}
+
+.encabezado-precios {
+    text-align: center;
+    margin-bottom: 100px;
+}
+
+.encabezado-precios h2 {
+    margin: 0;
+    color: #f1f4ef;
+    font-size: 56px;
+    font-weight: 800;
+}
+
+.cuadricula-precios {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 36px;
+}
+
+.tarjeta-precio {
+    position: relative;
+    padding: 60px 50px;
+    border-radius: 28px;
+    background: #1c211d;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: 0.4s ease;
+}
+
+.tarjeta-precio:hover {
+    transform: translateY(-8px);
+}
+
+.destacado {
+    border: 1px solid rgba(178,206,168,0.28);
+}
+
+.insignia-destacado {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px 18px;
+    background: #b2cea8;
+    color: #1d2819;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.parte-superior-plan h3 {
+    font-size: 72px;
+    margin: 0;
+}
+
+.caracteristicas-plan {
+    list-style: none;
+    padding: 0;
+    margin: 50px 0;
+}
+
+.caracteristicas-plan li {
+    margin-bottom: 24px;
+}
+
+.boton-precio {
+    width: 100%;
+    padding: 20px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.primario {
+    border: none;
+    background: linear-gradient(to bottom right,#b2cea8,#354d2f);
+}
+
+.secundario {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: white;
+}
