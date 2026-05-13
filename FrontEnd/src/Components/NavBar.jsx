@@ -1,6 +1,6 @@
 import "../Styles/NavBar.css";
 
-function Navbar() {
+function Navbar({ onOpenLogin }) {
     return (
         <nav className="barra-navegacion">
 
@@ -18,7 +18,7 @@ function Navbar() {
                     <a href="#equipo">Equipo</a>
                 </div>
 
-                <button className="boton-nav">
+                <button className="boton-nav" onClick={onOpenLogin}>
                     Área de Clientes
                 </button>
 
