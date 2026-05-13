@@ -8,7 +8,7 @@ const miembros = [
     },
     {
         nombre: "Holmert Cabarcas",
-        cargo: "Ayudante deL Frontend",
+        cargo: "Ayudante del Frontend",
         imagen: "https://lh3.googleusercontent.com/aida-public/AB6AXuAZnHPSzv1jPTh_lVkPNIgJr2pbxtZk9SYeqjI8jHYKjspfTi1qFZh1O2Jbqjz_B0RKeRASYise2V79t0nOoLEMBFwQSGw4XEpU2fxtRSA62KKpc7A4dVelebzeHVo0CKqtejSaaBaGNF0B0zC3ThYBLOaMN8VsuKwyDoc-miPdu1cVwj9iWWtNmQJREf1XSpCStAaFj6wW7qjNCUB9106oHLm2zHrzkeF1dJMvA2CrG8K4y-eREBHkzyQamfVDIc5Axs7Wl8StEfM"
     },
     {
