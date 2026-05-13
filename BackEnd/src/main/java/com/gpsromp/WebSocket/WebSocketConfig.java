@@ -1,4 +1,4 @@
-package com.gpsromp.WebSocket;
+package com.gpsromp.websocket;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
