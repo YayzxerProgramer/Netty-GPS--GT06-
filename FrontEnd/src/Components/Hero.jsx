@@ -17,7 +17,7 @@ function Hero() {
 
                     <h1 className="titulo-hero">
                         EL CAMINO <br />
-                        <span>DE LA PRECISIÓN.</span>
+                        <span>DE LA PRECISION.</span>
                     </h1>
 
                     <p className="descripcion-hero">

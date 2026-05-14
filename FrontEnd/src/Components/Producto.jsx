@@ -47,7 +47,7 @@ function Producto() {
 
                         <li>
                             <span className="punto"></span>
-                            Batería de larga duración (365 días)
+                            Bateria de larga duracion (365 días)
                         </li>
 
                         <li>
@@ -63,7 +63,7 @@ function Producto() {
                     </ul>
 
                     <button className="boton-especificaciones">
-                        Explorar Especificaciones Técnicas
+                        Explorar Especificaciones Tecnicas
                         <span>→</span>
                     </button>
 

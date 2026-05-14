@@ -15,7 +15,7 @@ function Nosotros() {
                         </span>
 
                         <h2 className="titulo-nosotros">
-                            Creamos instrumentos de precisión
+                            Creamos instrumentos de precision
                             para un mundo en movimiento.
                             No rastreamos;
                             <span> guiamos.</span>
@@ -26,7 +26,7 @@ function Nosotros() {
                     <div className="derecha-nosotros">
 
                         <p>
-                            ROMP GPS nació de la necesidad de
+                            ROMP GPS nacio de la necesidad de
                             fiabilidad absoluta en entornos críticos.
                             Nuestra tecnología combina hardware
                             de grado militar con software de análisis predictivo.
@@ -44,8 +44,8 @@ function Nosotros() {
                         <h3>I+D Constante</h3>
 
                         <p>
-                            Innovación continua en micro-geolocalización
-                            y eficiencia energética.
+                            Innovacion continua en micro-geolocalizacion
+                            y eficiencia energetica.
                         </p>
                     </div>
 
@@ -56,7 +56,7 @@ function Nosotros() {
 
                         <p>
                             Protocolos de seguridad extremo a extremo
-                            para proteger sus datos más valiosos.
+                            para proteger sus datos mas valiosos.
                         </p>
                     </div>
 

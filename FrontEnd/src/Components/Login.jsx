@@ -15,13 +15,13 @@ function InfoSesion() {
             <span className="info-sesion__etiqueta">Security Protocol</span>
 
             <h1>
-                Precisión en <br />
+                Precision en <br />
                 cada <span>coordenada</span>.
             </h1>
 
             <p className="info-sesion__descripcion">
                 Acceda a su centro de mando de ROMP GPS. Gestione flotas,
-                monitoree activos en tiempo real y analice telemetría con
+                monitoree activos en tiempo real y analice telemetria con
                 exactitud milimétrica.
             </p>
 
@@ -69,7 +69,6 @@ function BotonSesion({ children }) {
     );
 }
 
-/* ── Icono SVG de Google ── */
 function IconoGoogle() {
     return (
         <svg className="boton-social__icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -81,7 +80,6 @@ function IconoGoogle() {
     );
 }
 
-/* ── Icono SVG de GitHub ── */
 function IconoGitHub() {
     return (
         <svg className="boton-social__icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -90,7 +88,6 @@ function IconoGitHub() {
     );
 }
 
-/* ── Botones de login social ── */
 function BotonesSociales() {
     return (
         <div className="botones-sociales">
@@ -106,7 +103,6 @@ function BotonesSociales() {
     );
 }
 
-/* ── Separador "O continúa con" ── */
 function SeparadorOAuth() {
     return (
         <div className="separador-oauth">
@@ -120,13 +116,10 @@ function SeparadorOAuth() {
 function FormularioSesion() {
     return (
         <div className="formulario-sesion-wrapper">
-            {/* Botones sociales arriba */}
             <BotonesSociales />
 
-            {/* Separador */}
             <SeparadorOAuth />
 
-            {/* Formulario credenciales */}
             <form className="formulario-sesion" onSubmit={(e) => e.preventDefault()}>
                 <CampoEntrada
                     tipo="email"
@@ -146,11 +139,11 @@ function FormularioSesion() {
                 <div className="caja-recordar">
                     <input type="checkbox" id="recordar" className="caja-recordar__checkbox" />
                     <label htmlFor="recordar" className="caja-recordar__etiqueta">
-                        Mantener sesión iniciada por 30 días
+                        Mantener sesion iniciada por 30 días
                     </label>
                 </div>
 
-                <BotonSesion>Iniciar Sesión</BotonSesion>
+                <BotonSesion>Iniciar Sesion</BotonSesion>
             </form>
         </div>
     );
@@ -162,7 +155,7 @@ function TarjetaSesion() {
             <div className="ancla-hud">LAT: 40.7128° N | LON: 74.0060° W</div>
 
             <div className="encabezado-tarjeta">
-                <h2>Área de Clientes</h2>
+                <h2>area de Clientes</h2>
                 <p>Ingrese sus credenciales para acceder al terminal.</p>
             </div>
 
@@ -170,7 +163,7 @@ function TarjetaSesion() {
 
             <div className="pie-tarjeta">
                 <p>
-                    ¿Aún no es cliente?{" "}
+                    ¿Aun no es cliente?{" "}
                     <a href="#">Solicite un demo</a>
                 </p>
             </div>

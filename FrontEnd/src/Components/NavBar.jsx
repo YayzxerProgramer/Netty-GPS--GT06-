@@ -19,7 +19,7 @@ function Navbar({ onOpenLogin }) {
                 </div>
 
                 <button className="boton-nav" onClick={onOpenLogin}>
-                    Área de Clientes
+                    Area de Clientes
                 </button>
 
             </div>
