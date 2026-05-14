@@ -41,6 +41,7 @@ h3 {
     }
 }
 
+
 .barra-encabezado-sesion {
     position: fixed;
     top: 0;
@@ -73,7 +74,6 @@ h3 {
     font-weight: 800;
     letter-spacing: -1px;
     text-transform: uppercase;
-/*     font-family: 'Syne', sans-serif; */
 }
 
 .enlace-inicio {
@@ -237,7 +237,7 @@ h3 {
 }
 
 .encabezado-tarjeta {
-    margin-bottom: 50px;
+    margin-bottom: 34px;
 }
 
 .encabezado-tarjeta h2 {
@@ -271,6 +271,81 @@ h3 {
     color: #b2cea8;
     text-decoration: none;
     font-weight: 700;
+}
+
+.formulario-sesion-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.botones-sociales {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+.boton-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #c8d4c6;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease, color 0.25s ease;
+    white-space: nowrap;
+}
+
+.boton-social__icono {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.boton-social--google:hover {
+    background: rgba(66, 133, 244, 0.1);
+    border-color: rgba(66, 133, 244, 0.3);
+    color: #dce8ff;
+    transform: translateY(-2px);
+}
+
+.boton-social--github:hover {
+    background: rgba(178, 206, 168, 0.08);
+    border-color: rgba(178, 206, 168, 0.3);
+    color: #dffbde;
+    transform: translateY(-2px);
+}
+
+.separador-oauth {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 28px 0 28px;
+}
+
+.separador-oauth__linea {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.separador-oauth__texto {
+    color: #606860;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .formulario-sesion {
@@ -527,548 +602,6 @@ h3 {
         padding: 120px 24px;
     }
 
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap');
-
-    *,
-    *::before,
-    *::after {
-        box-sizing: border-box;
-    }
-
-    body {
-        margin: 0;
-        background: #0d0f0d;
-        font-family: 'DM Sans', sans-serif;
-        color: #e1e7df;
-    }
-
-    h1,
-    h2,
-    h3 {
-        font-family: 'Syne', sans-serif;
-    }
-
-    @keyframes fadeUp {
-        from {
-            opacity: 0;
-            transform: translateY(22px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    .barra-encabezado-sesion {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 1000;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 32px 80px;
-        background: linear-gradient(to bottom, rgba(13, 15, 13, 0.72), transparent);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
-
-    .marca-sesion {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .icono-marca {
-        color: #b2cea8;
-        font-size: 28px;
-    }
-
-    .texto-marca {
-        color: #f3fff0;
-        font-size: 28px;
-        font-weight: 800;
-        letter-spacing: -1px;
-        text-transform: uppercase;
-        font-family: 'Syne', sans-serif;
-    }
-
-    .enlace-inicio {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #9ea59e;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        transition: color 0.3s ease;
-    }
-
-    .enlace-inicio__flecha {
-        font-size: 16px;
-        display: inline-block;
-        transition: transform 0.3s ease;
-    }
-
-    .enlace-inicio:hover {
-        color: #dffbde;
-    }
-
-    .enlace-inicio:hover .enlace-inicio__flecha {
-        transform: translateX(-4px);
-    }
-
-    .pagina-sesion {
-        position: relative;
-        min-height: 100vh;
-        padding: 120px 80px;
-        background:
-            linear-gradient(to bottom, rgba(13, 15, 13, 0.85), rgba(13, 15, 13, 0.96)),
-            url("https://lh3.googleusercontent.com/aida-public/AB6AXuBMRU8spNig0981bN6h0-XqC4Gt3otGulgXPwGchmWobzekM-PCG34C8jJh086bFGccIeE13TPx34z8ScvNZDFlHbljUkY8bi_12DB5LZNWrj2x5c-XPTFxuVG0B1j2Pn4aKs_A-jqvn1Gvv5cgURMdaI0o5KKqQ0P5FwgWzWn8fVvPZcOe9ehZE_EIQv2-B2Kk2ha9UNTW8fnioBX3ANLDYvbLC_wZq9R78iCwzhEn600SSK_OzsHYSmADtfujm3X9k8VyVuOWzqw");
-        background-size: cover;
-        background-position: center;
-        overflow: hidden;
-    }
-
-    .circulo-fondo {
-        position: absolute;
-        width: 420px;
-        height: 420px;
-        border-radius: 50%;
-        filter: blur(120px);
-        pointer-events: none;
-    }
-
-    .circulo-fondo-1 {
-        top: -120px;
-        left: -120px;
-        background: rgba(178, 206, 168, 0.12);
-    }
-
-    .circulo-fondo-2 {
-        right: -120px;
-        bottom: -120px;
-        background: rgba(53, 77, 47, 0.24);
-    }
-
-    .contenedor-sesion {
-        position: relative;
-        z-index: 5;
-        max-width: 1400px;
-        margin: auto;
-        display: grid;
-        grid-template-columns: 1fr 480px;
-        gap: 120px;
-        align-items: center;
-    }
-
-    .info-sesion {
-        animation: fadeUp 0.6s ease both;
-    }
-
-    .info-sesion__etiqueta {
-        display: inline-block;
-        margin-bottom: 28px;
-        padding: 6px 14px;
-        border: 1px solid rgba(178, 206, 168, 0.25);
-        border-radius: 6px;
-        color: #b2cea8;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-    }
-
-    .info-sesion h1 {
-        margin: 0 0 30px 0;
-        color: #f2f5f0;
-        font-size: clamp(42px, 5.5vw, 74px);
-        font-weight: 800;
-        line-height: 1.05;
-        letter-spacing: -3px;
-    }
-
-    .info-sesion h1 span {
-        color: #b2cea8;
-    }
-
-    .info-sesion__descripcion {
-        max-width: 560px;
-        color: #9ea59e;
-        font-size: 20px;
-        line-height: 1.9;
-        margin: 0;
-    }
-
-    .estadisticas-sesion {
-        display: flex;
-        align-items: center;
-        gap: 34px;
-        margin-top: 50px;
-    }
-
-    .estadisticas-sesion__divisor {
-        width: 1px;
-        height: 50px;
-        background: rgba(255, 255, 255, 0.1);
-        flex-shrink: 0;
-    }
-
-    .caja-estadistica h3 {
-        margin: 0 0 6px 0;
-        color: #b2cea8;
-        font-size: 42px;
-        font-weight: 800;
-    }
-
-    .caja-estadistica span {
-        color: #8f968f;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-    }
-
-    .tarjeta-sesion {
-        position: relative;
-        padding: 50px;
-        border-radius: 28px;
-        background: rgba(28, 33, 29, 0.72);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
-        animation: fadeUp 0.6s 0.12s ease both;
-    }
-
-    .ancla-hud {
-        position: absolute;
-        top: 24px;
-        right: 28px;
-        color: rgba(255, 255, 255, 0.35);
-        font-size: 10px;
-        letter-spacing: 1px;
-        animation: fadeIn 1.2s 0.5s ease both;
-    }
-
-    .encabezado-tarjeta {
-        margin-bottom: 50px;
-    }
-
-    .encabezado-tarjeta h2 {
-        margin: 0 0 12px 0;
-        color: #f2f5f0;
-        font-size: 36px;
-        font-weight: 800;
-        letter-spacing: -1px;
-    }
-
-    .encabezado-tarjeta p {
-        margin: 0;
-        color: #98a098;
-        font-size: 15px;
-    }
-
-    .pie-tarjeta {
-        margin-top: 50px;
-        padding-top: 30px;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        text-align: center;
-    }
-
-    .pie-tarjeta p {
-        color: #8f968f;
-        font-size: 13px;
-        margin: 0;
-    }
-
-    .pie-tarjeta a {
-        color: #b2cea8;
-        text-decoration: none;
-        font-weight: 700;
-    }
-
-    .formulario-sesion {
-        display: flex;
-        flex-direction: column;
-        gap: 28px;
-    }
-
-    .grupo-campo {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .grupo-campo__etiqueta {
-        color: #8f968f;
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-    }
-
-    .grupo-campo__fila {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .grupo-campo__enlace {
-        color: #b2cea8;
-        text-decoration: none;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-    }
-
-    .caja-entrada {
-        position: relative;
-    }
-
-    .caja-entrada__icono {
-        position: absolute;
-        top: 50%;
-        left: 18px;
-        transform: translateY(-50%);
-        color: #7f867f;
-        font-size: 18px;
-        pointer-events: none;
-        user-select: none;
-    }
-
-    .caja-entrada__input {
-        width: 100%;
-        padding: 18px 18px 18px 52px;
-        border-radius: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: #212722;
-        color: #f2f5f0;
-        font-size: 15px;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        box-sizing: border-box;
-    }
-
-    .caja-entrada__input:focus {
-        border-color: #b2cea8;
-        box-shadow: 0 0 0 3px rgba(178, 206, 168, 0.12);
-    }
-
-    .caja-entrada__input::placeholder {
-        color: rgba(255, 255, 255, 0.22);
-    }
-
-    .caja-recordar {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .caja-recordar__checkbox {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-        accent-color: #b2cea8;
-        flex-shrink: 0;
-    }
-
-    .caja-recordar__etiqueta {
-        color: #98a098;
-        font-size: 13px;
-        cursor: pointer;
-    }
-
-    .boton-sesion {
-        width: 100%;
-        margin-top: 10px;
-        padding: 18px;
-        border: none;
-        border-radius: 16px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 14px;
-        background: linear-gradient(to bottom right, #b2cea8, #354d2f);
-        color: #24331f;
-        font-size: 14px;
-        font-weight: 800;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        cursor: pointer;
-        font-family: inherit;
-        transition: transform 0.3s ease, filter 0.3s ease;
-    }
-
-    .boton-sesion__flecha {
-        display: inline-block;
-        transition: transform 0.3s ease;
-    }
-
-    .boton-sesion:hover {
-        transform: translateY(-2px);
-        filter: brightness(1.05);
-    }
-
-    .boton-sesion:hover .boton-sesion__flecha {
-        transform: translateX(6px);
-    }
-
-    .enlaces-inferiores {
-        position: relative;
-        z-index: 5;
-        margin-top: 60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 18px;
-        flex-wrap: wrap;
-        animation: fadeUp 0.6s 0.24s ease both;
-    }
-
-    .enlaces-inferiores__grupo {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-    }
-
-    .enlaces-inferiores__item {
-        color: rgba(255, 255, 255, 0.38);
-        text-decoration: none;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        transition: color 0.3s ease;
-    }
-
-    .enlaces-inferiores__item:hover {
-        color: rgba(255, 255, 255, 0.7);
-    }
-
-    .enlaces-inferiores__separador {
-        color: rgba(255, 255, 255, 0.38);
-        font-size: 11px;
-        user-select: none;
-    }
-
-    .barra-pie-sesion {
-        position: relative;
-        width: 100%;
-        padding: 50px 80px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 40px;
-        flex-wrap: wrap;
-        background: #0b0d0b;
-        border-top: 1px solid rgba(178, 206, 168, 0.06);
-        box-sizing: border-box;
-    }
-
-    .marca-pie {
-        color: #f3fff0;
-        font-size: 24px;
-        font-weight: 800;
-        letter-spacing: -1px;
-        text-transform: uppercase;
-/*         font-family: 'Syne', sans-serif; */
-    }
-
-    .derechos-pie {
-        margin: 0;
-        color: rgba(255, 255, 255, 0.35);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-    }
-
-    .navegacion-pie {
-        display: flex;
-        align-items: center;
-        gap: 28px;
-        flex-wrap: wrap;
-    }
-
-    .navegacion-pie a {
-        color: rgba(255, 255, 255, 0.35);
-        text-decoration: none;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        transition: color 0.3s ease;
-    }
-
-    .navegacion-pie a:hover {
-        color: #dffbde;
-    }
-
-    @media (max-width: 1100px) {
-        .contenedor-sesion {
-            grid-template-columns: 1fr;
-        }
-
-        .info-sesion {
-            display: none;
-        }
-    }
-
-    @media (max-width: 900px) {
-        .barra-pie-sesion {
-            flex-direction: column;
-            text-align: center;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .barra-encabezado-sesion {
-            padding: 24px;
-        }
-
-        .texto-marca {
-            font-size: 22px;
-        }
-
-        .enlace-inicio {
-            font-size: 10px;
-            letter-spacing: 2px;
-        }
-
-        .pagina-sesion {
-            padding: 120px 24px;
-        }
-
-        .tarjeta-sesion {
-            padding: 38px 28px;
-        }
-
-        .barra-pie-sesion {
-            padding: 42px 24px;
-        }
-
-        .navegacion-pie {
-            justify-content: center;
-        }
-    }
-
     .tarjeta-sesion {
         padding: 38px 28px;
     }
@@ -1079,5 +612,21 @@ h3 {
 
     .navegacion-pie {
         justify-content: center;
+    }
+
+    .botones-sociales {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .boton-social {
+        padding: 13px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 380px) {
+    .botones-sociales {
+        grid-template-columns: 1fr;
     }
 }
