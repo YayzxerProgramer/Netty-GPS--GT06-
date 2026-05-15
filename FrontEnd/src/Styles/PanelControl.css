@@ -1083,3 +1083,290 @@
             rgba(18, 20, 18, 0.2));
     pointer-events: none;
 }
+
+/* HUD */
+
+.panel-hud {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tarjeta-telemetria {
+    background-color: rgba(35, 40, 35, 0.6);
+    backdrop-filter: blur(20px);
+    padding: 1.25rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    width: 16rem;
+}
+
+.encabezado-telemetria {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.titulo-telemetria {
+    font-size: 0.625rem;
+    font-family: var(--fuente-titular);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--primario);
+}
+
+.subtitulo-telemetria {
+    font-size: 0.625rem;
+    color: rgba(220, 228, 220, 0.4);
+}
+
+.metricas-telemetria {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.fila-metrica {
+    display: flex;
+    flex-direction: column;
+}
+
+.encabezado-metrica {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6875rem;
+    margin-bottom: 0.25rem;
+}
+
+.nombre-metrica {
+    color: rgba(220, 228, 220, 0.7);
+}
+
+.valor-metrica {
+    color: var(--primario);
+}
+
+.barra-progreso {
+    height: 4px;
+    background-color: var(--superficie-contenedor);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.relleno-progreso {
+    height: 100%;
+    background-color: var(--primario);
+}
+
+.fila-velocidad-hud {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bloque-velocidad {
+    flex: 1;
+}
+
+.etiqueta-velocidad {
+    font-size: 0.625rem;
+    color: rgba(220, 228, 220, 0.4);
+    text-transform: uppercase;
+}
+
+.valor-velocidad {
+    font-size: 1.125rem;
+    font-family: var(--fuente-titular);
+    font-weight: 700;
+    color: #dce4dc;
+}
+
+.unidad-velocidad {
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: rgba(220, 228, 220, 0.4);
+}
+
+.contenedor-sparkline {
+    width: 4rem;
+    height: 2rem;
+    background-color: rgba(134, 161, 125, 0.1);
+    border-radius: 0.25rem;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+}
+
+.barras-sparkline {
+    display: flex;
+    align-items: flex-end;
+    gap: 1px;
+    height: 100%;
+    width: 100%;
+    padding: 0 4px;
+}
+
+.barra-spark {
+    background-color: rgba(134, 161, 125, 0.4);
+    width: 4px;
+}
+
+/* COORDENADAS */
+
+.panel-coordenadas {
+    background-color: rgba(35, 40, 35, 0.4);
+    backdrop-filter: blur(8px);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.625rem;
+    font-family: monospace;
+    color: rgba(220, 228, 220, 0.4);
+}
+
+.fila-coordenadas {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.fila-coordenadas+.fila-coordenadas {
+    margin-top: 0.25rem;
+}
+
+/* MARCADOR */
+
+.marcador-mapa {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.marcador-mapa:hover .tooltip-vehiculo {
+    opacity: 1;
+}
+
+.contenedor-marcador {
+    position: relative;
+}
+
+.efecto-ripple {
+    position: absolute;
+    inset: -50%;
+    background-color: rgba(134, 161, 125, 0.2);
+    border-radius: 50%;
+    animation: ondulacion 2s infinite;
+}
+
+@keyframes ondulacion {
+    0% {
+        transform: scale(0.8);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.icono-marcador {
+    position: relative;
+    background-color: var(--primario);
+    color: var(--sobre-primario);
+    padding: 0.5rem;
+    border-radius: 50%;
+    box-shadow: 0 0 30px rgba(134, 161, 125, 0.5);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icono-marcador .material-symbols-outlined {
+    font-size: 1.25rem;
+    font-variation-settings: 'FILL' 1 !important;
+}
+
+.tooltip-vehiculo {
+    position: absolute;
+    bottom: calc(100% + 1rem);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12rem;
+    background-color: var(--superficie-cont-maxima);
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    border: 1px solid rgba(58, 82, 53, 0.2);
+}
+
+.nombre-tooltip {
+    font-size: 0.6875rem;
+    font-family: var(--fuente-titular);
+    font-weight: 700;
+    color: #dce4dc;
+    margin-bottom: 0.25rem;
+}
+
+.estado-tooltip {
+    font-size: 0.625rem;
+    color: var(--primario);
+    margin-bottom: 0.5rem;
+}
+
+.fila-tooltip {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.5625rem;
+    color: rgba(220, 228, 220, 0.5);
+}
+
+.flecha-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--superficie-cont-maxima);
+}
+
+/* FOOTER MAPA */
+
+.pie-mapa-izq {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    font-size: 0.625rem;
+    font-family: var(--fuente-titular);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: rgba(220, 228, 220, 0.2);
+    user-select: none;
+}
+
+.pie-mapa-der {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    font-size: 0.625rem;
+    font-family: var(--fuente-titular);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: rgba(220, 228, 220, 0.2);
+    user-select: none;
+}
