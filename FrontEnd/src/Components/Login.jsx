@@ -75,12 +75,10 @@ function FormularioSesion() {
     const [error, setError] = useState(false)
 
     function autenticar() {
-
         const auth = {
             usuario,
             contrasena
         }
-
         fetch("http://localhost:8081/usuario/login", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -93,13 +91,12 @@ function FormularioSesion() {
                 }
                 return respuesta.json()
             })
-
             .then((data) => {
-                console.log(data)
-                setError(false)
-                navigate("/panel-control")
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("usuario", data.usuario);
+                setError(false);
+                navigate("/panel-control");
             })
-
             .catch((error) => {
                 console.error(error)
             })
@@ -112,9 +109,7 @@ function FormularioSesion() {
 
     return (
         <div className="formulario-sesion-wrapper">
-
             <form className="formulario-sesion" onSubmit={formularioSubmit}>
-
                 <CampoEntrada
                     tipo="text"
                     etiqueta="Usuario"

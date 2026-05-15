@@ -1,16 +1,15 @@
 package com.gpsromp.usuario.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import com.gpsromp.usuario.model.Usuario;
-import com.gpsromp.usuario.service.UsuarioService;
-import com.gpsromp.vehiculo.model.Vehiculo;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.gpsromp.Config.JwtUtil;
+import com.gpsromp.usuario.model.Usuario;
+import com.gpsromp.usuario.service.UsuarioService;
+import com.gpsromp.vehiculo.model.Vehiculo;
+
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/usuario")
 @RequiredArgsConstructor
@@ -29,6 +35,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping
     public ResponseEntity<List<Usuario>> obtenerTodosUsuarios() {
@@ -98,22 +108,26 @@ public class UsuarioController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
-        String usuario = credenciales.get("usuario");
-        String contrasena = credenciales.get("contrasena");
-
-        if (usuario == null || contrasena == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Usuario y contraseña son requeridos"));
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            credenciales.get("usuario"),
+                            credenciales.get("contrasena")
+                    )
+            );
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Credenciales inválidas"));
         }
 
-        if (usuarioService.login(usuario, contrasena)) {
-            return usuarioService.obtenerUsuariosPorUsuario(usuario)
-                    .map(user -> ResponseEntity.ok(Map.of(
-                            "success", true,
-                            "user", user)))
-                    .orElse(ResponseEntity.internalServerError().build());
-        }
+        var usuario = usuarioService.obtenerUsuariosPorUsuario(credenciales.get("usuario")).get();
+        String token = jwtUtil.generarToken(usuario.getUsuario(), usuario.getRol());
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales inválidas"));
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "usuario", usuario.getUsuario(),
+                "rol", usuario.getRol()
+        ));
     }
 
     @GetMapping("/exists/usuario/{usuario}")
