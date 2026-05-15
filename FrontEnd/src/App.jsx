@@ -7,6 +7,7 @@ import Pricing from './components/Pricing'
 import Equipo from './components/Equipo'
 import Footer from './components/footer'
 import Login from './Components/Login'
+import PanelControl from './Components/PanelControl'
 import './Styles/App.css'
 
 function App() {
@@ -25,6 +26,9 @@ function App() {
       } />
       <Route path="/login" element={
         <Login />
+      } />
+      <Route path='/panel-control' element={
+        <PanelControl/>
       } />
     </Routes>
   )
