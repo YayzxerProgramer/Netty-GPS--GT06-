@@ -26,6 +26,7 @@ public class Usuario {
 
     private String correo;
 
+    @Column(nullable = false)
     private String rol = "USER";
 
     private Boolean activo = true;
