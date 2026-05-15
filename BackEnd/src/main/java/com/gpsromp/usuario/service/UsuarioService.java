@@ -46,9 +46,12 @@ public class UsuarioService {
 
     @Transactional
     public Usuario crearUsuario(Usuario usuario) {
+        if (usuario.getRol() == null || usuario.getRol().isBlank()) {
+            usuario.setRol("USER");
+        }
 
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
-        
+
         return usuarioRepository.save(usuario);
     }
 
