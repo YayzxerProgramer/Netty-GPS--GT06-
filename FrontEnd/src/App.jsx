@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import Hero from './components/Hero'
 import Nosotros from './components/Nosotros'
@@ -6,20 +6,15 @@ import Producto from './components/Producto'
 import Pricing from './components/Pricing'
 import Equipo from './components/Equipo'
 import Footer from './components/footer'
-import Login from './components/Login'
-import './App.css'
-
+import Login from './Components/Login'
+import './Styles/App.css'
 
 function App() {
-  const [showLogin, setShowLogin] = useState(false);
-
   return (
-    <>
-      <NavBar onOpenLogin={() => setShowLogin(true)} />
-      {showLogin ? (
-        <Login onBack={() => setShowLogin(false)} />
-      ) : (
+    <Routes>
+      <Route path="/" element={
         <>
+          <NavBar />
           <Hero />
           <Nosotros />
           <Producto />
@@ -27,8 +22,11 @@ function App() {
           <Equipo />
           <Footer />
         </>
-      )}
-    </>
+      } />
+      <Route path="/login" element={
+        <Login />
+      } />
+    </Routes>
   )
 }
 

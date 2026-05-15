@@ -1,6 +1,7 @@
 import "../Styles/NavBar.css";
+import { Link } from 'react-router-dom';
 
-function Navbar({ onOpenLogin }) {
+function Navbar() {
     return (
         <nav className="barra-navegacion">
 
@@ -18,8 +19,8 @@ function Navbar({ onOpenLogin }) {
                     <a href="#equipo">Equipo</a>
                 </div>
 
-                <button className="boton-nav" onClick={onOpenLogin}>
-                    Area de Clientes
+                <button className="boton-nav" >
+                    <Link to="/login">Area de Clientes</Link>
                 </button>
 
             </div>
