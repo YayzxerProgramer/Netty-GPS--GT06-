@@ -75,6 +75,11 @@ function FormularioSesion() {
     const [error, setError] = useState(false)
 
     function autenticar() {
+
+        /* if (usuario === "admin" && contrasena === "admin") {
+            navigate("/panel-control");
+            return;
+        } */
         const auth = {
             usuario,
             contrasena
@@ -138,7 +143,7 @@ function FormularioSesion() {
                 }
 
                 <BotonSesion>
-                    Iniciar Sesion
+                    Iniciar Sesión
                 </BotonSesion>
 
             </form>
