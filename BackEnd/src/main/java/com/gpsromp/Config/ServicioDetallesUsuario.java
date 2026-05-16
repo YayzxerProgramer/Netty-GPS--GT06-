@@ -1,4 +1,4 @@
-package com.gpsromp.Config;
+package com.gpsromp.config;
 
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.repository.UsuarioRepository;

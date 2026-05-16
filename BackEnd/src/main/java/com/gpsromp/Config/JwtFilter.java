@@ -1,4 +1,4 @@
-package com.gpsromp.Config;
+package com.gpsromp.config;
 
 import java.io.IOException;
 

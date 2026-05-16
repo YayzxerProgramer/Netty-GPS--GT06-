@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.gpsromp.Config.JwtUtil;
+import com.gpsromp.config.JwtUtil;
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.service.UsuarioService;
 import com.gpsromp.vehiculo.model.Vehiculo;
