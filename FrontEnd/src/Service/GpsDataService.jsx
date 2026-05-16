@@ -1,36 +1,33 @@
-import { useEffect, useState } from "react"
-import { Client } from "@stomp/stompjs"
-import SockJS from "sockjs-client"
+import { useEffect, useState } from "react";
+import { Client } from "@stomp/stompjs";
 
 export function useGpsSocket(imei) {
-  const [position, setPosition] = useState(null)
-  const [connected, setConnected] = useState(false)
+  const [position, setPosition] = useState(null);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    if (!imei) return;
+
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8081/ws-gps"),
+      brokerURL: "ws://localhost:8081/ws-gps",
       onConnect: () => {
-        console.log("✅ WebSocket conectado")
-        setConnected(true)
+        setConnected(true);
         client.subscribe(`/socket/gps/${imei}`, (message) => {
-          console.log("Raw message:", message.body)
-          const data = JSON.parse(message.body)
-          console.log("Latitud:", data.latitud, "Longitud:", data.longitud)
-          setPosition(data)
-        })
+          try {
+            const data = JSON.parse(message.body);
+            setPosition(data);
+          } catch (err) {
+            console.error("Error parsing JSON:", err);
+          }
+        });
       },
-      onDisconnect: () => {
-        console.log("❌ Desconectado")
-        setConnected(false)
-      },
-      onStompError: (frame) => console.error("🔴 STOMP error:", frame),
-      onWebSocketError: (e) => console.error("🔴 WS error:", e),
       reconnectDelay: 5000,
-    })
+    });
+    client.activate();
+    return () => {
+      client.deactivate();
+    };
+  }, [imei]);
 
-    client.activate()
-    return () => { client.deactivate() }
-  }, [imei])
-
-  return { position, connected }
+  return { position, connected };
 }

@@ -541,30 +541,6 @@
     pointer-events: none;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
-
-:root {
-    --primario: #86A17D;
-    --primario-tenue: #6e8a66;
-    --primario-fijo: #a8c49f;
-    --contenedor-primario: #3a5235;
-    --sobre-primario: #1a2e17;
-    --error-tenue: #a05540;
-    --fondo: #121412;
-    --superficie: #121412;
-    --superficie-contenedor: #1a1e1a;
-    --superficie-cont-alta: #1e231e;
-    --superficie-cont-maxima: #232823;
-    --sobre-fondo: #dce4dc;
-    --sobre-superficie: #dce4dc;
-    --sobre-superficie-var: #9ea89e;
-    --contorno: #5a625a;
-    --contorno-variante: #383e38;
-    --fuente-titular: 'Space Grotesk', sans-serif;
-    --fuente-cuerpo: 'Manrope', sans-serif;
-}
-
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
@@ -1369,4 +1345,16 @@
     letter-spacing: 0.3em;
     color: rgba(220, 228, 220, 0.2);
     user-select: none;
+}
+
+/* El mapa real ocupa todo el área principal */
+.contenedor-mapa-real {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.contenedor-mapa-real>div {
+    width: 100% !important;
+    height: 100% !important;
 }

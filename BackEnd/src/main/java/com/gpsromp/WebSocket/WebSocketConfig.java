@@ -12,7 +12,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-gps").setAllowedOrigins("*").withSockJS();
+        registry.addEndpoint("/ws-gps").setAllowedOrigins("*");
     }
 
     @Override
