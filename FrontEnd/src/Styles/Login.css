@@ -237,6 +237,8 @@ h3 {
 }
 
 .encabezado-tarjeta {
+    display: flex;
+    flex-direction: column;
     margin-bottom: 34px;
 }
 

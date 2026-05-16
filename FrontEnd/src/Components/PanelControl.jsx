@@ -8,8 +8,13 @@ const IMEI = "0863874084559974";
 const sparkHeights = ["40%", "60%", "55%", "80%", "95%", "70%", "85%"];
 
 export default function PanelControl() {
+    const [usuarioData, setUsuarioData] = useState(null);
+
     const [time, setTime] = useState("14:22:05");
 
+    const usuario = localStorage.getItem("usuario");
+    const id_usuario = usuarioData ? usuarioData.id : null;
+    const token = localStorage.getItem("token");
     // Conectamos el WebSocket — todos los datos vienen de aquí
     const { position, connected } = useGpsSocket(IMEI);
 
@@ -27,6 +32,45 @@ export default function PanelControl() {
     const velocidad = position ? position.velocidad : 0;
     const motorEncendido = position ? position.acc : false;
     const gpsValido = position ? position.gpsValido : false;
+
+    useEffect(() => {
+
+        fetch(`http://localhost:8081/usuario/usuario/${usuario}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((respuesta) => respuesta.json())
+            .then((data) => {
+                setUsuarioData(data);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    }, []);
+
+    useEffect(() => {
+
+        if (!usuarioData) return;
+
+        fetch(`http://localhost:8081/usuario/vehiculos/${usuarioData.id}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((respuesta) => respuesta.json())
+            .then((data) => {
+                console.log("Vehículos:", data)
+            })
+            .catch((error) => {
+                console.error(error)
+            });
+    }, [usuarioData]);
+
 
     return (
         <div className="romp-root">
@@ -56,7 +100,7 @@ export default function PanelControl() {
                                 />
                             </div>
                             <div className="datos-perfil">
-                                <h2>Fleet Monitor</h2>
+                                <h2>{usuarioData ? usuarioData.usuario : "Usuario"}</h2>
                                 <p>Unidades activas: 1</p>
                             </div>
                         </div>

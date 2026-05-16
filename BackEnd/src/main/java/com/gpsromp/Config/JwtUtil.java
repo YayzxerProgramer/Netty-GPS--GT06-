@@ -1,4 +1,4 @@
-package com.gpsromp.Config;
+package com.gpsromp.config;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

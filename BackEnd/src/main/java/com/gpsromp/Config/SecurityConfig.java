@@ -1,4 +1,4 @@
-package com.gpsromp.Config;
+package com.gpsromp.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Rutas públicas
-                        .requestMatchers(HttpMethod.POST, "/usuario/login", "/usuario").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario/login", "/usuario", "/vehiculo").permitAll()
                         // Verificación de existencia de usuario para registro
                         .requestMatchers("/usuario/exists/**").permitAll()
                         // WebSocket — lo manejamos aparte
