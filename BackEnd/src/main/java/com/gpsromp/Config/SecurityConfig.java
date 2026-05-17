@@ -27,16 +27,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas públicas
-                        .requestMatchers(HttpMethod.POST, "/usuario/login", "/usuario", "/vehiculo").permitAll()
-                        // Verificación de existencia de usuario para registro
-                        .requestMatchers("/usuario/exists/**").permitAll()
-                        // WebSocket — lo manejamos aparte
-                        .requestMatchers("/ws-gps/**").permitAll()
-                        // Actuator solo para ADMIN
-                        .requestMatchers("/actuator/**").hasRole("ADMIN")
-                        // Todo lo demás requiere autenticación
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(cors -> cors.configurationSource(request -> {
                     var config = new org.springframework.web.cors.CorsConfiguration();

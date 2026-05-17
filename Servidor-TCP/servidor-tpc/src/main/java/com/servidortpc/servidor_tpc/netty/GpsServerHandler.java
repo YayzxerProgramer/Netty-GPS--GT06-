@@ -11,6 +11,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+
 @Component
 @ChannelHandler.Sharable
 public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
@@ -36,32 +37,32 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
         byte[] imeiBytes = new byte[8];
         paquete.readBytes(imeiBytes);
 
-        //Decodificando el IMEI 
+        // Decodificando el IMEI
         imei = GT06Utils.decodificarIMEI(imeiBytes);
         // Ahora SÍ leer serial
         short serial = paquete.readShort();
 
-        //Verificando el serial
+        // Verificando el serial
         System.out.println("Serial recibido: " + String.format("%04X", serial));
 
-        //Imprimiendo el IMEI
+        // Imprimiendo el IMEI
         System.out.println("IMEI: " + imei);
 
-        //Construyendo Respuesta (ACK)
+        // Construyendo Respuesta (ACK)
         ByteBuf respuesta_ack = GT06Utils.ACK(serial);
 
-        //Guardando el ACK
+        // Guardando el ACK
         byte[] bytes = new byte[respuesta_ack.readableBytes()];
         respuesta_ack.getBytes(0, bytes);
 
-        //Mostrando el ACK
+        // Mostrando el ACK
         System.out.print("ACK enviado: ");
         for (byte b : bytes) {
             System.out.printf("%02X ", b);
         }
         System.out.println();
 
-        //Dandole Contexto al Servidor de la respuesta
+        // Dandole Contexto al Servidor de la respuesta
         contexto.writeAndFlush(respuesta_ack);
     }
 
@@ -89,21 +90,24 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
         // Bits importantes
         boolean gpsValido = (courseStatus & 0x0400) != 0;
         boolean oeste = (courseStatus & 0x0800) != 0;
-        boolean sur = (courseStatus & 0x1000) != 0;
+        boolean norte = (courseStatus & 0x1000) != 0;
 
-        // Aplicar signo correctamente
-        if (sur) {
+        // Si NO es norte -> sur
+        if (!norte) {
             latitud = -latitud;
         }
+
+        // Si NO es este -> oeste
         if (oeste) {
             longitud = -longitud;
         }
 
+        System.out.println(Integer.toBinaryString(courseStatus));
+
         System.out.printf(
                 "Fecha: %04d-%02d-%02d %02d:%02d:%02d, Lat: %f, Lon: %f, Velocidad: %d km/h, GPS valido: %b\n",
                 year, mes, dia, hora, minuto, segundo,
-                latitud, longitud, velocidad, gpsValido
-        );
+                latitud, longitud, velocidad, gpsValido);
 
         String tiempo = "Año: " + year + " Mes: " + mes
                 + " Dia: " + dia + " Hora: " + hora + " Minuto: " + minuto + " Segundo:" + segundo;
@@ -116,8 +120,7 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 velocidad,
                 gpsValido,
                 accOn,
-                corteMotor
-        );
+                corteMotor);
 
         // Guardar en memoria local
         gpsDataService.recibirData(gps);
@@ -133,7 +136,7 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     private void heartbeat(ChannelHandlerContext contexto, ByteBuf contenido) {
 
-        byte terminalInfo = contenido.readByte();  // ESTE es el byte con bits (incluye ACC)
+        byte terminalInfo = contenido.readByte(); // ESTE es el byte con bits (incluye ACC)
         byte nivelGsm = contenido.readByte();
 
         short serial = contenido.readShort();

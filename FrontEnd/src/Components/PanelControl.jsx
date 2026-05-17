@@ -9,11 +9,15 @@ const sparkHeights = ["40%", "60%", "55%", "80%", "95%", "70%", "85%"];
 
 export default function PanelControl() {
     const [usuarioData, setUsuarioData] = useState(null);
+    const [vehiculos, setVehiculos] = useState([]);
 
     const [time, setTime] = useState("14:22:05");
 
     const usuario = localStorage.getItem("usuario");
     const id_usuario = usuarioData ? usuarioData.id : null;
+
+    const vehiculoActivo = vehiculos.find(vehiculo => vehiculo.activo);
+
     const token = localStorage.getItem("token");
     // Conectamos el WebSocket — todos los datos vienen de aquí
     const { position, connected } = useGpsSocket(IMEI);
@@ -64,7 +68,7 @@ export default function PanelControl() {
         })
             .then((respuesta) => respuesta.json())
             .then((data) => {
-                console.log("Vehículos:", data)
+                setVehiculos(data);
             })
             .catch((error) => {
                 console.error(error)
@@ -157,7 +161,8 @@ export default function PanelControl() {
                                 {/* Tarjeta dinámica del GPS conectado */}
                                 <div className="tarjeta-vehiculo">
                                     <div className="encabezado-tarjeta">
-                                        <span className="nombre-vehiculo">GPS-{IMEI.slice(-4)}</span>
+                                        <span className="nombre-vehiculo">{vehiculoActivo ? vehiculoActivo.placa : "Vehículo no disponible"}</span>
+                                        <span className="modelo-vehiculo">{vehiculoActivo ? vehiculoActivo.modelo : "Modelo no disponible"}</span>
                                         <span className={`etiqueta-estado ${connected ? "etiqueta-en-mapa" : "etiqueta-detenido"}`}>
                                             {connected ? "EN VIVO" : "OFFLINE"}
                                         </span>

@@ -6,19 +6,11 @@ import "../Styles/MapaGPS.css"
 
 const IMEI = "0863874084559974";
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyB34zK6C8x4r3eLMpLjilbMjcWFWsjmmFo";
-
-console.log(GOOGLE_MAPS_API_KEY)
-
-const estiloContenedor = {
-  width: "100%",
-  height: "100vh",
-  borderRadius: "18px",
-};
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const centroDefault = {
-  lat: 10.9685,
-  lng: -74.7813,
+  lat: 10.425,
+  lng: -75.5402,
 };
 
 function MapaGPS() {
@@ -27,8 +19,8 @@ function MapaGPS() {
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
 
+
   const { position, connected } = useGpsSocket(IMEI);
-  const [infoAbierta, setInfoAbierta] = useState(false);
   const [path, setPath] = useState([]);
   const mapRef = useRef(null);
 
@@ -44,44 +36,58 @@ function MapaGPS() {
     }
   }, [position]);
 
-
   const darkMapStyle = [
     {
       elementType: "geometry",
-      stylers: [{ color: "#0f172a" }],
+      stylers: [{ color: "#121412" }], // fondo principal
     },
     {
       elementType: "labels.text.stroke",
-      stylers: [{ color: "#0f172a" }],
+      stylers: [{ color: "#121412" }],
     },
     {
       elementType: "labels.text.fill",
-      stylers: [{ color: "#94a3b8" }],
+      stylers: [{ color: "#9ea89e" }], // texto suave
     },
     {
       featureType: "administrative.locality",
       elementType: "labels.text.fill",
-      stylers: [{ color: "#cbd5e1" }],
+      stylers: [{ color: "#dce4dc" }],
     },
     {
       featureType: "poi",
       elementType: "labels.text.fill",
-      stylers: [{ color: "#64748b" }],
+      stylers: [{ color: "#6e8a66" }],
     },
     {
       featureType: "road",
       elementType: "geometry",
-      stylers: [{ color: "#1e293b" }],
+      stylers: [{ color: "#1a1e1a" }], // superficie
     },
     {
       featureType: "road",
       elementType: "geometry.stroke",
-      stylers: [{ color: "#334155" }],
+      stylers: [{ color: "#383e38" }],
+    },
+    {
+      featureType: "road.highway",
+      elementType: "geometry",
+      stylers: [{ color: "#3a5235" }], // verde principal oscuro
+    },
+    {
+      featureType: "road.highway",
+      elementType: "geometry.stroke",
+      stylers: [{ color: "#86A17D" }],
     },
     {
       featureType: "water",
       elementType: "geometry",
-      stylers: [{ color: "#020617" }],
+      stylers: [{ color: "#0d100d" }],
+    },
+    {
+      featureType: "landscape",
+      elementType: "geometry",
+      stylers: [{ color: "#161916" }],
     },
   ];
 
@@ -93,20 +99,11 @@ function MapaGPS() {
     );
   }
   return (
-    <div className="mapa-wrapper">
-      <div className="status-container">
-        <div className={`status - pill ${connected ? "online" : "offline"}`}>
-          <div className={`status - dot ${connected ? "online" : "offline"}`} />
-          {connected ? "GPS ONLINE" : "GPS OFFLINE"}
-        </div>
-        <div className="speed-pill">
-          {position ? `🚗 ${position.velocidad} km / h` : "Esperando datos..."}
-        </div>
-      </div>
+    <div>
       <GoogleMap
         mapContainerClassName="map-container"
         center={centroDefault}
-        zoom={15}
+        zoom={100}
         onLoad={(map) => {
           mapRef.current = map
         }}
@@ -148,39 +145,7 @@ function MapaGPS() {
                 25
               ),
             }}
-            onClick={() => setInfoAbierta(true)}
           >
-            {infoAbierta && (
-              <InfoWindow
-                onCloseClick={() =>
-                  setInfoAbierta(false)
-                }
-              >
-                <div className="info-window">
-                  <strong>IMEI:</strong>{" "}
-                  {position.imei}
-                  <br />
-                  <strong>Velocidad:</strong>{" "}
-                  {position.velocidad} km/h
-                  <br />
-                  <strong>GPS válido:</strong>{" "}
-                  {position.gpsValido
-                    ? "Sí"
-                    : "No"}
-                  <br />
-                  <strong>ACC:</strong>{" "}
-                  {position.acc
-                    ? "Encendido"
-                    : "Apagado"}
-                  <br />
-                  <strong>Lat:</strong>{" "}
-                  {position.latitud}
-                  <br />
-                  <strong>Lon:</strong>{" "}
-                  {position.longitud}
-                </div>
-              </InfoWindow>
-            )}
           </Marker>
         )}
       </GoogleMap>

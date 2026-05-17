@@ -12,10 +12,13 @@ export function useGpsSocket(imei) {
       brokerURL: "ws://localhost:8081/ws-gps",
       onConnect: () => {
         setConnected(true);
+        console.log("Conectado al WebSocket para IMEI:", imei);
         client.subscribe(`/socket/gps/${imei}`, (message) => {
+          console.log("Mensaje recibido en /socket/gps/" + imei + ":", message.body);
           try {
             const data = JSON.parse(message.body);
             setPosition(data);
+            console.log("Datos GPS recibidos:", data);
           } catch (err) {
             console.error("Error parsing JSON:", err);
           }
