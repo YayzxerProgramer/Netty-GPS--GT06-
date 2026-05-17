@@ -1,0 +1,896 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #0d0f0d;
+    --bg2: #111411;
+    --bg3: #161a16;
+    --bg4: #1c211c;
+    --border: #2a332a;
+    --border2: #1e271e;
+    --green: #4ade80;
+    --green2: #22c55e;
+    --green3: #16a34a;
+    --green-dim: #2d5a3d;
+    --text: #e2e8e2;
+    --text2: #9aab9a;
+    --text3: #6b7a6b;
+    --accent: #a3e635;
+    --warn: #f59e0b;
+    --red: #ef4444;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* TOPBAR */
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    height: 52px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.logo {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text);
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.search {
+    flex: 1;
+    max-width: 320px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: var(--text3);
+    font-size: 13px;
+}
+
+.search svg {
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+
+.topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-text {
+    text-align: right;
+}
+
+.user-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+}
+
+.user-status {
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1px;
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2d5a3d, #1a3a2a);
+    border: 1.5px solid var(--green-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green);
+}
+
+/* LAYOUT */
+.layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+}
+
+.sidebar-user {
+    padding: 0 16px 20px;
+    border-bottom: 1px solid var(--border2);
+}
+
+.sidebar-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.sidebar-user-role {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.sidebar-user-icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav {
+    margin-top: 16px;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 500;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+}
+
+.nav-item:hover {
+    color: var(--text);
+    background: var(--bg3);
+}
+
+.nav-item.active {
+    color: var(--text);
+    background: var(--bg3);
+    border-left-color: var(--green2);
+}
+
+.sidebar-bottom {
+    padding: 16px;
+    border-top: 1px solid var(--border2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.register-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    width: 100%;
+}
+
+.register-btn:hover {
+    border-color: var(--green-dim);
+    color: var(--green);
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    background: var(--bg);
+}
+
+/* HEADER */
+.page-header {
+    margin-bottom: 24px;
+}
+
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--green);
+}
+
+.live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1
+    }
+
+    50% {
+        opacity: 0.4
+    }
+}
+
+.uptime {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+}
+
+.page-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.page-desc {
+    color: var(--text3);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.header-meta {
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.meta-item label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    display: block;
+}
+
+.meta-item span {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 18px;
+    color: var(--text);
+}
+
+/* STATS CARDS */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 20px;
+    position: relative;
+}
+
+.stat-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.stat-icon {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    opacity: 0.5;
+    color: var(--text3);
+}
+
+.stat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+}
+
+.stat-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stat-change {
+    color: var(--green);
+    font-weight: 600;
+}
+
+.progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 4px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--green3);
+    border-radius: 2px;
+}
+
+.in-stock {
+    color: var(--green);
+    font-weight: 600;
+}
+
+.signal-dots {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.signal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 1px;
+}
+
+.signal-dot.on {
+    background: var(--green2);
+}
+
+.signal-dot.off {
+    background: var(--border);
+}
+
+.latency {
+    font-size: 11px;
+    color: var(--text3);
+}
+
+.alert-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--warn);
+    line-height: 1;
+}
+
+.alert-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+}
+
+/* BOTTOM GRID */
+.bottom-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* MANAGEMENT */
+.management-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text3);
+    margin-bottom: 4px;
+}
+
+.mgmt-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.mgmt-card:hover {
+    border-color: var(--green-dim);
+}
+
+.mgmt-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text2);
+    flex-shrink: 0;
+}
+
+.mgmt-text {
+    flex: 1;
+}
+
+.mgmt-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.mgmt-desc {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+}
+
+.mgmt-arrow {
+    color: var(--text3);
+}
+
+.fleet-report {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.fleet-report-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.fleet-report-desc {
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.download-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    letter-spacing: 1px;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.download-btn:hover {
+    color: var(--green);
+}
+
+.report-icon {
+    position: absolute;
+    bottom: -5px;
+    right: 12px;
+    opacity: 0.15;
+}
+
+/* TELEMETRY PANEL */
+.telemetry-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.telemetry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.telemetry-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.telemetry-dots {
+    display: flex;
+    gap: 5px;
+}
+
+.t-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.t-dot-1 {
+    background: var(--border);
+}
+
+.t-dot-2 {
+    background: var(--border);
+}
+
+.t-dot-3 {
+    background: var(--green3);
+}
+
+.telemetry-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.tstat {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+}
+
+.tstat-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.tstat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.tstat-unit {
+    font-size: 12px;
+    color: var(--text3);
+}
+
+.signal-bars {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 30px;
+}
+
+.sbar {
+    width: 8px;
+    background: var(--green3);
+    border-radius: 1px;
+}
+
+.telemetry-center {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.analytics-icon-wrap {
+    width: 60px;
+    height: 60px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text2);
+}
+
+.analytics-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.analytics-desc {
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto 16px;
+}
+
+.init-btn {
+    padding: 10px 24px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+
+.init-btn:hover {
+    border-color: var(--green-dim);
+    color: var(--green);
+}
+
+.telemetry-footer {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border2);
+}
+
+.telemetry-coord label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.telemetry-coord span {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+}
+
+/* DEPLOYMENTS TABLE */
+.deployments {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.deployments-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.deployments-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.deployments-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+}
+
+.export-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.export-btn:hover {
+    border-color: var(--green-dim);
+    color: var(--green);
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 160px 180px 180px 140px 160px 80px;
+    padding: 10px 20px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 160px 180px 180px 140px 160px 80px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border2);
+    align-items: center;
+}
+
+.table-row:hover {
+    background: var(--bg3);
+}
+
+.device-id {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.device-type {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.client-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.client-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text2);
+    flex-shrink: 0;
+}
+
+.client-name {
+    font-size: 13px;
+    color: var(--text);
+}
+
+.region {
+    font-size: 13px;
+    color: var(--text2);
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-dot.operational {
+    background: var(--green2);
+}
+
+.status-op {
+    color: var(--green2);
+}
+
+.sync-time {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+}
+
+.row-actions {
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+/* FOOTER */
+.page-footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 1px;
+}

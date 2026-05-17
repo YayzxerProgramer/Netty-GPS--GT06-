@@ -7,7 +7,9 @@ import Pricing from './components/Pricing'
 import Equipo from './components/Equipo'
 import Footer from './components/footer'
 import Login from './Components/Login'
+import Dashboard from './Components/Dashboard'
 import PanelControl from './Components/PanelControl'
+import UserSettings from './Components/UserSettings'
 import './Styles/App.css'
 
 function App() {
@@ -30,6 +32,9 @@ function App() {
       <Route path='/panel-control' element={
         <PanelControl/>
       } />
+      <Route path="/configuracion" element={
+        <UserSettings/>
+      } />  
     </Routes>
   )
 }

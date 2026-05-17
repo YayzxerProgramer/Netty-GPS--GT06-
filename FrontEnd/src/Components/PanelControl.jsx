@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import MapaGPS from "./Mapa";
 import { useGpsSocket } from "../Service/GpsDataService";
+import { Link } from "react-router-dom";
 import "../Styles/PanelControl.css";
-
 const IMEI = "0863874084559974";
 
 const sparkHeights = ["40%", "60%", "55%", "80%", "95%", "70%", "85%"];
@@ -85,7 +85,9 @@ export default function PanelControl() {
                     <span className="material-symbols-outlined icono-logo">explore</span>
                     ROMP GPS
                 </div>
-                <button className="boton-clientes">Cerrar Sesión</button>
+                <button className="boton-clientes">
+                    <Link to="/login">Cerrar Sesión</Link>
+                </button>
             </nav>
 
             {/* Contenedor principal */}
@@ -193,7 +195,9 @@ export default function PanelControl() {
                     <div className="pie-barra-lateral">
                         <div className="tab-pie">
                             <span className="material-symbols-outlined icono-pie">settings</span>
-                            <span className="texto-pie">Configuración</span>
+                            <span className="texto-pie">
+                                <Link to="/configuracion">Configuración</Link>
+                            </span>
                         </div>
                         <div className="tab-pie">
                             <span className="material-symbols-outlined icono-pie">help</span>
