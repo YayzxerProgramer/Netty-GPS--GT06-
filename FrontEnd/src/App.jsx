@@ -10,6 +10,7 @@ import Login from './Components/Login'
 import Dashboard from './Components/Dashboard'
 import PanelControl from './Components/PanelControl'
 import UserSettings from './Components/UserSettings'
+import Registro from './Components/Registro'
 import './Styles/App.css'
 
 function App() {
@@ -30,11 +31,15 @@ function App() {
         <Login />
       } />
       <Route path='/panel-control' element={
-        <PanelControl/>
+        <PanelControl />
       } />
       <Route path="/configuracion" element={
-        <UserSettings/>
-      } />  
+        <UserSettings />
+      } />
+
+      <Route path="/registro" element={
+        <Registro />
+      } />
     </Routes>
   )
 }

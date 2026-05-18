@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import MapaGPS from "./Mapa";
 import { useGpsSocket } from "../Service/GpsDataService";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "../Styles/PanelControl.css";
 const IMEI = "0863874084559974";
@@ -12,6 +13,8 @@ export default function PanelControl() {
     const [vehiculos, setVehiculos] = useState([]);
 
     const [time, setTime] = useState("14:22:05");
+
+    const navigate = useNavigate()
 
     const usuario = localStorage.getItem("usuario");
     const id_usuario = usuarioData ? usuarioData.id : null;
@@ -75,6 +78,11 @@ export default function PanelControl() {
             });
     }, [usuarioData]);
 
+    function cerrarSesion() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        navigate("/login");
+    }
 
     return (
         <div className="romp-root">
@@ -85,12 +93,10 @@ export default function PanelControl() {
                     <span className="material-symbols-outlined icono-logo">explore</span>
                     ROMP GPS
                 </div>
-                <button className="boton-clientes">
-                    <Link to="/login">Cerrar Sesión</Link>
+                <button className="boton-clientes" onClick={cerrarSesion}>
+                    Cerrar Sesión
                 </button>
             </nav>
-
-            {/* Contenedor principal */}
             <div className="contenedor-principal">
 
                 {/* Barra lateral */}
@@ -102,7 +108,7 @@ export default function PanelControl() {
                             <div className="avatar-perfil">
                                 <img
                                     alt="Perfil de usuario"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAY2LUZy8-2hH4EHpzk3fYPcKWGWO-KFLJi026AWK5hVL8IclrSHzl6nHY3IZDOrMGLfe0y5DCDS_FbOuiQ876MODJCixKpcuhqt9IP42G9ZbNMWt3Bdr3dMicj7oIubOipTqySE4VggkfaXCfjOuO0VP9fVLkKxVRfzrtRfRQW7ZCt9glPMhZinrCn3jhl-cG33Ww0CnjKHUBe4ScbYvWaYi-tMR7xoPPQbShkWGwwFivAB0UuhNoOHFCQlvudSkPAz5W2aANPLQE"
+                                    src={usuarioData?.imagenUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuAY2LUZy8-2hH4EHpzk3fYPcKWGWO-KFLJi026AWK5hVL8IclrSHzl6nHY3IZDOrMGLfe0y5DCDS_FbOuiQ876MODJCixKpcuhqt9IP42G9ZbNMWt3Bdr3dMicj7oIubOipTqySE4VggkfaXCfjOuO0VP9fVLkKxVRfzrtRfRQW7ZCt9glPMhZinrCn3jhl-cG33Ww0CnjKHUBe4ScbYvWaYi-tMR7xoPPQbShkWGwwFivAB0UuhNoOHFCQlvudSkPAz5W2aANPLQE"}
                                 />
                             </div>
                             <div className="datos-perfil">
@@ -162,7 +168,7 @@ export default function PanelControl() {
 
                                 {/* Tarjeta dinámica del GPS conectado */}
                                 <div className="tarjeta-vehiculo">
-                                    <div className="encabezado-tarjeta">
+                                    <div className="encabezado-tarjeta-panel">
                                         <span className="nombre-vehiculo">{vehiculoActivo ? vehiculoActivo.placa : "Vehículo no disponible"}</span>
                                         <span className="modelo-vehiculo">{vehiculoActivo ? vehiculoActivo.modelo : "Modelo no disponible"}</span>
                                         <span className={`etiqueta-estado ${connected ? "etiqueta-en-mapa" : "etiqueta-detenido"}`}>

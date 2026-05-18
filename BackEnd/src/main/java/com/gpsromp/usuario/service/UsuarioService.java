@@ -43,6 +43,9 @@ public class UsuarioService {
     public boolean existeCorreo(String correo) {
         return usuarioRepository.existsByCorreo(correo);
     }
+    public Optional<Usuario> obtenerPorCorreo(String correo) {
+    return usuarioRepository.findByCorreo(correo);
+}
 
     @Transactional
     public Usuario crearUsuario(Usuario usuario) {

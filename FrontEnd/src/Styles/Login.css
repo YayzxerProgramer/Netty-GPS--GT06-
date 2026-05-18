@@ -145,6 +145,7 @@ h3 {
     grid-template-columns: 1fr 480px;
     gap: 120px;
     align-items: center;
+    margin-top: 40px;
 }
 
 .info-sesion {
@@ -238,8 +239,10 @@ h3 {
 
 .encabezado-tarjeta {
     display: flex;
+    align-items: center;
     flex-direction: column;
-    margin-bottom: 34px;
+    justify-content: space-between;
+    margin-bottom: 0.90rem;
 }
 
 .encabezado-tarjeta h2 {

@@ -31,7 +31,6 @@ public class Vehiculo {
     @Column(unique = true, nullable = false, length = 6)
     private String placa;
 
-    @NonNull
     @Column(unique = true, nullable = false)
     private String imei;
 

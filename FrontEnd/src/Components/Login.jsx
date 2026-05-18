@@ -1,6 +1,8 @@
 import "../Styles/Login.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { TypeAnimation } from 'react-type-animation';
+import { Link } from "react-router-dom";
 
 
 function CajaEstadistica({ valor, etiqueta }) {
@@ -17,9 +19,24 @@ function InfoSesion() {
         <div className="info-sesion">
             <span className="info-sesion__etiqueta">Security Protocol</span>
 
-            <h1>
-                Precision en <br />
-                cada <span>coordenada</span>.
+            <h1> Precision en cada <br />
+                <TypeAnimation
+                    sequence={[
+                        ' Coordenada',
+                        2000,
+                        ' Kilometro',
+                        2000,
+                        ' Ruta',
+                        2000,
+                        ' Viaje',
+                        2000
+                    ]}
+                    wrapper="span"
+                    speed={1}
+                    deletionSpeed={1}
+                    style={{ display: 'inline-block' }}
+                    repeat={Infinity}
+                />
             </h1>
 
             <p className="info-sesion__descripcion">
@@ -80,10 +97,12 @@ function FormularioSesion() {
             navigate("/panel-control");
             return;
         } */
+
         const auth = {
             usuario,
             contrasena
         }
+
         fetch("http://localhost:8081/usuario/login", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -214,8 +233,8 @@ function TarjetaSesion() {
 
             <div className="pie-tarjeta">
                 <p>
-                    ¿Aun no es cliente?{" "}
-                    <a href="#">Solicite un demo</a>
+                    ¿Aun no tienes cuenta?{" "}
+                    <Link to="/registro">Regístrate aquí</Link>
                 </p>
             </div>
         </div>

@@ -31,6 +31,8 @@ public class Usuario {
 
     private Boolean activo = true;
 
+    private String imagenUrl;
+
     @OneToMany(mappedBy = "id_usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Vehiculo> vehiculos;
 
