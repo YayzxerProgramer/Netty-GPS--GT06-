@@ -37,10 +37,13 @@ export default function UserSettings() {
   const [activeSection, setActiveSection] = useState("profile");
   const [usuarioData, setUsuarioData] = useState(null);
   const [vehiculos, setVehiculos] = useState([]);
-  const [vehiculo, setVehiculo] = useState({ modelo: "", placa: "", tipo: "", activo: true, id_usuario: usuarioData?.id });
+  const [vehiculo, setVehiculo] = useState({ modelo: "", placa: "", tipo: "MOTO", activo: true, id_usuario: usuarioData?.id });
   const [tipo, setTipo] = useState("password");
   const token = localStorage.getItem("token");
   const usuario = localStorage.getItem("usuario");
+  const [modalEliminar, setModalEliminar] = useState(null);
+  const [modalGuardar, setModalGuardar] = useState(false);
+  const [nuevaContrasena, setNuevaContrasena] = useState("");
 
   useEffect(() => {
 
@@ -53,8 +56,8 @@ export default function UserSettings() {
     })
       .then((respuesta) => respuesta.json())
       .then((data) => {
-        console.log("Datos del usuario:", data);
         setUsuarioData(data);
+        setVehiculo(prev => ({ ...prev, id_usuario: data.id }));
       })
       .catch((error) => {
         console.error(error);
@@ -81,32 +84,6 @@ export default function UserSettings() {
       });
   }, [usuarioData]);
 
-  /* 
-    useEffect(() => {
-      fetch(`http://localhost:8081/usuario/vehiculos/${usuarioData?.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          modelo: "MOSS-TRUCK-02",
-          placa: "ABC-1234",
-          gps: "ROMP-9921-X",
-          usuarioId: usuarioData?.id,
-        }),
-      })
-        .then((respuesta) => respuesta.json())
-        .then((data) => {
-          console.log("Vehículo registrado:", data);
-          setVehiculos((prev) => [...prev, data]);
-        })
-        .catch((error) => {
-          console.error("Error registrando vehículo:", error);
-        });
-    }, [usuarioData]); */
-
-
   function registrarVehiculo() {
     fetch(`http://localhost:8081/vehiculo`, {
       method: "POST",
@@ -118,7 +95,6 @@ export default function UserSettings() {
     })
       .then((respuesta) => respuesta.json())
       .then((data) => {
-        console.log("Vehículo registrado:", data);
         setVehiculos((prev) => [...prev, data]);
       })
       .catch((error) => {
@@ -126,8 +102,94 @@ export default function UserSettings() {
       });
   }
 
+  function eliminarVehiculo(id) {
+    fetch(`http://localhost:8081/vehiculo/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((respuesta) => {
+        if (respuesta.ok) {
+          setVehiculos((prev) => prev.filter((v) => v.id !== id))
+          setModalEliminar(null)
+        } else {
+          console.error("Error eliminando vehículo:", respuesta.statusText)
+        }
+      })
+      .catch((error) => {
+        console.error("Error eliminando vehículo:", error)
+      });
+  }
+
+  function actualizarUsuario() {
+    const payload = {
+      ...usuarioData,
+      activo: usuarioData?.activo ?? true,
+      rol: usuarioData?.rol ?? "USER",
+
+    };
+
+    fetch(`http://localhost:8081/usuario/${usuarioData.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((respuesta) => respuesta.json())
+      .then((data) => {
+        setUsuarioData(data);
+        setModalGuardar(false);
+      })
+      .catch((error) => console.error("Error actualizando usuario:", error));
+  }
+
   return (
+
     <>
+      {/* Modal reutilizable */}
+      {(modalEliminar || modalGuardar) && (
+        <div className="modal-overlay" onClick={() => {
+          setModalEliminar(null);
+          setModalGuardar(false);
+        }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+
+            <div className="modal-titulo">
+              {modalEliminar ? "Confirmar eliminación" : "Confirmar cambios"}
+            </div>
+
+            <p className="modal-desc">
+              {modalEliminar
+                ? "¿Estás seguro de que deseas eliminar este vehículo? Esta acción no se puede deshacer."
+                : "¿Deseas guardar los cambios realizados en tu perfil?"
+              }
+            </p>
+
+            <div className="modal-acciones">
+              <button className="modal-btn-cancelar" onClick={() => {
+                setModalEliminar(null);
+                setModalGuardar(false);
+              }}>
+                Cancelar
+              </button>
+              <button
+                className={modalEliminar ? "modal-btn-confirmar" : "modal-btn-guardar"}
+                onClick={() => {
+                  if (modalEliminar) eliminarVehiculo(modalEliminar);
+                  if (modalGuardar) actualizarUsuario();
+                }}
+              >
+                {modalEliminar ? "Eliminar" : "Guardar"}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
       <div className="app">
         {/* TOPBAR */}
         <div className="topbar">
@@ -140,7 +202,13 @@ export default function UserSettings() {
           <div className="topbar-right">
             <button className="icon-btn"><Icon type="bell" /></button>
             <button className="icon-btn"><Icon type="settings" /></button>
-            <div className="avatar">A</div>
+            <div className="avatar">
+              {usuarioData?.imagenUrl ? (
+                <img src={usuarioData.imagenUrl} alt="Avatar" className="avatar" />
+              ) : (
+                <p>{usuarioData?.usuario?.charAt(0).toUpperCase() || "?"}</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -198,23 +266,25 @@ export default function UserSettings() {
                   <div className="form-row">
                     <div className="form-group">
                       <label>DISPLAY USERNAME</label>
-                      <input className="form-input" defaultValue={usuarioData?.usuario} />
+                      <input className="form-input" defaultValue={usuarioData?.usuario} onChange={(e) => { setUsuarioData(prev => ({ ...prev, usuario: e.target.value })) }} />
                     </div>
                     <div className="form-group">
                       <label>EMAIL ADDRESS</label>
-                      <input className="form-input" defaultValue={usuarioData?.correo} />
+                      <input className="form-input" defaultValue={usuarioData?.correo} onChange={(e) => { setUsuarioData(prev => ({ ...prev, correo: e.target.value })) }} />
                     </div>
                   </div>
                   <div className="form-group">
                     <label>RESET PASSWORD</label>
                     <div className="password-row">
-                      <input className="form-input password" type={tipo} defaultValue="password123" />
+                      <input className="form-input password" type={tipo} defaultValue="password123" onChange={(e) => setNuevaContrasena(e.target.value)} />
                       <button className="change-btn" onClick={() => setTipo(tipo === "password" ? "text" : "password")}>
                         CHANGE
                       </button>
                     </div>
                   </div>
-                  <button className="save-btn">SAVE PROFILE CHANGES</button>
+                  <button className="save-btn" onClick={() => setModalGuardar(true)}>
+                    SAVE PROFILE CHANGES
+                  </button>
                 </div>
               </div>
             </div>
@@ -249,7 +319,7 @@ export default function UserSettings() {
                         <label>TIPO</label>
                         <span>{v.tipo}</span>
                       </div>
-                      <button className="delete-btn"><Icon type="trash" /></button>
+                      <button className="delete-btn" onClick={() => { setModalEliminar(v.id) }}><Icon type="trash" /></button>
                     </div>
                   ))}
                 </div>

@@ -47,7 +47,8 @@ public class UsuarioController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    private String googleClientId = "426121822210-mjnojj5qmht0r8lmkfogfa7mc3ev4lrk.apps.googleusercontent.com";
+    @Value("${google.client-id}")
+    private String googleClientId;
 
     // ─────────────────────────────────────────────────────────────────────────
     // CRUD estándar
@@ -87,16 +88,169 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> actualizarUsuario(
-            @PathVariable UUID id,
-            @RequestBody Usuario detallesUsuario) {
+    public ResponseEntity<?> actualizarUsuario(@PathVariable UUID id, @RequestBody Usuario usuario) {
         try {
-            Usuario actualizado = usuarioService.actualizarUsuario(id, detallesUsuario);
-            return ResponseEntity.ok(actualizado);
+            Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, usuario);
+            return ResponseEntity.ok(usuarioActualizado);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/github")
+public ResponseEntity<?> loginConGithub(@RequestBody Map<String, String> body) {
+
+    String accessToken = body.get("tokenGithub");
+
+    if (accessToken == null || accessToken.isBlank()) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", "Token de GitHub requerido"));
+    }
+
+    try {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+        headers.set("Accept", "application/vnd.github+json");
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> githubResponse = restTemplate.exchange(
+                "https://api.github.com/user",
+                HttpMethod.GET,
+                entity,
+                Map.class);
+
+        if (!githubResponse.getStatusCode().is2xxSuccessful()
+                || githubResponse.getBody() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Token de GitHub inválido"));
+        }
+
+        Map<String, Object> githubData = githubResponse.getBody();
+
+        String correo = (String) githubData.get("email");
+        if (correo == null) {
+            ResponseEntity<List> emailsResponse = restTemplate.exchange(
+                    "https://api.github.com/user/emails",
+                    HttpMethod.GET,
+                    entity,
+                    List.class);
+
+            correo = ((List<Map<String, Object>>) emailsResponse.getBody())
+                    .stream()
+                    .filter(e -> Boolean.TRUE.equals(e.get("primary"))
+                            && Boolean.TRUE.equals(e.get("verified")))
+                    .map(e -> (String) e.get("email"))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (correo == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "No se pudo obtener el email de GitHub"));
+        }
+
+        // ← login es el @username de GitHub, nunca es null
+        String loginGithub    = (String) githubData.get("login");
+        String imagenVerificada = (String) githubData.get("avatar_url");
+        final String correoFinal = correo;
+
+        Usuario usuario = usuarioService.obtenerPorCorreo(correoFinal)
+                .orElseGet(() -> {
+
+                    // Usar login de GitHub como base, nunca llega null
+                    String base = loginGithub
+                            .toLowerCase()
+                            .replaceAll("[^a-z0-9_]", "");
+
+                    if (base.isBlank()) base = "github_user";
+
+                    String usernameUnico = base;
+                    if (usuarioService.existeUsuario(usernameUnico)) {
+                        usernameUnico = base + "_" + (int) (Math.random() * 9000 + 1000);
+                    }
+
+                    Usuario nuevo = new Usuario();
+                    nuevo.setUsuario(usernameUnico);
+                    nuevo.setCorreo(correoFinal);
+                    nuevo.setContrasena(UUID.randomUUID().toString());
+                    nuevo.setRol("USER");
+                    nuevo.setActivo(true);
+                    nuevo.setImagenUrl(imagenVerificada);
+                    return usuarioService.crearUsuario(nuevo);
+                });
+
+        String token = jwtUtil.generarToken(usuario.getUsuario(), usuario.getRol());
+
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "usuario", usuario.getUsuario(),
+                "rol", usuario.getRol()));
+
+    } catch (Exception e) {
+        System.out.println("Error verificando token GitHub: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "No se pudo verificar la identidad con GitHub"));
+    }
+}
+
+    @Value("${github.client-id}")
+    private String githubClientId;
+
+    @Value("${github.client-secret}")
+    private String githubClientSecret;
+
+    @PostMapping("/github/callback")
+public ResponseEntity<?> githubCallback(@RequestBody Map<String, String> body) {
+    String code = body.get("code");
+
+    try {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", "application/json");
+        headers.set("Content-Type", "application/json"); // ← esto faltaba
+
+        Map<String, String> tokenRequest = Map.of(
+            "client_id",     githubClientId,
+            "client_secret", githubClientSecret,
+            "code",          code
+        );
+
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+            "https://github.com/login/oauth/access_token",
+            HttpMethod.POST,
+            new HttpEntity<>(tokenRequest, headers),
+            Map.class
+        );
+
+        if (tokenResponse.getBody() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Respuesta vacía de GitHub"));
+        }
+
+        // GitHub a veces devuelve el error dentro del body con 200
+        Object errorObj = tokenResponse.getBody().get("error");
+        if (errorObj != null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "GitHub rechazó el code: " + errorObj));
+        }
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+        if (accessToken == null || accessToken.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "No se pudo obtener access_token de GitHub"));
+        }
+
+        return loginConGithub(Map.of("tokenGithub", accessToken));
+
+    } catch (Exception e) {
+        System.out.println("Error en callback GitHub: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("error", "Error en callback de GitHub"));
+    }
+}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable UUID id) {

@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { TypeAnimation } from 'react-type-animation';
 import { Link } from "react-router-dom";
+import { useGoogleLogin } from "@react-oauth/google";
+import { iniciarLoginGithub } from "../Service/GitgubService";
 
 
 function CajaEstadistica({ valor, etiqueta }) {
@@ -90,13 +92,10 @@ function FormularioSesion() {
     const [usuario, setUsuario] = useState("")
     const [contrasena, setContrasena] = useState("")
     const [error, setError] = useState(false)
+    const [cargandoGoogle, setCargandoGoogle] = useState(false)
 
+    /* ───── LOGIN NORMAL ───── */
     function autenticar() {
-
-        /* if (usuario === "admin" && contrasena === "admin") {
-            navigate("/panel-control");
-            return;
-        } */
 
         const auth = {
             usuario,
@@ -118,11 +117,14 @@ function FormularioSesion() {
             .then((data) => {
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("usuario", data.usuario);
+
                 setError(false);
+
                 navigate("/panel-control");
             })
             .catch((error) => {
                 console.error(error)
+                setError(true)
             })
     }
 
@@ -131,9 +133,96 @@ function FormularioSesion() {
         autenticar()
     }
 
+    /* ───── LOGIN GOOGLE ───── */
+    const loginConGoogle = useGoogleLogin({
+
+        onSuccess: async (respuestaGoogle) => {
+
+            setCargandoGoogle(true)
+            setError(false)
+
+            try {
+
+                // Obtener info del usuario desde Google
+                const infoRes = await fetch(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${respuestaGoogle.access_token}`,
+                        },
+                    }
+                )
+
+                if (!infoRes.ok) {
+                    throw new Error("No se pudo obtener información de Google")
+                }
+
+                const infoGoogle = await infoRes.json()
+
+                // Enviar al backend
+                const backendRes = await fetch(
+                    "http://localhost:8081/usuario/google",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            tokenGoogle: respuestaGoogle.access_token,
+                            correo: infoGoogle.email,
+                            nombre: infoGoogle.name,
+                            imagenUrl: infoGoogle.picture,
+                            sub: infoGoogle.sub,
+                        }),
+                    }
+                )
+
+                if (!backendRes.ok) {
+                    const data = await backendRes.json()
+                    throw new Error(data.error || "Error al autenticar con Google")
+                }
+
+                const data = await backendRes.json()
+
+                localStorage.setItem("token", data.token)
+                localStorage.setItem("usuario", data.usuario)
+
+                navigate("/panel-control")
+
+            } catch (err) {
+
+                console.error(err)
+                setError(true)
+
+            } finally {
+
+                setCargandoGoogle(false)
+
+            }
+        },
+
+        onError: () => {
+
+            setError(true)
+
+        },
+    })
+
     return (
         <div className="formulario-sesion-wrapper">
+
             <form className="formulario-sesion" onSubmit={formularioSubmit}>
+
+                {/* ───── BOTÓN GOOGLE ───── */}
+                <BotonesSociales
+                    loginConGoogle={loginConGoogle}
+                    cargandoGoogle={cargandoGoogle}
+                />
+
+                {/* ───── SEPARADOR ───── */}
+                <SeparadorOAuth />
+
+                {/* ───── USUARIO ───── */}
                 <CampoEntrada
                     tipo="text"
                     etiqueta="Usuario"
@@ -144,6 +233,7 @@ function FormularioSesion() {
                     error={error}
                 />
 
+                {/* ───── CONTRASEÑA ───── */}
                 <CampoEntrada
                     tipo="password"
                     etiqueta="Contraseña"
@@ -154,6 +244,7 @@ function FormularioSesion() {
                     error={error}
                 />
 
+                {/* ───── ERROR ───── */}
                 {
                     error &&
                     <p className="mensaje-error">
@@ -161,11 +252,13 @@ function FormularioSesion() {
                     </p>
                 }
 
+                {/* ───── BOTÓN LOGIN ───── */}
                 <BotonSesion>
                     Iniciar Sesión
                 </BotonSesion>
 
             </form>
+
         </div>
     );
 }
@@ -193,17 +286,31 @@ function IconoGitHub() {
     );
 }
 
-function BotonesSociales() {
+function BotonesSociales({ loginConGoogle, cargandoGoogle }) {
     return (
         <div className="botones-sociales">
-            <button type="button" className="boton-social boton-social--google" onClick={() => { }}>
+
+            <button
+                type="button"
+                className="boton-social boton-social--google"
+                onClick={() => loginConGoogle()}
+                disabled={cargandoGoogle}
+            >
                 <IconoGoogle />
-                <span>Google</span>
+
+                <span>
+                    {cargandoGoogle ? "Conectando..." : "Google"}
+                </span>
             </button>
-            <button type="button" className="boton-social boton-social--github" onClick={() => { }}>
+
+            <button
+                type="button"
+                className="boton-social boton-social--github"
+                onClick= {iniciarLoginGithub }>
                 <IconoGitHub />
                 <span>GitHub</span>
             </button>
+
         </div>
     );
 }
