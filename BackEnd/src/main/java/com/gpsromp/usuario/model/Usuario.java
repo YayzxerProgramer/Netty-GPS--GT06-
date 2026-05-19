@@ -20,11 +20,17 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    private String nombre;
+
+    private String apellido;
+
     private String usuario;
 
     private String contrasena;
 
     private String correo;
+
+    private String telefono;
 
     @Column(nullable = false)
     private String rol = "USER";
