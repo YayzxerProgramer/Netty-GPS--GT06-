@@ -50,8 +50,17 @@ function IndicadorFortaleza({ nivel }) {
     );
 }
 
-function CampoContrasena({ id, etiqueta, valor, onChange, placeholder, mostrarFortaleza, nivelFortaleza }) {
+function CampoContrasena({
+    id,
+    etiqueta,
+    valor,
+    onChange,
+    placeholder,
+    mostrarFortaleza,
+    nivelFortaleza
+}) {
     const [enfocado, setEnfocado] = useState(false);
+    const [mostrar, setMostrar] = useState(false);
 
     return (
         <div className="campo-contrasena">
@@ -67,7 +76,7 @@ function CampoContrasena({ id, etiqueta, valor, onChange, placeholder, mostrarFo
                     className="campo-contrasena__input"
                     id={id}
                     name={id}
-                    type="password"
+                    type={mostrar ? "text" : "password"}
                     placeholder={placeholder}
                     autoComplete="off"
                     value={valor}
@@ -75,6 +84,18 @@ function CampoContrasena({ id, etiqueta, valor, onChange, placeholder, mostrarFo
                     onFocus={() => setEnfocado(true)}
                     onBlur={() => setEnfocado(false)}
                 />
+
+                {/* BOTÓN OJO */}
+                <button
+                    type="button"
+                    className="campo-contrasena__toggle"
+                    onClick={() => setMostrar(!mostrar)}
+                    tabIndex={-1}
+                >
+                    <span className="material-symbols-outlined">
+                        {mostrar ? "visibility_off" : "visibility"}
+                    </span>
+                </button>
             </div>
 
             {mostrarFortaleza && valor.length > 0 && (
@@ -107,6 +128,7 @@ export default function ConfiguracionSeguridad() {
     const orbeSecundarioRef = useRef(null);
     const usuario = localStorage.getItem("usuario");
     const [usuarioData, setUsuarioData] = useState(null);
+    const [modalExito, setModalExito] = useState(false);
 
     useEffect(() => {
         fetch(`http://localhost:8081/usuario/usuario/${usuario}`, {
@@ -134,15 +156,32 @@ export default function ConfiguracionSeguridad() {
         return () => document.removeEventListener("mousemove", manejarMouse);
     }, []);
 
-    function actualizarContrasena(nuevaClave) {
-        fetch(`http://localhost:8081/usuario/contrasena/${usuarioData.id}`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ nuevaContrasena: nuevaClave }),
-        });
+    async function actualizarContrasena(nuevaClave) {
+        try {
+            const res = await fetch(
+                `http://localhost:8081/usuario/contrasena/${usuarioData.id}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({ nuevaContrasena: nuevaClave }),
+                }
+            );
+
+            if (!res.ok) throw new Error("Error al actualizar contraseña");
+
+            setModalExito(true);
+
+            setTimeout(() => {
+                navigate("/panel-usuario");
+            }, 2000);
+
+        } catch (error) {
+            console.error(error);
+            alert("No se pudo actualizar la contraseña");
+        }
     }
 
 
@@ -151,11 +190,13 @@ export default function ConfiguracionSeguridad() {
 
     const manejarEnvio = (e) => {
         e.preventDefault();
+
         if (formulario.nuevaClave !== formulario.confirmarClave) {
             alert("Las claves no coinciden.");
             return;
         }
-        console.log("Clave actualizada");
+
+        actualizarContrasena(formulario.nuevaClave);
     };
 
     const manejarCancelar = () => {
@@ -198,46 +239,43 @@ export default function ConfiguracionSeguridad() {
 
                                 {/* Encabezado */}
                                 <div className="formulario-seguridad__encabezado">
-                                    <h2 className="formulario-seguridad__titulo">Update Security Key</h2>
-                                    <p className="formulario-seguridad__subtitulo">Authorized Access Only</p>
+                                    <h2 className="formulario-seguridad__titulo">Cambio de contraseña</h2>
+                                    <p className="formulario-seguridad__subtitulo">Acceso autorizado solamente</p>
                                 </div>
 
                                 {/* Campos */}
                                 <div className="formulario-seguridad__campos">
                                     <CampoContrasena
                                         id="nuevaClave"
-                                        etiqueta="New Security Key"
+                                        etiqueta="Nueva contraseña"
                                         valor={formulario.nuevaClave}
                                         onChange={manejarCambio}
-                                        placeholder="Enter new key"
+                                        placeholder="Ingrese la nueva contraseña"
                                         mostrarFortaleza={true}
                                         nivelFortaleza={nivelFortaleza}
                                     />
                                     <CampoContrasena
                                         id="confirmarClave"
-                                        etiqueta="Confirm New Security Key"
+                                        etiqueta="Confirmar contraseña "
                                         valor={formulario.confirmarClave}
                                         onChange={manejarCambio}
-                                        placeholder="Repeat new key"
+                                        placeholder="Repita la nueva contraseña para confirmar"
                                         mostrarFortaleza={false}
                                         nivelFortaleza={0}
                                     />
                                 </div>
 
-                                {/* Acciones */}
                                 <div className="formulario-seguridad__acciones">
-                                    <button className="boton-actualizar" type="submit" onClick={(e) => {
-                                        e.preventDefault();
-                                        actualizarContrasena(formulario.nuevaClave);
-                                    }}>
-                                        Update Security Key
+                                    <button className="boton-actualizar" type="submit">
+                                        Cambiar contraseña
                                     </button>
+                                    Cambiar contraseña
                                     <button
                                         className="boton-cancelar"
                                         type="button"
                                         onClick={manejarCancelar}
                                     >
-                                        Cancel Changes
+                                        Cancelar
                                     </button>
                                 </div>
 
@@ -245,8 +283,20 @@ export default function ConfiguracionSeguridad() {
                         </div>
 
                     </div>
+                </div >
+            </main >
+            {modalExito && (
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <span className="material-symbols-outlined modal-icon">
+                            check_circle
+                        </span>
+
+                        <h3>Contraseña actualizada</h3>
+                        <p>Serás redirigido al panel de usuario...</p>
+                    </div>
                 </div>
-            </main>
+            )}
         </>
     );
 }

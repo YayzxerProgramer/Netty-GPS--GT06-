@@ -9,7 +9,7 @@ const ENLACES_NAV = [
 ];
 
 const ENLACES_PIE_NAV = [
-    { icono: "logout", etiqueta: "Cerrar Sesión" },
+    { icono: "logout", etiqueta: "Cerrar Sesión", onClick: () => { localStorage.clear(); window.location.href = "/login"; } },
 ];
 
 function FondoAtmosferico() {
@@ -64,8 +64,8 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                 </nav>
 
                 <div className="pie-nav-lateral">
-                    {ENLACES_PIE_NAV.map(({ icono, etiqueta }) => (
-                        <a key={etiqueta} href="#" className="enlace-lateral">
+                    {ENLACES_PIE_NAV.map(({ icono, etiqueta, onClick }) => (
+                        <a key={etiqueta} href="#" className="enlace-lateral" onClick={onClick}>
                             <span className="material-symbols-outlined">{icono}</span>
                             {etiqueta}
                         </a>
@@ -241,7 +241,9 @@ export default function PerfilUsuario() {
     const [tipo, setTipo] = useState("password");
     const [modalGuardar, setModalGuardar] = useState(false);
     const [nuevaContrasena, setNuevaContrasena] = useState("");
-    const [enlaceActivo, setEnlaceActivo] = useState("Perfil"); // ← estado compartido
+    const [enlaceActivo, setEnlaceActivo] = useState("Perfil");
+    const [modalExito, setModalExito] = useState(false);
+    // ← estado compartido
 
     const token = localStorage.getItem("token");
     const usuario = localStorage.getItem("usuario");
@@ -267,18 +269,44 @@ export default function PerfilUsuario() {
             rol: usuarioData?.rol ?? "USER",
             imagenUrl: usuarioData?.imagenUrl,
         };
+
         fetch(`http://localhost:8081/usuario/${usuarioData.id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
             body: JSON.stringify(payload),
         })
-            .then((res) => { if (!res.ok) throw new Error("Error al actualizar"); return res.json(); })
-            .then((data) => { setUsuarioData(data); setModalGuardar(false); })
+            .then((res) => {
+                if (!res.ok) throw new Error("Error al actualizar");
+                return res.json();
+            })
+            .then((data) => {
+                setUsuarioData(data);
+                setModalGuardar(false);
+                setModalExito(true);
+                setTimeout(() => {
+                    navigate("/configuracion");
+                }, 2000);
+            })
             .catch((error) => console.error("Error actualizando usuario:", error));
     }
 
     return (
         <>
+            {modalExito && (
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <span className="material-symbols-outlined modal-icon">
+                            check_circle
+                        </span>
+
+                        <h3>Perfil actualizado correctamente</h3>
+                        <p>Serás redirigido al panel...</p>
+                    </div>
+                </div>
+            )}
             <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
             <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import "../Styles/PanelVehiculo.css";
 
-function TarjetaVehiculo({ vehiculo }) {
+
+function TarjetaVehiculo({ vehiculo, onDelete }) {
     return (
         <article className="tarjeta-vehiculo-configuracion" role="row">
             <div className="tarjeta-vehiculo__celda-imagen tarjeta-vehiculo__imagen-envoltorio">
@@ -35,11 +36,8 @@ function TarjetaVehiculo({ vehiculo }) {
                 </div>
             </div>
             <div className="tarjeta-vehiculo__celda-acciones tarjeta-vehiculo__acciones">
-                <button className="tarjeta-vehiculo__boton-accion" type="button" aria-label="Ver ubicación en vivo">
-                    <span className="material-symbols-outlined">near_me</span>
-                </button>
-                <button className="tarjeta-vehiculo__boton-accion" type="button" aria-label="Configuración del vehículo">
-                    <span className="material-symbols-outlined">settings</span>
+                <button className="tarjeta-vehiculo__boton-accion" type="button" aria-label="Eliminar vehículo" onClick={() => onDelete(vehiculo.id)}>
+                    <span className="material-symbols-outlined">delete</span>
                 </button>
             </div>
         </article>
@@ -83,7 +81,7 @@ function ModalRegistro({ visible, onCerrar, onRegistrado, usuarioId, token }) {
 
         if (!formulario.modelo.trim()) return setError("El modelo es obligatorio.");
         if (!formulario.placa.trim()) return setError("La placa es obligatoria.");
-        
+
 
         setCargando(true);
         try {
@@ -111,7 +109,7 @@ function ModalRegistro({ visible, onCerrar, onRegistrado, usuarioId, token }) {
                 return;
             }
 
-            onRegistrado(); // recarga la lista
+            onRegistrado();
             onCerrar();
         } catch (e) {
             setError("Error de conexión con el servidor.");
@@ -121,6 +119,8 @@ function ModalRegistro({ visible, onCerrar, onRegistrado, usuarioId, token }) {
     };
 
     if (!visible) return null;
+
+
 
     return (
         <div className="modal-fondo modal-fondo--visible" role="dialog" aria-modal="true"
@@ -224,9 +224,6 @@ function ModalRegistro({ visible, onCerrar, onRegistrado, usuarioId, token }) {
                         >
                             {cargando ? "Registrando..." : "Confirmar Registro"}
                         </button>
-                        <button className="formulario__boton-cancelar" type="button" onClick={onCerrar}>
-                            Cancelar
-                        </button>
                     </div>
                 </div>
             </div>
@@ -235,15 +232,15 @@ function ModalRegistro({ visible, onCerrar, onRegistrado, usuarioId, token }) {
 }
 
 export default function PanelVehiculo() {
-    const [modalVisible, setModalVisible] = useState(false);
     const [vehiculos, setVehiculos] = useState([]);
-    const [cargando, setCargando] = useState(true);
     const [usuarioId, setUsuarioId] = useState(null);
+    const [cargando, setCargando] = useState(true);
+    const usuario = localStorage.getItem("usuario");
+    const token = localStorage.getItem("token");
+    const [modalVisible, setModalVisible] = useState(false);
+    const [vehiculoEditando, setVehiculoEditando] = useState(null);
     const orbePrimarioRef = useRef(null);
     const orbeSecundarioRef = useRef(null);
-
-    const token = localStorage.getItem("token");
-    const usuario = localStorage.getItem("usuario");
 
     const cargarVehiculos = (id) => {
         fetch(`http://localhost:8081/usuario/vehiculos/${id}`, {
@@ -258,6 +255,24 @@ export default function PanelVehiculo() {
                 console.error("Error cargando vehículos:", error);
                 setCargando(false);
             });
+    };
+
+
+    const eliminarVehiculo = async (id) => {
+        try {
+            const res = await fetch(`http://localhost:8081/vehiculo/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!res.ok) throw new Error("Error eliminando");
+            cargarVehiculos(usuarioId);
+
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     useEffect(() => {
@@ -342,7 +357,7 @@ export default function PanelVehiculo() {
                             </p>
                         ) : (
                             vehiculos.map((v) => (
-                                <TarjetaVehiculo key={v.id} vehiculo={v} />
+                                <TarjetaVehiculo key={v.id} vehiculo={v} onDelete={eliminarVehiculo} />
                             ))
                         )}
                     </div>

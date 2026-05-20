@@ -27,7 +27,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll())
+                        // Rutas públicas
+                        .requestMatchers(HttpMethod.POST, "/usuario/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario/google").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario/github").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario/github/callback").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/gps").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/ws-gps/**").permitAll()
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(cors -> cors.configurationSource(request -> {
                     var config = new org.springframework.web.cors.CorsConfiguration();

@@ -863,10 +863,32 @@
     gap: 10px;
 }
 
-.modal-btn-cancelar,
+.modal-btn-cancelar {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #e1e7df;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.modal-btn-cancelar:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
 .modal-btn-guardar {
     padding: 10px 18px;
     border-radius: 10px;
     border: none;
+    background: linear-gradient(135deg, #b2cea8, #354d2f);
+    color: #111411;
+    font-weight: 700;
     cursor: pointer;
+    transition: transform 0.2s ease, filter 0.25s ease;
+}
+
+.modal-btn-guardar:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
 }
