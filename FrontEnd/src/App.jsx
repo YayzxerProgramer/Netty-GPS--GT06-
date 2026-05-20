@@ -9,9 +9,9 @@ import Footer from './components/footer'
 import Login from './Components/Login'
 import Dashboard from './Components/Dashboard'
 import PanelControl from './Components/PanelControl'
-import UserSettings from './Components/UserSettings'
-import Registro from './Components/Registro1'
-import AuthCallback from './Components/AuthCallback'
+import PanelUsuario from './Components/PerfilUsuario'
+import Registro from './Components/Registro'
+import AuthCallback from './Components/AuthCallback'  
 import './Styles/App.css'
 
 function App() {
@@ -35,9 +35,8 @@ function App() {
         <PanelControl />
       } />
       <Route path="/configuracion" element={
-        <UserSettings />
+        <PanelUsuario />
       } />
-
       <Route path="/registro" element={
         <Registro />
       } />

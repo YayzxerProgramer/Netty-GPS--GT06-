@@ -85,6 +85,14 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
+    @Transactional
+    public void cambiarContrasena(UUID id, String nuevaContrasena) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        usuario.setContrasena(passwordEncoder.encode(nuevaContrasena));
+        usuarioRepository.save(usuario);
+    }
+
     public boolean login(String usuario, String contrasena) {
         return usuarioRepository.findByUsuario(usuario)
                 .map(u -> u.getActivo() && u.getContrasena().equals(contrasena))

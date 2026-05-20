@@ -679,3 +679,60 @@
     background: var(--color-primario);
     color: var(--color-en-primario);
 }
+
+/* ===== TERMINOS ===== */
+
+.reg-terminos {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    color: var(--color-en-superficie-variante);
+    font-size: 0.85rem;
+    user-select: none;
+    margin-top: 0.5rem;
+    grid-column: 1 / -1;
+    /* ocupa ambas columnas */
+    grid-row: span 2;
+}
+
+
+.reg-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-contorno-variante);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+
+
+.reg-checkbox:hover {
+    border-color: var(--color-primario);
+}
+
+.reg-checkbox--checked {
+    background: var(--color-primario);
+    border-color: var(--color-primario);
+    color: var(--color-en-primario);
+}
+
+
+/* ===== BOTON DESHABILITADO ===== */
+
+.boton-principal:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(40%);
+    box-shadow: none;
+}
+
+.boton-principal:disabled:hover {
+    transform: none;
+    filter: grayscale(40%);
+    box-shadow: none;
+}
