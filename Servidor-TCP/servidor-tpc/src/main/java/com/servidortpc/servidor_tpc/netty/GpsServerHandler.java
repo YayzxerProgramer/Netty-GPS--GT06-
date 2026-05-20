@@ -90,14 +90,7 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
         // Bits importantes
         boolean gpsValido = (courseStatus & 0x0400) != 0;
         boolean oeste = (courseStatus & 0x0800) != 0;
-        boolean norte = (courseStatus & 0x1000) != 0;
 
-        // Si NO es norte -> sur
-        if (!norte) {
-            latitud = -latitud;
-        }
-
-        // Si NO es este -> oeste
         if (oeste) {
             longitud = -longitud;
         }

@@ -383,7 +383,7 @@ function Registro() {
 
             <div className="pagina-romp">
                 <FondoAtmosferico />
-                <main className="contenedor-principal">
+                <main className="contenedor-principal-registro">
                     <ColumnaEditorial />
                     <FormularioRegistro />
                 </main>

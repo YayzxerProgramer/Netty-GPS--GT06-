@@ -8,13 +8,14 @@ import com.gpsromp.vehiculo.model.Vehiculo;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "Usuarios")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Usuario {
+public class Usuario implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

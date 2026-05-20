@@ -2,6 +2,7 @@ package com.gpsromp.vehiculo.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.io.Serializable;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -21,7 +22,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 
-public class Vehiculo {
+public class Vehiculo implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,7 +32,7 @@ public class Vehiculo {
     @Column(unique = true, nullable = false, length = 6)
     private String placa;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = true)
     private String imei;
 
     @NonNull

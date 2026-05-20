@@ -11,7 +11,8 @@ import Dashboard from './Components/Dashboard'
 import PanelControl from './Components/PanelControl'
 import PanelUsuario from './Components/PerfilUsuario'
 import Registro from './Components/Registro'
-import AuthCallback from './Components/AuthCallback'  
+import AuthCallback from './Components/AuthCallback'
+import CambiarContrasena from './Components/CambiarContrasena'
 import './Styles/App.css'
 
 function App() {
@@ -42,6 +43,9 @@ function App() {
       } />
       <Route path="/auth/callback" element={
         <AuthCallback />
+      } />
+      <Route path="/cambiar-contrasena" element={
+        <CambiarContrasena />
       } />
     </Routes>
   )

@@ -161,7 +161,7 @@
     animation: flotar-brillo 18s ease-in-out infinite reverse;
 }
 
-.contenedor-principal {
+.contenedor-principal-registro {
     position: relative;
     z-index: 10;
     width: 100%;
@@ -173,7 +173,7 @@
 }
 
 @media (min-width: 1024px) {
-    .contenedor-principal {
+    .contenedor-principal-registro {
         grid-template-columns: 5fr 7fr;
     }
 }
