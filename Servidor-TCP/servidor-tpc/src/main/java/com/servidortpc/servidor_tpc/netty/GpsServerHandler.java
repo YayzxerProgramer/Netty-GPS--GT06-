@@ -142,7 +142,18 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
         ByteBuf ack = GT06Utils.ACKHeartbeat(serial);
         contexto.writeAndFlush(ack);
+    }
 
+    public void protocolo16(ByteBuf contenido) {
+        ByteBuf buf = (ByteBuf) contenido.retainedDuplicate();
+        byte[] data = new byte[buf.readableBytes()];
+        buf.getBytes(0, data);
+        StringBuilder hex = new StringBuilder();
+        for (byte b : data) {
+            hex.append(String.format("%02X ", b));
+        }
+
+        System.out.println("Paquete recibido: " + hex);
     }
 
     @Override
@@ -196,6 +207,8 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
                     ubicacion(contenido);
                 case 0x13 ->
                     heartbeat(contexto, contenido);
+                case 0x16 ->
+                    protocolo16(contenido);
             }
 
             paquete.readUnsignedShort(); // CRC

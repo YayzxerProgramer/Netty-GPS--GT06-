@@ -335,7 +335,7 @@
 }
 
 /* Encabezado de telemetría */
-.encabezado-telemetria {
+.encabezado-telemetria-usuario {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;

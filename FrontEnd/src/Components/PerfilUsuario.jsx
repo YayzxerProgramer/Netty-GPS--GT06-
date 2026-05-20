@@ -196,7 +196,7 @@ function ContenidoPrincipal(props) {
     return (
         <main className="contenido-principal">
             <div className="contenedor-interior">
-                <div className="encabezado-telemetria">
+                <div className="encabezado-telemetria-usuario">
                     <div className="bloque-titulo">
                         <span className="etiqueta-sistema">SYSTEM // USER_PROFILE_CONFIG</span>
                         <h1 className="titulo-pagina">Configuración de Perfil</h1>
