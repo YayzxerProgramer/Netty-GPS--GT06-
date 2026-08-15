@@ -18,10 +18,7 @@ public class GPSDataService {
 
     private final GPSDataRepository repository;
     private final SimpMessagingTemplate messagingTemplate;
-
-    /**
-     * Guarda un nuevo registro GPS en MongoDB
-     */
+    
     public GPSData save(GPSData gpsData) {
         GPSData entity = GPSData.builder()
                 .imei(gpsData.getImei())
@@ -38,12 +35,5 @@ public class GPSDataService {
         messagingTemplate.convertAndSend("/socket/gps/" + entity.getImei(), entity);
 
         return repository.save(entity);
-    }
-
-    /**
-     * Obtiene la última posición conocida del GPS
-     */
-    public Optional<GPSData> getLastPosition(String imei) {
-        return repository.findFirstByImeiOrderByRegistradoEnDesc(imei);
     }
 }

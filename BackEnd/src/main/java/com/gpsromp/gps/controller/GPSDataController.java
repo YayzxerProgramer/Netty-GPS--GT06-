@@ -29,11 +29,4 @@ public class GPSDataController {
         GPSData data = gpsDataService.save(gpsData);
         return ResponseEntity.ok(data);
     }
-
-    @GetMapping("/ultima-posicion/{imei}") 
-    public ResponseEntity<GPSData> obtenerUltimaPosicionPorImei(@PathVariable String imei) {
-        Optional<GPSData> resultado = gpsDataService.getLastPosition(imei);
-        return resultado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
-
 }

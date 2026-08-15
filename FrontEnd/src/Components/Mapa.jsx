@@ -6,14 +6,14 @@ import "../Styles/MapaGPS.css";
 
 const IMEI = "0863874084559974";
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const ANIMATION_DURATION = 1000; // ms — ajusta según frecuencia de tus paquetes GPS
+
+const ANIMATION_DURATION = 20000;
 
 const centroDefault = { lat: 10.425, lng: -75.5402 };
 
-// Interpolación lineal entre dos valores
 function lerp(a, b, t) {
   return a + (b - a) * t;
-}  
+}
 
 function MapaGPS() {
   const { isLoaded } = useJsApiLoader({
@@ -25,14 +25,12 @@ function MapaGPS() {
   const [path, setPath] = useState([]);
   const mapRef = useRef(null);
 
-  // Referencias para la animación
-  const markerRef = useRef(null);        // instancia del Marker de Google Maps
-  const animationRef = useRef(null);     // requestAnimationFrame ID
-  const startPosRef = useRef(null);      // posición donde empezó la animación
-  const targetPosRef = useRef(null);     // posición destino
-  const startTimeRef = useRef(null);     // timestamp de inicio
+  const markerRef = useRef(null);
+  const animationRef = useRef(null);
+  const startPosRef = useRef(null);
+  const targetPosRef = useRef(null);
+  const startTimeRef = useRef(null);
 
-  // Cuando llega una nueva posición, arrancamos la animación
   useEffect(() => {
     if (!position || !markerRef.current) return;
 
@@ -41,23 +39,20 @@ function MapaGPS() {
       lng: Number(position.longitud),
     };
 
-    // Agregar al path para la Polyline
     setPath((prev) => [...prev, newTarget]);
 
-    // Panear el mapa suavemente
+
     if (mapRef.current) {
       mapRef.current.panTo(newTarget);
       mapRef.current.setZoom(17);
     }
 
-    // Posición actual del marcador como punto de inicio
     const currentPos = markerRef.current.getPosition();
     startPosRef.current = currentPos
       ? { lat: currentPos.lat(), lng: currentPos.lng() }
       : newTarget;
     targetPosRef.current = newTarget;
 
-    // Cancelar animación anterior si todavía corría
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -66,9 +61,8 @@ function MapaGPS() {
 
     function animate(now) {
       const elapsed = now - startTimeRef.current;
-      const t = Math.min(elapsed / ANIMATION_DURATION, 1); // 0 → 1
+      const t = Math.min(elapsed / ANIMATION_DURATION, 1);
 
-      // Easing suave: ease-out cúbico
       const eased = 1 - Math.pow(1 - t, 3);
 
       const interpolated = {
@@ -90,8 +84,6 @@ function MapaGPS() {
     };
   }, [position]);
 
-  // Callback cuando el mapa carga: creamos el Marker manualmente
-  // para tener referencia directa y poder usar setPosition()
   const handleMapLoad = (map) => {
     mapRef.current = map;
 
@@ -134,7 +126,7 @@ function MapaGPS() {
           styles: darkMapStyle,
           disableDefaultUI: true,
           zoomControl: true,
-          streetViewControl: false,
+          streetViewControl: false, 
           mapTypeControl: false,
           fullscreenControl: false,
           gestureHandling: "greedy",
