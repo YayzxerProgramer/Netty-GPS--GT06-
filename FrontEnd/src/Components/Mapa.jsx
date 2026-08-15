@@ -6,14 +6,13 @@ import "../Styles/MapaGPS.css";
 
 const IMEI = "0863874084559974";
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const ANIMATION_DURATION = 1000; // ms — ajusta según frecuencia de tus paquetes GPS
+const ANIMATION_DURATION = 1000;
 
 const centroDefault = { lat: 10.425, lng: -75.5402 };
 
-// Interpolación lineal entre dos valores
 function lerp(a, b, t) {
   return a + (b - a) * t;
-}  
+}
 
 function MapaGPS() {
   const { isLoaded } = useJsApiLoader({
@@ -25,8 +24,7 @@ function MapaGPS() {
   const [path, setPath] = useState([]);
   const mapRef = useRef(null);
 
-  // Referencias para la animación
-  const markerRef = useRef(null);        // instancia del Marker de Google Maps
+  const markerRef = useRef(null);     
   const animationRef = useRef(null);     // requestAnimationFrame ID
   const startPosRef = useRef(null);      // posición donde empezó la animación
   const targetPosRef = useRef(null);     // posición destino

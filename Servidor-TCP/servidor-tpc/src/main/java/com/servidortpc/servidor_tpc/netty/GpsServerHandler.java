@@ -201,14 +201,20 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<ByteBuf> {
             System.out.println("Protocolo recibido: " + String.format("%02X", protocolo));
 
             switch (protocolo) {
-                case 0x01 ->
+                case 0x01:
                     login(contexto, contenido);
-                case 0x12 ->
+                    break;
+                case 0x12:
                     ubicacion(contenido);
-                case 0x13 ->
+                    break;
+                case 0x13:
                     heartbeat(contexto, contenido);
-                case 0x16 ->
+                    break;
+                case 0x16:
                     protocolo16(contenido);
+                    break;
+                default:
+                    break;
             }
 
             paquete.readUnsignedShort(); // CRC

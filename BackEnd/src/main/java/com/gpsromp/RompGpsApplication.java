@@ -9,9 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableCaching
 public class RompGpsApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(RompGpsApplication.class, args);
 	}
-
 }

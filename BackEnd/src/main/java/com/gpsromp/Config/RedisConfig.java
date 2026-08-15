@@ -11,8 +11,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.*;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.util.HashMap;
-import java.util.Map;
 
 import java.time.Duration;
 
@@ -23,8 +21,7 @@ public class RedisConfig {
         public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
                 RedisTemplate<String, Object> template = new RedisTemplate<>();
                 template.setConnectionFactory(connectionFactory);
-
-                // Serializadores
+                
                 StringRedisSerializer keySerializer = new StringRedisSerializer();
 
                 ObjectMapper mapper = new ObjectMapper();

@@ -178,8 +178,10 @@ public class UsuarioController {
             String correoVerificado = (String) googleData.get("email");
             String imagenVerificada = (String) googleData.get("picture");
 
-            String nombreVerificado = (String) googleData.getOrDefault("given_name", googleData.get("name"));
-            String apellidoVerificado = (String) googleData.getOrDefault("family_name", "");
+            String nombreRaw = googleData.get("given_name") != null ? (String) googleData.get("given_name") : (String) googleData.get("name");
+            String apellidoRaw = googleData.get("family_name") != null ? (String) googleData.get("family_name") : "";
+            String nombreVerificado = (nombreRaw != null && !nombreRaw.isBlank()) ? nombreRaw : "google_user";
+            String apellidoVerificado = (apellidoRaw != null) ? apellidoRaw : "";
 
             String telefonoRecibido = body.getOrDefault("telefono", "");
 
@@ -191,6 +193,10 @@ public class UsuarioController {
                                 .replaceAll("[^a-z0-9_]", "_")
                                 .replaceAll("_+", "_")
                                 .replaceAll("^_|_$", "");
+
+                        if (base.isBlank()) {
+                            base = "google_user";
+                        }
 
                         String usernameUnico = base;
                         if (usuarioService.existeUsuario(usernameUnico)) {

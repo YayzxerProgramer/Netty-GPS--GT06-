@@ -1,4 +1,4 @@
-const GITHUB_CLIENT_ID = "Ov23lifcAXEVo4WKXu28";    
+const GITHUB_CLIENT_ID = "Ov23lifcAXEVo4WKXu28";
 const REDIRECT_URI = "http://localhost:5173/auth/callback";
 
 export function iniciarLoginGithub() {

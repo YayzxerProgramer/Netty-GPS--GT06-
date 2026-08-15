@@ -62,6 +62,7 @@ public class UsuarioService {
     }
 
     @Transactional
+    @CacheEvict(value = "usuarios", allEntries = true)
     public Usuario actualizarUsuario(UUID id, Usuario usuarioDetalles) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -115,7 +116,7 @@ public class UsuarioService {
 
     public boolean login(String usuario, String contrasena) {
         return usuarioRepository.findByUsuario(usuario)
-                .map(u -> u.getActivo() && u.getContrasena().equals(contrasena))
+                .map(u -> u.getActivo() && passwordEncoder.matches(contrasena, u.getContrasena()))
                 .orElse(false);
     }
 }

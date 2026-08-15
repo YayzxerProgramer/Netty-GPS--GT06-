@@ -78,7 +78,9 @@ public class GT06Utils {
 
         int crc = calcularCRC(datos);
 
-        buffer.writeShort(crc);
+        // GT06 usa Little-Endian para el CRC
+        buffer.writeByte(crc & 0xFF);
+        buffer.writeByte((crc >> 8) & 0xFF);
 
         buffer.writeByte(0x0D);
         buffer.writeByte(0x0A);
