@@ -12,6 +12,7 @@ import PanelUsuario from './Components/PerfilUsuario'
 import Registro from './Components/Registro'
 import AuthCallback from './Components/AuthCallback'
 import CambiarContrasena from './Components/CambiarContrasena'
+import './Styles/Base.css'
 import './Styles/App.css'
 
 function App() {
