@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "../Styles/PanelVehiculo.css";
+import { API_URL } from "../Service/api";
 
 
 function TarjetaVehiculo({ vehiculo, onDelete }) {
@@ -65,12 +66,14 @@ function ModalRegistro({ visible, onCerrar, onRegistrado, usuarioId, token }) {
         return () => { document.body.style.overflow = ""; };
     }, [visible]);
 
-    // Limpiar al abrir
+    // Limpiar al abrir. Es sincronización deliberada con una prop: al abrir el
+    // modal el formulario debe quedar vacío, no conservar lo del intento anterior.
     useEffect(() => {
-        if (visible) {
-            setFormulario({ modelo: "", placa: "", tipo: "MOTO", imei: "" });
-            setError("");
-        }
+        if (!visible) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setFormulario({ modelo: "", placa: "", tipo: "MOTO", imei: "" });
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setError("");
     }, [visible]);
 
     const manejarCambio = (e) =>
@@ -94,7 +97,7 @@ function ModalRegistro({ visible, onCerrar, onRegistrado, usuarioId, token }) {
                 activo: true,
             };
 
-            const res = await fetch("http://localhost:8081/vehiculo", {
+            const res = await fetch(`${API_URL}/vehiculo`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -243,7 +246,7 @@ export default function PanelVehiculo() {
     const orbeSecundarioRef = useRef(null);
 
     const cargarVehiculos = (id) => {
-        fetch(`http://localhost:8081/usuario/vehiculos/${id}`, {
+        fetch(`${API_URL}/usuario/vehiculos/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())
@@ -260,7 +263,7 @@ export default function PanelVehiculo() {
 
     const eliminarVehiculo = async (id) => {
         try {
-            const res = await fetch(`http://localhost:8081/vehiculo/${id}`, {
+            const res = await fetch(`${API_URL}/vehiculo/${id}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -278,7 +281,7 @@ export default function PanelVehiculo() {
     useEffect(() => {
         if (!usuario || !token) return;
 
-        fetch(`http://localhost:8081/usuario/usuario/${usuario}`, {
+        fetch(`${API_URL}/usuario/usuario/${usuario}`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())

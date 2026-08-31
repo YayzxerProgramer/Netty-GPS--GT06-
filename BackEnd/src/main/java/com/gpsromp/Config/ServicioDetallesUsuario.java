@@ -1,4 +1,4 @@
-package com.gpsromp.config;
+package com.gpsromp.Config;
 
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.repository.UsuarioRepository;
@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,27 +17,30 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ServicioDetallesUsuario implements UserDetailsService {
 
-        private final UsuarioRepository repositorioUsuario;
+    private final UsuarioRepository repositorioUsuario;
 
-        @Override
-        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    @Override
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-                Usuario usuarioEncontrado = repositorioUsuario.findByUsuario(username)
-                                .orElseThrow(() -> new UsernameNotFoundException(
-                                                "No se encontró el usuario: " + username));
+        Usuario usuarioEncontrado = repositorioUsuario.findByUsuario(username)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "No se encontró el usuario: " + username));
 
-                if (!usuarioEncontrado.getActivo()) {
-                        throw new UsernameNotFoundException(
-                                        "El usuario está inactivo: " + username);
-                }
-
-                SimpleGrantedAuthority autoridad = new SimpleGrantedAuthority(
-                                "ROLE_" + usuarioEncontrado.getRol());
-
-                return User.builder()
-                                .username(usuarioEncontrado.getUsuario())
-                                .password(usuarioEncontrado.getContrasena())
-                                .authorities(List.of(autoridad))
-                                .build();
+        if (!Boolean.TRUE.equals(usuarioEncontrado.getActivo())) {
+            throw new UsernameNotFoundException("El usuario está inactivo: " + username);
         }
+
+        // rol es un enum: .name() garantiza la forma exacta "ROLE_ADMIN" / "ROLE_USER".
+        // Cuando era un String libre, un valor como "admin" producía "ROLE_admin"
+        // y hasRole("ADMIN") fallaba en silencio.
+        SimpleGrantedAuthority autoridad = new SimpleGrantedAuthority(
+                "ROLE_" + usuarioEncontrado.getRol().name());
+
+        return User.builder()
+                .username(usuarioEncontrado.getUsuario())
+                .password(usuarioEncontrado.getContrasena())
+                .authorities(List.of(autoridad))
+                .build();
+    }
 }

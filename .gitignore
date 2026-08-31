@@ -21,9 +21,10 @@ dist/
 *.ear
 
 
-.mvn/
-mvnw
-mvnw.cmd
+# El Maven Wrapper SI debe versionarse: es lo que permite compilar sin tener
+# Maven instalado, y BackEnd/Dockerfile depende de el (RUN ./mvnw).
+# Solo se ignora el jar descargado, que se regenera solo.
+.mvn/wrapper/maven-wrapper.jar
 
 node_modules/
 npm-debug.log

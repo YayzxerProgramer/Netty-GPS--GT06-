@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../Styles/CambiarContrasena.css";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../Service/api";
 
 function RadarDecorativo() {
     return (
@@ -119,6 +120,7 @@ function calcularFortaleza(contrasena) {
 
 export default function ConfiguracionSeguridad() {
     const [formulario, setFormulario] = useState({
+        claveActual: "",
         nuevaClave: "",
         confirmarClave: "",
     });
@@ -131,7 +133,7 @@ export default function ConfiguracionSeguridad() {
     const [modalExito, setModalExito] = useState(false);
 
     useEffect(() => {
-        fetch(`http://localhost:8081/usuario/usuario/${usuario}`, {
+        fetch(`${API_URL}/usuario/usuario/${usuario}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -156,31 +158,40 @@ export default function ConfiguracionSeguridad() {
         return () => document.removeEventListener("mousemove", manejarMouse);
     }, []);
 
-    async function actualizarContrasena(nuevaClave) {
+    async function actualizarContrasena(claveActual, nuevaClave) {
         try {
             const res = await fetch(
-                `http://localhost:8081/usuario/contrasena/${usuarioData.id}`,
+                `${API_URL}/usuario/contrasena/${usuarioData.id}`,
                 {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
-                    body: JSON.stringify({ nuevaContrasena: nuevaClave }),
+                    // El backend exige la contraseña actual para que un cambio de
+                    // contraseña no baste con tener un token: antes cualquier
+                    // cuenta autenticada podía apoderarse de cualquier otra.
+                    body: JSON.stringify({
+                        contrasenaActual: claveActual,
+                        nuevaContrasena: nuevaClave,
+                    }),
                 }
             );
 
-            if (!res.ok) throw new Error("Error al actualizar contraseña");
+            if (!res.ok) {
+                const detalle = await res.json().catch(() => null);
+                throw new Error(detalle?.error || "Error al actualizar contraseña");
+            }
 
             setModalExito(true);
 
             setTimeout(() => {
-                navigate("/panel-usuario");
+                navigate("/configuracion");
             }, 2000);
 
         } catch (error) {
             console.error(error);
-            alert("No se pudo actualizar la contraseña");
+            alert(error.message || "No se pudo actualizar la contraseña");
         }
     }
 
@@ -191,16 +202,26 @@ export default function ConfiguracionSeguridad() {
     const manejarEnvio = (e) => {
         e.preventDefault();
 
+        if (!formulario.claveActual) {
+            alert("Debes ingresar tu contraseña actual.");
+            return;
+        }
+
         if (formulario.nuevaClave !== formulario.confirmarClave) {
             alert("Las claves no coinciden.");
             return;
         }
 
-        actualizarContrasena(formulario.nuevaClave);
+        if (formulario.nuevaClave.length < 8) {
+            alert("La nueva contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
+
+        actualizarContrasena(formulario.claveActual, formulario.nuevaClave);
     };
 
     const manejarCancelar = () => {
-        setFormulario({ nuevaClave: "", confirmarClave: "" });
+        setFormulario({ claveActual: "", nuevaClave: "", confirmarClave: "" });
     };
 
     const nivelFortaleza = calcularFortaleza(formulario.nuevaClave);
@@ -246,6 +267,15 @@ export default function ConfiguracionSeguridad() {
                                 {/* Campos */}
                                 <div className="formulario-seguridad__campos">
                                     <CampoContrasena
+                                        id="claveActual"
+                                        etiqueta="Contraseña actual"
+                                        valor={formulario.claveActual}
+                                        onChange={manejarCambio}
+                                        placeholder="Ingrese su contraseña actual"
+                                        mostrarFortaleza={false}
+                                        nivelFortaleza={0}
+                                    />
+                                    <CampoContrasena
                                         id="nuevaClave"
                                         etiqueta="Nueva contraseña"
                                         valor={formulario.nuevaClave}
@@ -269,7 +299,6 @@ export default function ConfiguracionSeguridad() {
                                     <button className="boton-actualizar" type="submit">
                                         Cambiar contraseña
                                     </button>
-                                    Cambiar contraseña
                                     <button
                                         className="boton-cancelar"
                                         type="button"

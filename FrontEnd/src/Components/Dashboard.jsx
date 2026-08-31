@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { obtenerUsuario, cerrarSesion } from "../Service/sesion";
+import { get, patch } from "../Service/api";
 
 import "../Styles/Dashboard.css";
 
@@ -32,6 +35,76 @@ const NavIcon = ({ type }) => {
 
 export default function Dashboard() {
   const [activeNav, setActiveNav] = useState("dashboard");
+  const navigate = useNavigate();
+  const usuario = obtenerUsuario() || "ADMIN";
+
+  // Datos reales del panel. Antes todo el contenido era literal del maquetado:
+  // TOTAL CLIENTS 412, GPS INVENTORY 8,924 y dos filas de dispositivos falsos.
+  const [resumen, setResumen] = useState(null);
+  const [usuarios, setUsuarios] = useState([]);
+  const [vehiculos, setVehiculos] = useState([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  const cargar = useCallback(async (texto = "") => {
+    setCargando(true);
+    setError(null);
+    try {
+      const filtro = texto ? `&busqueda=${encodeURIComponent(texto)}` : "";
+      const [datosResumen, pagUsuarios, pagVehiculos] = await Promise.all([
+        get("/admin/resumen"),
+        get(`/admin/usuarios?tamano=10${filtro}`),
+        get(`/admin/vehiculos?tamano=10${filtro}`),
+      ]);
+      setResumen(datosResumen);
+      setUsuarios(pagUsuarios.contenido);
+      setVehiculos(pagVehiculos.contenido);
+    } catch (e) {
+      setError(e.message || "No se pudieron cargar los datos");
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  // Carga inicial y buscador, en un solo efecto.
+  //
+  // La espera de 400 ms evita una petición por cada tecla pulsada, y al montar
+  // el componente dispara igualmente la primera carga con la búsqueda vacía:
+  // por eso no hace falta un segundo useEffect que llame a cargar() al inicio.
+  useEffect(() => {
+    const id = setTimeout(() => cargar(busqueda), 400);
+    return () => clearTimeout(id);
+  }, [busqueda, cargar]);
+
+  const manejarCerrarSesion = () => {
+    cerrarSesion();
+    navigate("/login", { replace: true });
+  };
+
+  const alternarEstadoVehiculo = async (id) => {
+    try {
+      await patch(`/admin/vehiculos/${id}/estado`);
+      cargar(busqueda);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const exportarCsv = () => {
+    const cabecera = "imei,placa,modelo,tipo,activo,creadoEn";
+    const filas = vehiculos.map((v) =>
+      [v.imei || "", v.placa, v.modelo, v.tipo, v.activo, v.creadoEn].join(","));
+    const csv = [cabecera, ...filas].join("\n");
+
+    const enlace = document.createElement("a");
+    enlace.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    enlace.download = `vehiculos-${new Date().toISOString().slice(0, 10)}.csv`;
+    enlace.click();
+    URL.revokeObjectURL(enlace.href);
+  };
+
+  const numero = (valor) => (valor ?? 0).toLocaleString("es-CO");
 
 
   return (
@@ -41,7 +114,15 @@ export default function Dashboard() {
           <span className="logo">ROMP GPS</span>
           <div className="search">
             <NavIcon type="search" />
-            <span>Global Telemetry Search...</span>
+            {/* Antes era un <span> con texto muerto: no buscaba nada. */}
+            <input
+              className="search-input"
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar usuario, placa o IMEI..."
+              style={{ background: "transparent", border: "none", outline: "none", color: "inherit", width: "100%" }}
+            />
           </div>
           <div className="topbar-right">
             <button className="icon-btn"><NavIcon type="bell" /></button>
@@ -49,10 +130,10 @@ export default function Dashboard() {
             <button className="icon-btn"><NavIcon type="help" /></button>
             <div className="user-info">
               <div className="user-text">
-                <div className="user-name">ADMI</div>
-                <div className="user-status">ACTIVE SESSION</div>
+                <div className="user-name">{usuario.toUpperCase()}</div>
+                <div className="user-status">SESIÓN ACTIVA</div>
               </div>
-              <div className="avatar">A</div>
+              <div className="avatar">{usuario.charAt(0).toUpperCase()}</div>
             </div>
           </div>
         </div>
@@ -87,8 +168,8 @@ export default function Dashboard() {
                 <NavIcon type="plus" />
                 Register New Device
               </button>
-              <div className="nav-item" style={{ padding: "10px 0" }}><NavIcon type="user" /><span>User Settings</span></div>
-              <div className="nav-item" style={{ padding: "10px 0" }}><NavIcon type="logout" /><span>Log Out</span></div>
+              <div className="nav-item" style={{ padding: "10px 0", cursor: "pointer" }} onClick={() => navigate("/configuracion")}><NavIcon type="user" /><span>Mi perfil</span></div>
+              <div className="nav-item" style={{ padding: "10px 0", cursor: "pointer" }} onClick={manejarCerrarSesion}><NavIcon type="logout" /><span>Cerrar sesión</span></div>
             </div>
           </div>
 
@@ -102,45 +183,92 @@ export default function Dashboard() {
               </div>
               <div className="header-row">
                 <div>
-                  <h1 className="page-title">Telemetric Command Center</h1>
-                  <p className="page-desc">Real-time administration and fleet resource management for global GPS assets.</p>
+                  <h1 className="page-title">Centro de mando</h1>
+                  <p className="page-desc">Administracion de usuarios, vehiculos y dispositivos GPS.</p>
                 </div>
                 <div className="header-meta">
-                  <div className="meta-item"><label>DATA REFRESH</label><span>02:45s</span></div>
-                  <div className="meta-item"><label>ACTIVE NODES</label><span>1,402</span></div>
+                  <div className="meta-item">
+                    <label>VEHICULOS ACTIVOS</label>
+                    <span>{numero(resumen?.vehiculosActivos)}</span>
+                  </div>
+                  <div className="meta-item">
+                    <label>ACTUALIZAR</label>
+                    <span
+                      onClick={() => cargar(busqueda)}
+                      style={{ cursor: "pointer", textDecoration: "underline" }}
+                    >
+                      Recargar
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
+            {error && (
+              <div style={{
+                background: "rgba(220,38,38,0.15)", border: "1px solid rgba(220,38,38,0.4)",
+                color: "#fca5a5", padding: "12px 16px", borderRadius: 8, marginBottom: 16,
+              }}>
+                {error}
+              </div>
+            )}
+
             {/* STATS */}
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="stat-label">TOTAL CLIENTS</div>
+                <div className="stat-label">USUARIOS</div>
                 <div className="stat-icon"><NavIcon type="clients" /></div>
-                <div className="stat-value">412</div>
-                <div className="stat-sub"><span className="stat-change">+12%</span></div>
-                <div className="progress-bar" style={{ marginTop: 8 }}><div className="progress-fill" style={{ width: "60%" }} /></div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">GPS INVENTORY</div>
-                <div className="stat-icon"><NavIcon type="box" /></div>
-                <div className="stat-value">8,924</div>
-                <div className="stat-sub"><span className="in-stock">In-Stock</span>&nbsp; 2,100 units</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">ACTIVE SIGNAL</div>
-                <div className="stat-icon"><NavIcon type="signal" /></div>
-                <div className="stat-value">94.2<span style={{ fontSize: 18 }}>%</span></div>
-                <div className="signal-dots">
-                  {[1, 1, 1, 1, 0].map((on, i) => <div key={i} className={`signal-dot ${on ? "on" : "off"}`} />)}
-                  <span className="latency" style={{ marginLeft: 6 }}>Latency: 24ms</span>
+                <div className="stat-value">{numero(resumen?.totalUsuarios)}</div>
+                <div className="stat-sub">
+                  <span className="stat-change">{numero(resumen?.usuariosActivos)} activos</span>
+                </div>
+                <div className="progress-bar" style={{ marginTop: 8 }}>
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: resumen?.totalUsuarios
+                        ? `${Math.round((resumen.usuariosActivos / resumen.totalUsuarios) * 100)}%`
+                        : "0%",
+                    }}
+                  />
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-label">ALERT PROTOCOL</div>
+                <div className="stat-label">VEHICULOS</div>
+                <div className="stat-icon"><NavIcon type="box" /></div>
+                <div className="stat-value">{numero(resumen?.totalVehiculos)}</div>
+                <div className="stat-sub">
+                  <span className="in-stock">{numero(resumen?.vehiculosSinDuenno)}</span>&nbsp; sin asignar
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">CON GPS</div>
+                <div className="stat-icon"><NavIcon type="signal" /></div>
+                <div className="stat-value">
+                  {resumen?.totalVehiculos
+                    ? Math.round((resumen.vehiculosConImei / resumen.totalVehiculos) * 100)
+                    : 0}
+                  <span style={{ fontSize: 18 }}>%</span>
+                </div>
+                <div className="signal-dots">
+                  {[0, 1, 2, 3, 4].map((i) => {
+                    const proporcion = resumen?.totalVehiculos
+                      ? resumen.vehiculosConImei / resumen.totalVehiculos
+                      : 0;
+                    return <div key={i} className={`signal-dot ${i < Math.round(proporcion * 5) ? "on" : "off"}`} />;
+                  })}
+                  <span className="latency" style={{ marginLeft: 6 }}>
+                    {numero(resumen?.vehiculosConImei)} equipos
+                  </span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">ADMINISTRADORES</div>
                 <div className="stat-icon"><NavIcon type="warn" /></div>
-                <div className="alert-value">03</div>
-                <div className="alert-sub">Offline Critical Units</div>
+                <div className="alert-value">
+                  {String(resumen?.administradores ?? 0).padStart(2, "0")}
+                </div>
+                <div className="alert-sub">Con acceso al panel</div>
               </div>
             </div>
 
@@ -226,38 +354,63 @@ export default function Dashboard() {
             <div className="deployments">
               <div className="deployments-header">
                 <div>
-                  <div className="deployments-title">Recent Hardware Deployments</div>
-                  <div className="deployments-sub">Live feed of units commissioned in the last 24 hours.</div>
+                  <div className="deployments-title">Vehiculos registrados</div>
+                  <div className="deployments-sub">Ultimos vehiculos dados de alta en el sistema.</div>
                 </div>
-                <button className="export-btn"><NavIcon type="upload" /> Export CSV</button>
+                {/* Antes no tenia onClick: el boton no hacia nada. */}
+                <button className="export-btn" onClick={exportarCsv}>
+                  <NavIcon type="upload" /> Exportar CSV
+                </button>
               </div>
               <div className="table-header">
-                <span>DEVICE ID</span>
-                <span>ASSIGNED CLIENT</span>
-                <span>REGION</span>
-                <span>STATUS</span>
-                <span>LAST SYNC</span>
-                <span>ACTIONS</span>
+                <span>PLACA / IMEI</span>
+                <span>PROPIETARIO</span>
+                <span>MODELO</span>
+                <span>ESTADO</span>
+                <span>ALTA</span>
+                <span>ACCIONES</span>
               </div>
-              {[
-                { id: "RMP-9921-X", type: "MK. IV TRACKER", client: "Apex Logistics", initials: "AL", region: "North America (West)", sync: "2024-05-21\n09:12:04" },
-                { id: "RMP-4402-A", type: "STEALTH NODE", client: "Trans-States Oil", initials: "TS", region: "Middle East (Gulf)", sync: "2024-05-21\n08:55:21" },
-              ].map((row, i) => (
-                <div key={i} className="table-row">
-                  <div><div className="device-id">{row.id}</div><div className="device-type">{row.type}</div></div>
-                  <div className="client-cell">
-                    <div className="client-avatar">{row.initials}</div>
-                    <span className="client-name">{row.client}</span>
-                  </div>
-                  <div className="region">{row.region}</div>
-                  <div className="status-badge">
-                    <div className="status-dot operational" />
-                    <span className="status-op">OPERATIONAL</span>
-                  </div>
-                  <div className="sync-time" style={{ whiteSpace: "pre" }}>{row.sync}</div>
-                  <div className="row-actions">···</div>
+              {cargando && <div className="table-row"><div>Cargando...</div></div>}
+
+              {!cargando && vehiculos.length === 0 && (
+                <div className="table-row">
+                  <div>{busqueda ? "Sin resultados para la busqueda" : "Todavia no hay vehiculos registrados"}</div>
                 </div>
-              ))}
+              )}
+
+              {vehiculos.map((v) => {
+                const duenno = usuarios.find((u) => u.id === v.id_usuario);
+                const nombre = duenno ? `${duenno.nombre} ${duenno.apellido || ""}`.trim() : "Sin asignar";
+                return (
+                  <div key={v.id} className="table-row">
+                    <div>
+                      <div className="device-id">{v.placa}</div>
+                      <div className="device-type">{v.imei || "SIN GPS"}</div>
+                    </div>
+                    <div className="client-cell">
+                      <div className="client-avatar">{nombre.slice(0, 2).toUpperCase()}</div>
+                      <span className="client-name">{nombre}</span>
+                    </div>
+                    <div className="region">{v.modelo} - {v.tipo}</div>
+                    <div className="status-badge">
+                      <div className={`status-dot ${v.activo ? "operational" : ""}`} />
+                      <span className="status-op">{v.activo ? "ACTIVO" : "INACTIVO"}</span>
+                    </div>
+                    <div className="sync-time">
+                      {v.creadoEn ? new Date(v.creadoEn).toLocaleString("es-CO") : "-"}
+                    </div>
+                    <div className="row-actions">
+                      <button
+                        onClick={() => alternarEstadoVehiculo(v.id)}
+                        style={{ background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                        title={v.activo ? "Desactivar" : "Activar"}
+                      >
+                        {v.activo ? "Desactivar" : "Activar"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="page-footer">© 2024 ROMP GPS TELEMETRY SYSTEMS</div>

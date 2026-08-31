@@ -4,138 +4,88 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
-import com.gpsromp.config.JwtUtil;
+import com.gpsromp.Config.SeguridadService;
+import com.gpsromp.usuario.dto.*;
 import com.gpsromp.usuario.model.Usuario;
+import com.gpsromp.usuario.service.ServicioAutenticacion;
+import com.gpsromp.usuario.service.ServicioOauth;
 import com.gpsromp.usuario.service.UsuarioService;
-import com.gpsromp.vehiculo.model.Vehiculo;
+import com.gpsromp.vehiculo.dto.VehiculoMapper;
+import com.gpsromp.vehiculo.dto.VehiculoResponse;
+import com.gpsromp.vehiculo.service.VehiculoService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Endpoints de usuario y autenticación.
+ *
+ * La administración vive en AdminController (/admin/**) y la lógica de OAuth en
+ * ServicioOauth: este controlador pasó de ~400 líneas con llamadas HTTP a
+ * terceros embebidas a ser una capa fina de enrutado.
+ *
+ * Autorización (antes la única regla era .anyRequest().authenticated(), de modo
+ * que cualquier cuenta podía leer, editar y borrar los datos de cualquier otra):
+ *
+ *   GET    /usuario            → solo ADMIN
+ *   GET    /usuario/{id}       → el propio usuario o un ADMIN
+ *   PUT    /usuario/{id}       → el propio usuario o un ADMIN
+ *   DELETE /usuario/{id}       → solo ADMIN
+ *   PATCH  contraseña          → el titular (con la actual) o un ADMIN
+ *   GET    /usuario/vehiculos/ → el propio usuario o un ADMIN
+ */
 @RestController
 @RequestMapping("/usuario")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private final VehiculoService vehiculoService;
+    private final ServicioAutenticacion servicioAutenticacion;
+    private final ServicioOauth servicioOauth;
+    private final SeguridadService seguridadService;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Value("${google.client-id}")
-    private String googleClientId;
-
-    @Value("${github.client-id}")
-    private String githubClientId;
-
-    @Value("${github.client-secret}")
-    private String githubClientSecret;
+    // ============================================================== consultas
 
     @GetMapping
-    public ResponseEntity<List<Usuario>> obtenerTodosUsuarios() {
-        return ResponseEntity.ok(usuarioService.ObtenerUsuarios());
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UsuarioResponse>> obtenerTodosUsuarios() {
+        return ResponseEntity.ok(usuarioService.buscar(null, null, null, Pageable.unpaged())
+                .map(UsuarioMapper::aResponse)
+                .getContent());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> obtenerUsuariosId(@PathVariable UUID id) {
-        return usuarioService.ObtenerUsuariosPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiUsuario(#id, authentication)")
+    public ResponseEntity<UsuarioResponse> obtenerUsuariosId(@PathVariable UUID id) {
+        return ResponseEntity.ok(UsuarioMapper.aResponse(usuarioService.obtenerPorIdOFallar(id)));
     }
 
     @GetMapping("/usuario/{usuario}")
-    public ResponseEntity<Usuario> obtenerUsuariosPorUsuario(@PathVariable String usuario) {
-        return usuarioService.obtenerUsuariosPorUsuario(usuario)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario) {
-        if (usuarioService.existeUsuario(usuario.getUsuario())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "El nombre de usuario ya existe"));
-        }
-        if (usuarioService.existeCorreo(usuario.getCorreo())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "El email ya está registrado"));
-        }
-        Usuario nuevoUsuario = usuarioService.crearUsuario(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarUsuario(@PathVariable UUID id, @RequestBody Usuario usuario) {
-        try {
-            Usuario usuarioActualizado = usuarioService.actualizarUsuario(id, usuario);
-            return ResponseEntity.ok(usuarioActualizado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarUsuario(@PathVariable UUID id) {
-        usuarioService.eliminarUsuario(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/contrasena/{id}")
-    public ResponseEntity<Void> cambiarContrasena(@PathVariable UUID id, @RequestBody Map<String, String> body) {
-        String nuevaContrasena = body.get("nuevaContrasena");
-        if (nuevaContrasena == null || nuevaContrasena.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            usuarioService.cambiarContrasena(id, nuevaContrasena);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PatchMapping("/cambiar-estado/{id}")
-    public ResponseEntity<Void> cambiarEstadoUsuario(@PathVariable UUID id) {
-        try {
-            usuarioService.cambiarEstado(id);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiNombreUsuario(#usuario, authentication)")
+    public ResponseEntity<UsuarioResponse> obtenerUsuariosPorUsuario(@PathVariable String usuario) {
+        return ResponseEntity.ok(
+                UsuarioMapper.aResponse(usuarioService.obtenerPorNombreUsuarioOFallar(usuario)));
     }
 
     @GetMapping("/vehiculos/{usuarioId}")
-    public ResponseEntity<List<Vehiculo>> obtenerVehiculosPorUsuario(@PathVariable UUID usuarioId) {
-        return usuarioService.ObtenerUsuariosPorId(usuarioId)
-                .map(usuario -> ResponseEntity.ok(usuario.getVehiculos()))
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiUsuario(#usuarioId, authentication)")
+    public ResponseEntity<List<VehiculoResponse>> obtenerVehiculosPorUsuario(@PathVariable UUID usuarioId) {
+        usuarioService.obtenerPorIdOFallar(usuarioId);
+        return ResponseEntity.ok(vehiculoService.obtenerPorUsuario(usuarioId).stream()
+                .map(VehiculoMapper::aResponse)
+                .toList());
     }
 
+    /** Disponibilidad. Público: lo necesita el formulario de registro. */
     @GetMapping("/exists/usuario/{usuario}")
     public ResponseEntity<Map<String, Boolean>> existeUsuario(@PathVariable String usuario) {
         return ResponseEntity.ok(Map.of("exists", usuarioService.existeUsuario(usuario)));
@@ -146,255 +96,145 @@ public class UsuarioController {
         return ResponseEntity.ok(Map.of("exists", usuarioService.existeCorreo(correo)));
     }
 
+    // ============================================================== registro
+
+    /**
+     * Registro público.
+     *
+     * Recibe RegistroRequest, no la entidad Usuario: el DTO no declara rol, id,
+     * activo ni vehiculos, así que ya no se puede crear un administrador desde
+     * un endpoint sin autenticación.
+     */
+    @PostMapping
+    public ResponseEntity<UsuarioResponse> crearUsuario(@Valid @RequestBody RegistroRequest peticion) {
+        Usuario creado = usuarioService.registrar(peticion);
+        return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioMapper.aResponse(creado));
+    }
+
+    // ============================================================ mutaciones
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiUsuario(#id, authentication)")
+    public ResponseEntity<UsuarioResponse> actualizarUsuario(
+            @PathVariable UUID id,
+            @Valid @RequestBody ActualizarUsuarioRequest peticion) {
+
+        return ResponseEntity.ok(UsuarioMapper.aResponse(usuarioService.actualizar(id, peticion)));
+    }
+
+    /**
+     * Cambio de contraseña. Exige la actual salvo que quien llame sea ADMIN.
+     * Al terminar se revocan todas las sesiones: si alguien había robado un
+     * token, cambiar la contraseña debe echarlo fuera.
+     */
+    @PatchMapping("/contrasena/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiUsuario(#id, authentication)")
+    public ResponseEntity<Void> cambiarContrasena(
+            @PathVariable UUID id,
+            @Valid @RequestBody CambiarContrasenaRequest peticion,
+            Authentication auth) {
+
+        usuarioService.cambiarContrasena(id, peticion.contrasenaActual(),
+                peticion.nuevaContrasena(), seguridadService.esAdmin(auth));
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/cambiar-estado/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UsuarioResponse> cambiarEstadoUsuario(@PathVariable UUID id, Authentication auth) {
+        return ResponseEntity.ok(
+                UsuarioMapper.aResponse(usuarioService.cambiarEstado(id, auth.getName())));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> eliminarUsuario(@PathVariable UUID id, Authentication auth) {
+        usuarioService.eliminar(id, auth.getName());
+        return ResponseEntity.noContent().build();
+    }
+
+    // ======================================================== autenticación
+
+    @PostMapping("/login")
+    public ResponseEntity<SesionResponse> login(
+            @Valid @RequestBody LoginRequest credenciales,
+            HttpServletRequest peticionHttp) {
+
+        return ResponseEntity.ok(servicioAutenticacion.login(
+                credenciales.usuario(), credenciales.contrasena(), ipDe(peticionHttp)));
+    }
+
+    /**
+     * Renueva el par de tokens. El refresco usado se revoca y se emite otro
+     * (rotación), de modo que reutilizar uno robado falla.
+     */
+    @PostMapping("/refrescar")
+    public ResponseEntity<SesionResponse> refrescar(@Valid @RequestBody RefrescarRequest peticion) {
+        return ResponseEntity.ok(servicioAutenticacion.refrescar(peticion.refreshToken()));
+    }
+
+    /**
+     * Cierra la sesión en el servidor.
+     * Antes no existía: el frontend solo borraba el localStorage, así que el
+     * token seguía siendo válido durante 24 horas para quien lo tuviera.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefrescarRequest peticion) {
+        servicioAutenticacion.logout(peticion.refreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/google")
-    public ResponseEntity<?> loginConGoogle(@RequestBody Map<String, String> body) {
+    public ResponseEntity<SesionResponse> loginConGoogle(@RequestBody Map<String, String> body) {
 
-        String accessToken = body.get("tokenGoogle");
+        String accessToken = requerido(body.get("tokenGoogle"), "Token de Google requerido");
+        Usuario usuario = servicioOauth.autenticarConGoogle(accessToken, body.get("telefono"));
 
-        if (accessToken == null || accessToken.isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Token de Google requerido"));
-        }
+        boolean perfilCompleto = usuario.getTelefono() != null && !usuario.getTelefono().isBlank();
 
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + accessToken);
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<Map> googleResponse = restTemplate.exchange(
-                    "https://www.googleapis.com/oauth2/v3/userinfo",
-                    HttpMethod.GET,
-                    entity,
-                    Map.class);
-
-            if (!googleResponse.getStatusCode().is2xxSuccessful()
-                    || googleResponse.getBody() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Token de Google inválido"));
-            }
-
-            Map<String, Object> googleData = googleResponse.getBody();
-            String correoVerificado = (String) googleData.get("email");
-            String imagenVerificada = (String) googleData.get("picture");
-
-            String nombreRaw = googleData.get("given_name") != null ? (String) googleData.get("given_name") : (String) googleData.get("name");
-            String apellidoRaw = googleData.get("family_name") != null ? (String) googleData.get("family_name") : "";
-            String nombreVerificado = (nombreRaw != null && !nombreRaw.isBlank()) ? nombreRaw : "google_user";
-            String apellidoVerificado = (apellidoRaw != null) ? apellidoRaw : "";
-
-            String telefonoRecibido = body.getOrDefault("telefono", "");
-
-            Usuario usuario = usuarioService.obtenerPorCorreo(correoVerificado)
-                    .orElseGet(() -> {
-
-                        String base = (nombreVerificado + "_" + apellidoVerificado)
-                                .toLowerCase()
-                                .replaceAll("[^a-z0-9_]", "_")
-                                .replaceAll("_+", "_")
-                                .replaceAll("^_|_$", "");
-
-                        if (base.isBlank()) {
-                            base = "google_user";
-                        }
-
-                        String usernameUnico = base;
-                        if (usuarioService.existeUsuario(usernameUnico)) {
-                            usernameUnico = base + "_" + (int) (Math.random() * 9000 + 1000);
-                        }
-
-                        Usuario nuevo = new Usuario();
-                        nuevo.setUsuario(usernameUnico);
-                        nuevo.setCorreo(correoVerificado);
-                        nuevo.setNombre(nombreVerificado);
-                        nuevo.setApellido(apellidoVerificado);
-                        nuevo.setTelefono(telefonoRecibido.isBlank() ? null : telefonoRecibido);
-                        nuevo.setContrasena(UUID.randomUUID().toString());
-                        nuevo.setRol("USER");
-                        nuevo.setActivo(true);
-                        nuevo.setImagenUrl(imagenVerificada);
-                        return usuarioService.crearUsuario(nuevo);
-                    });
-
-            String token = jwtUtil.generarToken(usuario.getUsuario(), usuario.getRol());
-
-            boolean perfilCompleto = usuario.getTelefono() != null && !usuario.getTelefono().isBlank();
-
-            return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "usuario", usuario.getUsuario(),
-                    "rol", usuario.getRol(),
-                    "perfilCompleto", perfilCompleto));
-
-        } catch (Exception e) {
-            System.out.println("Error verificando token Google: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "No se pudo verificar la identidad con Google"));
-        }
+        return ResponseEntity.ok(
+                servicioAutenticacion.emitirSesion(usuario).conPerfilCompleto(perfilCompleto));
     }
 
     @PostMapping("/github")
-    public ResponseEntity<?> loginConGithub(@RequestBody Map<String, String> body) {
+    public ResponseEntity<SesionResponse> loginConGithub(@RequestBody Map<String, String> body) {
 
-        String accessToken = body.get("tokenGithub");
+        String accessToken = requerido(body.get("tokenGithub"), "Token de GitHub requerido");
+        Usuario usuario = servicioOauth.autenticarConGithub(accessToken);
 
-        if (accessToken == null || accessToken.isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Token de GitHub requerido"));
-        }
-
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + accessToken);
-            headers.set("Accept", "application/vnd.github+json");
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<Map> githubResponse = restTemplate.exchange(
-                    "https://api.github.com/user",
-                    HttpMethod.GET,
-                    entity,
-                    Map.class);
-
-            if (!githubResponse.getStatusCode().is2xxSuccessful()
-                    || githubResponse.getBody() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Token de GitHub inválido"));
-            }
-
-            Map<String, Object> githubData = githubResponse.getBody();
-
-            String correo = (String) githubData.get("email");
-            if (correo == null) {
-                ResponseEntity<List> emailsResponse = restTemplate.exchange(
-                        "https://api.github.com/user/emails",
-                        HttpMethod.GET,
-                        entity,
-                        List.class);
-
-                correo = ((List<Map<String, Object>>) emailsResponse.getBody())
-                        .stream()
-                        .filter(e -> Boolean.TRUE.equals(e.get("primary"))
-                                && Boolean.TRUE.equals(e.get("verified")))
-                        .map(e -> (String) e.get("email"))
-                        .findFirst()
-                        .orElse(null);
-            }
-
-            if (correo == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "No se pudo obtener el email de GitHub"));
-            }
-
-            String loginGithub = (String) githubData.get("login");
-            String imagenVerificada = (String) githubData.get("avatar_url");
-            final String correoFinal = correo;
-
-            Usuario usuario = usuarioService.obtenerPorCorreo(correoFinal)
-                    .orElseGet(() -> {
-                        String base = loginGithub
-                                .toLowerCase()
-                                .replaceAll("[^a-z0-9_]", "");
-
-                        if (base.isBlank())
-                            base = "github_user";
-
-                        String usernameUnico = base;
-                        if (usuarioService.existeUsuario(usernameUnico)) {
-                            usernameUnico = base + "_" + (int) (Math.random() * 9000 + 1000);
-                        }
-
-                        Usuario nuevo = new Usuario();
-                        nuevo.setUsuario(usernameUnico);
-                        nuevo.setCorreo(correoFinal);
-                        nuevo.setContrasena(UUID.randomUUID().toString());
-                        nuevo.setRol("USER");
-                        nuevo.setActivo(true);
-                        nuevo.setImagenUrl(imagenVerificada);
-                        return usuarioService.crearUsuario(nuevo);
-                    });
-
-            String token = jwtUtil.generarToken(usuario.getUsuario(), usuario.getRol());
-
-            return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "usuario", usuario.getUsuario(),
-                    "rol", usuario.getRol()));
-
-        } catch (Exception e) {
-            System.out.println("Error verificando token GitHub: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "No se pudo verificar la identidad con GitHub"));
-        }
+        return ResponseEntity.ok(servicioAutenticacion.emitirSesion(usuario));
     }
 
     @PostMapping("/github/callback")
-    public ResponseEntity<?> githubCallback(@RequestBody Map<String, String> body) {
-        String code = body.get("code");
+    public ResponseEntity<SesionResponse> githubCallback(@RequestBody Map<String, String> body) {
 
-        try {
-            RestTemplate restTemplate = new RestTemplate();
+        String code = requerido(body.get("code"), "Falta el código de GitHub");
+        String accessToken = servicioOauth.intercambiarCodigoGithub(code);
+        Usuario usuario = servicioOauth.autenticarConGithub(accessToken);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.set("Content-Type", "application/json");
-
-            Map<String, String> tokenRequest = Map.of(
-                    "client_id", githubClientId,
-                    "client_secret", githubClientSecret,
-                    "code", code);
-
-            ResponseEntity<Map> tokenResponse = restTemplate.exchange(
-                    "https://github.com/login/oauth/access_token",
-                    HttpMethod.POST,
-                    new HttpEntity<>(tokenRequest, headers),
-                    Map.class);
-
-            if (tokenResponse.getBody() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Respuesta vacía de GitHub"));
-            }
-
-            Object errorObj = tokenResponse.getBody().get("error");
-            if (errorObj != null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "GitHub rechazó el code: " + errorObj));
-            }
-
-            String accessToken = (String) tokenResponse.getBody().get("access_token");
-
-            if (accessToken == null || accessToken.isBlank()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "No se pudo obtener access_token de GitHub"));
-            }
-
-            return loginConGithub(Map.of("tokenGithub", accessToken));
-
-        } catch (Exception e) {
-            System.out.println("Error en callback GitHub: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Error en callback de GitHub"));
-        }
+        return ResponseEntity.ok(servicioAutenticacion.emitirSesion(usuario));
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            credenciales.get("usuario"),
-                            credenciales.get("contrasena")));
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Credenciales inválidas"));
+    // ============================================================== privados
+
+    private String requerido(String valor, String mensaje) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException(mensaje);
         }
+        return valor;
+    }
 
-        var usuario = usuarioService.obtenerUsuariosPorUsuario(credenciales.get("usuario")).get();
-        String token = jwtUtil.generarToken(usuario.getUsuario(), usuario.getRol());
-
-        return ResponseEntity.ok(Map.of(
-                "token", token,
-                "usuario", usuario.getUsuario(),
-                "rol", usuario.getRol()));
+    /**
+     * IP del cliente para el límite de intentos.
+     * Se respeta X-Forwarded-For por si hay un proxy delante; si no, la IP de
+     * la conexión.
+     */
+    private String ipDe(HttpServletRequest peticion) {
+        String reenviada = peticion.getHeader("X-Forwarded-For");
+        if (reenviada != null && !reenviada.isBlank()) {
+            return reenviada.split(",")[0].trim();
+        }
+        return peticion.getRemoteAddr();
     }
 }

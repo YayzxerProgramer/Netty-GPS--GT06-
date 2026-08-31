@@ -1,4 +1,4 @@
-package com.gpsromp.config;
+package com.gpsromp.Config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;

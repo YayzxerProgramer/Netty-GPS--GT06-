@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import "../Styles/PerfilUsuario.css";
 import PanelVehiculo from "../Components/PanelVehiculo";
 import { useNavigate } from "react-router-dom";
+import { cerrarSesion } from "../Service/sesion";
+import { API_URL } from "../Service/api";
 
 const ENLACES_NAV = [
     { icono: "person", etiqueta: "Perfil" },
@@ -9,7 +11,7 @@ const ENLACES_NAV = [
 ];
 
 const ENLACES_PIE_NAV = [
-    { icono: "logout", etiqueta: "Cerrar Sesión", onClick: () => { localStorage.clear(); window.location.href = "/login"; } },
+    { icono: "logout", etiqueta: "Cerrar Sesión", onClick: () => { cerrarSesion(); window.location.href = "/login"; } },
 ];
 
 function FondoAtmosferico() {
@@ -249,7 +251,7 @@ export default function PerfilUsuario() {
     const usuario = localStorage.getItem("usuario");
 
     useEffect(() => {
-        fetch(`http://localhost:8081/usuario/usuario/${usuario}`, {
+        fetch(`${API_URL}/usuario/usuario/${usuario}`, {
             method: "GET",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         })
@@ -270,7 +272,7 @@ export default function PerfilUsuario() {
             imagenUrl: usuarioData?.imagenUrl,
         };
 
-        fetch(`http://localhost:8081/usuario/${usuarioData.id}`, {
+        fetch(`${API_URL}/usuario/${usuarioData.id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",

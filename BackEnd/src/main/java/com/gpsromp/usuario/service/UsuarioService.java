@@ -1,42 +1,71 @@
 package com.gpsromp.usuario.service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.gpsromp.Config.ServicioTokens;
+import com.gpsromp.common.exception.OperacionNoPermitidaException;
+import com.gpsromp.common.exception.RecursoDuplicadoException;
+import com.gpsromp.common.exception.RecursoNoEncontradoException;
+import com.gpsromp.usuario.dto.ActualizarUsuarioRequest;
+import com.gpsromp.usuario.dto.CrearUsuarioAdminRequest;
+import com.gpsromp.usuario.dto.RegistroRequest;
+import com.gpsromp.usuario.model.Rol;
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.repository.UsuarioRepository;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Lógica de usuarios.
+ *
+ * Nota sobre la caché: se retiró @Cacheable("usuarios") de los listados. El
+ * RedisTemplate del proyecto serializa sin default typing, así que en un
+ * cache-hit la lista volvía como List<LinkedHashMap> disfrazada de
+ * List<Usuario> y cualquier acceso tipado lanzaba ClassCastException. Además
+ * cacheaba entidades con el hash BCrypt dentro de un Redis sin contraseña.
+ * Arreglar la serialización queda fuera del alcance de esta tarea; quitar la
+ * caché de aquí es correcto y no reintroduce el fallo.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ServicioTokens servicioTokens;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    // ---------------------------------------------------------------- consultas
 
-    @Cacheable(value = "usuarios")
-    public List<Usuario> ObtenerUsuarios() {
-        return usuarioRepository.findAll();
+    /** Listado paginado con búsqueda y filtros. Alimenta la tabla del panel. */
+    public Page<Usuario> buscar(String busqueda, Rol rol, Boolean activo, Pageable pageable) {
+        String texto = (busqueda == null) ? "" : busqueda.trim();
+        return usuarioRepository.buscar(texto, rol, activo, pageable);
     }
 
-    public Optional<Usuario> ObtenerUsuariosPorId(UUID id) {
+    public Usuario obtenerPorIdOFallar(UUID id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> RecursoNoEncontradoException.usuario(id));
+    }
+
+    public Optional<Usuario> obtenerPorId(UUID id) {
         return usuarioRepository.findById(id);
     }
 
-    public Optional<Usuario> obtenerUsuariosPorUsuario(String usuario) {
+    public Optional<Usuario> obtenerPorNombreUsuario(String usuario) {
         return usuarioRepository.findByUsuario(usuario);
+    }
+
+    public Usuario obtenerPorNombreUsuarioOFallar(String usuario) {
+        return usuarioRepository.findByUsuario(usuario)
+                .orElseThrow(() -> RecursoNoEncontradoException.usuario(usuario));
     }
 
     public Optional<Usuario> obtenerPorCorreo(String correo) {
@@ -51,72 +80,226 @@ public class UsuarioService {
         return usuarioRepository.existsByCorreo(correo);
     }
 
+    public long contarTodos() {
+        return usuarioRepository.count();
+    }
+
+    public long contarActivos() {
+        return usuarioRepository.countByActivoTrue();
+    }
+
+    public long contarPorRol(Rol rol) {
+        return usuarioRepository.countByRol(rol);
+    }
+
+    // ------------------------------------------------------------------- altas
+
+    /**
+     * Registro público. El rol NO se toma del cliente: siempre USER.
+     *
+     * Este es el punto donde se cierra la escalada de privilegios: antes el
+     * método recibía la entidad Usuario entera y solo forzaba "USER" si el rol
+     * venía vacío, de modo que {"rol":"ADMIN"} pasaba tal cual.
+     */
     @Transactional
-    @CacheEvict(value = "usuarios", allEntries = true)
-    public Usuario crearUsuario(Usuario usuario) {
-        if (usuario.getRol() == null || usuario.getRol().isBlank()) {
-            usuario.setRol("USER");
-        }
+    public Usuario registrar(RegistroRequest peticion) {
+        validarDisponibilidad(peticion.usuario(), peticion.correo());
+
+        Usuario usuario = new Usuario();
+        usuario.setNombre(peticion.nombre());
+        usuario.setApellido(peticion.apellido());
+        usuario.setUsuario(peticion.usuario());
+        usuario.setCorreo(peticion.correo());
+        usuario.setTelefono(vacioANull(peticion.telefono()));
+        usuario.setContrasena(passwordEncoder.encode(peticion.contrasena()));
+        usuario.setRol(Rol.USER);
+        usuario.setActivo(true);
+
+        return usuarioRepository.save(usuario);
+    }
+
+    /** Alta desde el panel. Aquí sí se acepta el rol, porque quien llama es ADMIN. */
+    @Transactional
+    public Usuario crearComoAdmin(CrearUsuarioAdminRequest peticion) {
+        validarDisponibilidad(peticion.usuario(), peticion.correo());
+
+        Usuario usuario = new Usuario();
+        usuario.setNombre(peticion.nombre());
+        usuario.setApellido(peticion.apellido());
+        usuario.setUsuario(peticion.usuario());
+        usuario.setCorreo(peticion.correo());
+        usuario.setTelefono(vacioANull(peticion.telefono()));
+        usuario.setContrasena(passwordEncoder.encode(peticion.contrasena()));
+        usuario.setRol(peticion.rol());
+        usuario.setActivo(peticion.activo() == null || peticion.activo());
+        usuario.setImagenUrl(peticion.imagenUrl());
+
+        return usuarioRepository.save(usuario);
+    }
+
+    /**
+     * Alta de usuarios que llegan por OAuth (Google / GitHub).
+     * Se mantiene separada porque no hay contraseña elegida por la persona.
+     */
+    @Transactional
+    public Usuario crearDesdeOauth(Usuario usuario) {
+        usuario.setRol(Rol.USER);
+        usuario.setActivo(true);
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
         return usuarioRepository.save(usuario);
     }
 
+    // ------------------------------------------------------------- mutaciones
+
+    /** Patch de perfil. Los campos null se dejan como estaban. No toca rol ni activo. */
     @Transactional
-    @CacheEvict(value = "usuarios", allEntries = true)
-    public Usuario actualizarUsuario(UUID id, Usuario usuarioDetalles) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    public Usuario actualizar(UUID id, ActualizarUsuarioRequest peticion) {
+        Usuario usuario = obtenerPorIdOFallar(id);
 
-        if (usuarioDetalles.getNombre() != null)
-            usuario.setNombre(usuarioDetalles.getNombre());
+        if (peticion.nombre() != null) {
+            usuario.setNombre(peticion.nombre());
+        }
+        if (peticion.apellido() != null) {
+            usuario.setApellido(peticion.apellido());
+        }
+        if (peticion.usuario() != null && !peticion.usuario().equals(usuario.getUsuario())) {
+            if (usuarioRepository.existsByUsuarioAndIdNot(peticion.usuario(), id)) {
+                throw new RecursoDuplicadoException("El nombre de usuario ya existe");
+            }
+            usuario.setUsuario(peticion.usuario());
+        }
+        if (peticion.correo() != null && !peticion.correo().equals(usuario.getCorreo())) {
+            if (usuarioRepository.existsByCorreoAndIdNot(peticion.correo(), id)) {
+                throw new RecursoDuplicadoException("El correo ya está registrado");
+            }
+            usuario.setCorreo(peticion.correo());
+        }
+        if (peticion.telefono() != null) {
+            usuario.setTelefono(vacioANull(peticion.telefono()));
+        }
+        if (peticion.imagenUrl() != null) {
+            usuario.setImagenUrl(peticion.imagenUrl());
+        }
 
-        if (usuarioDetalles.getApellido() != null)
-            usuario.setApellido(usuarioDetalles.getApellido());
+        return usuarioRepository.save(usuario);
+    }
 
-        if (usuarioDetalles.getUsuario() != null)
-            usuario.setUsuario(usuarioDetalles.getUsuario());
+    /**
+     * Cambio de rol. Solo ADMIN.
+     *
+     * Regla del último administrador: si se degrada al único ADMIN que queda,
+     * el sistema se queda sin acceso administrativo y sin forma de recuperarlo
+     * desde la interfaz. Se bloquea.
+     */
+    @Transactional
+    public Usuario cambiarRol(UUID id, Rol nuevoRol, String usuarioSolicitante) {
+        Usuario usuario = obtenerPorIdOFallar(id);
 
-        if (usuarioDetalles.getCorreo() != null)
-            usuario.setCorreo(usuarioDetalles.getCorreo());
+        if (usuario.getRol() == nuevoRol) {
+            return usuario;
+        }
 
-        if (usuarioDetalles.getTelefono() != null)
-            usuario.setTelefono(usuarioDetalles.getTelefono());
+        if (usuario.getRol() == Rol.ADMIN) {
+            if (usuario.getUsuario().equals(usuarioSolicitante)) {
+                throw new OperacionNoPermitidaException(
+                        "No puedes quitarte a ti mismo el rol de administrador");
+            }
+            verificarQueNoEsElUltimoAdmin();
+        }
 
-        if (usuarioDetalles.getActivo() != null)
-            usuario.setActivo(usuarioDetalles.getActivo());
+        usuario.setRol(nuevoRol);
+        return usuarioRepository.save(usuario);
+    }
 
-        if (usuarioDetalles.getImagenUrl() != null)
-            usuario.setImagenUrl(usuarioDetalles.getImagenUrl());
+    /**
+     * Activa o desactiva. Un usuario inactivo no puede autenticarse:
+     * ServicioDetallesUsuario lo rechaza y JwtFilter responde 401.
+     */
+    @Transactional
+    public Usuario cambiarEstado(UUID id, String usuarioSolicitante) {
+        Usuario usuario = obtenerPorIdOFallar(id);
+
+        if (usuario.getUsuario().equals(usuarioSolicitante)) {
+            throw new OperacionNoPermitidaException("No puedes desactivar tu propia cuenta");
+        }
+
+        boolean estabaActivo = Boolean.TRUE.equals(usuario.getActivo());
+        if (estabaActivo && usuario.getRol() == Rol.ADMIN) {
+            verificarQueNoEsElUltimoAdmin();
+        }
+
+        usuario.setActivo(!estabaActivo);
+
+        if (estabaActivo) {
+            // Desactivar sin revocar dejaria vivo su refresco durante 7 dias.
+            servicioTokens.revocarTodas(usuario.getUsuario());
+        }
 
         return usuarioRepository.save(usuario);
     }
 
     @Transactional
-    @CacheEvict(value = "usuarios", allEntries = true)
-    public void eliminarUsuario(UUID id) {
-        usuarioRepository.deleteById(id);
+    public void eliminar(UUID id, String usuarioSolicitante) {
+        Usuario usuario = obtenerPorIdOFallar(id);
+
+        if (usuario.getUsuario().equals(usuarioSolicitante)) {
+            throw new OperacionNoPermitidaException("No puedes eliminar tu propia cuenta");
+        }
+        if (usuario.getRol() == Rol.ADMIN) {
+            verificarQueNoEsElUltimoAdmin();
+        }
+
+        servicioTokens.revocarTodas(usuario.getUsuario());
+        usuarioRepository.delete(usuario);
     }
 
+    /**
+     * Cambio de contraseña.
+     *
+     * Si quien llama NO es administrador, debe aportar la contraseña actual y
+     * que coincida. Antes no se pedía nada, así que cualquier cuenta autenticada
+     * podía apoderarse de cualquier otra.
+     */
     @Transactional
-    @CacheEvict(value = "usuarios", allEntries = true)
-    public void cambiarEstado(UUID id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        usuario.setActivo(!usuario.getActivo());
-        usuarioRepository.save(usuario);
-    }
+    public void cambiarContrasena(UUID id, String contrasenaActual, String nuevaContrasena, boolean esAdmin) {
+        Usuario usuario = obtenerPorIdOFallar(id);
 
-    @Transactional
-    public void cambiarContrasena(UUID id, String nuevaContrasena) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        if (!esAdmin) {
+            if (contrasenaActual == null || contrasenaActual.isBlank()) {
+                throw new OperacionNoPermitidaException("Debes indicar tu contraseña actual");
+            }
+            if (!passwordEncoder.matches(contrasenaActual, usuario.getContrasena())) {
+                throw new OperacionNoPermitidaException("La contraseña actual no es correcta");
+            }
+        }
+
         usuario.setContrasena(passwordEncoder.encode(nuevaContrasena));
         usuarioRepository.save(usuario);
+
+        // Si alguien habia robado un token, cambiar la contrasena debe echarlo
+        // fuera. Antes el token seguia valido hasta caducar.
+        servicioTokens.revocarTodas(usuario.getUsuario());
     }
 
-    public boolean login(String usuario, String contrasena) {
-        return usuarioRepository.findByUsuario(usuario)
-                .map(u -> u.getActivo() && passwordEncoder.matches(contrasena, u.getContrasena()))
-                .orElse(false);
+    // --------------------------------------------------------------- privados
+
+    private void validarDisponibilidad(String usuario, String correo) {
+        if (usuarioRepository.existsByUsuario(usuario)) {
+            throw new RecursoDuplicadoException("El nombre de usuario ya existe");
+        }
+        if (usuarioRepository.existsByCorreo(correo)) {
+            throw new RecursoDuplicadoException("El correo ya está registrado");
+        }
+    }
+
+    private void verificarQueNoEsElUltimoAdmin() {
+        if (usuarioRepository.countByRol(Rol.ADMIN) <= 1) {
+            throw new OperacionNoPermitidaException(
+                    "Debe quedar al menos un administrador activo en el sistema");
+        }
+    }
+
+    private String vacioANull(String valor) {
+        return (valor == null || valor.isBlank()) ? null : valor;
     }
 }

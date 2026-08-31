@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import NavBar from './Components/NavBar'
 import Hero from './Components/Hero'
 import Nosotros from './Components/Nosotros'
@@ -12,11 +12,14 @@ import PanelUsuario from './Components/PerfilUsuario'
 import Registro from './Components/Registro'
 import AuthCallback from './Components/AuthCallback'
 import CambiarContrasena from './Components/CambiarContrasena'
+import Dashboard from './Components/Dashboard'
+import RutaProtegida from './Components/RutaProtegida'
 import './Styles/App.css'
 
 function App() {
   return (
     <Routes>
+      {/* ── Públicas ── */}
       <Route path="/" element={
         <>
           <NavBar />
@@ -28,24 +31,37 @@ function App() {
           <Footer />
         </>
       } />
-      <Route path="/login" element={
-        <Login />
+      <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<Registro />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+
+      {/* ── Panel administrativo: solo ADMIN ── */}
+      <Route path="/admin" element={
+        <RutaProtegida soloAdmin>
+          <Dashboard />
+        </RutaProtegida>
       } />
-      <Route path='/panel-control' element={
-        <PanelControl />
+
+      {/* ── Requieren sesión ── */}
+      <Route path="/panel-control" element={
+        <RutaProtegida>
+          <PanelControl />
+        </RutaProtegida>
       } />
       <Route path="/configuracion" element={
-        <PanelUsuario />
-      } />
-      <Route path="/registro" element={
-        <Registro />
-      } />
-      <Route path="/auth/callback" element={
-        <AuthCallback />
+        <RutaProtegida>
+          <PanelUsuario />
+        </RutaProtegida>
       } />
       <Route path="/cambiar-contrasena" element={
-        <CambiarContrasena />
+        <RutaProtegida>
+          <CambiarContrasena />
+        </RutaProtegida>
       } />
+
+      {/* Cualquier ruta desconocida vuelve al inicio en lugar de dejar la
+          pantalla en blanco, que es lo que pasaba al no haber catch-all. */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

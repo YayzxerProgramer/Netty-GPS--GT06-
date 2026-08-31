@@ -57,7 +57,7 @@ function Producto() {
 
                         <li>
                             <span className="punto"></span>
-                            Instalación "Plug-and-Monitor" en 5 minutos
+                            Instalación &quot;Plug-and-Monitor&quot; en 5 minutos
                         </li>
 
                     </ul>

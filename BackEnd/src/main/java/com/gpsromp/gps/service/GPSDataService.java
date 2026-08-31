@@ -1,7 +1,9 @@
 package com.gpsromp.gps.service;
 
+import com.gpsromp.common.exception.RecursoNoEncontradoException;
 import com.gpsromp.gps.model.GPSData;
 import com.gpsromp.gps.repository.GPSDataRepository;
+import com.gpsromp.vehiculo.repository.VehiculoRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,16 +21,54 @@ import java.util.Optional;
 public class GPSDataService {
 
     private final GPSDataRepository repository;
+    private final VehiculoRepository vehiculoRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String REDIS_PREFIX_GPS = "gps:posicion:";
 
     /**
-     * Guarda un nuevo registro GPS en MongoDB y actualiza la última posición en Redis
+     * Persiste una posición, actualiza la caché y la difunde por WebSocket.
+     *
+     * DOS ARREGLOS:
+     *
+     * 1. ORDEN. Antes se publicaba por WebSocket ANTES de guardar en Mongo, así
+     *    que si el guardado fallaba los clientes ya habían pintado una posición
+     *    que no existía en ningún sitio. Ahora se persiste primero y solo se
+     *    difunde lo que quedó guardado de verdad.
+     *
+     * 2. HORA DEL DISPOSITIVO. Antes se pisaba registradoEn con Instant.now(),
+     *    descartando la hora real del fix GPS que envía el GT06. El histórico
+     *    reflejaba la hora de ingesta, de modo que con reintentos o con el
+     *    buffer del propio dispositivo las trazas quedaban desordenadas. Ahora
+     *    se respeta la hora recibida y solo se recurre a la actual si no viene.
      */
     public GPSData save(GPSData gpsData) {
-        GPSData entity = GPSData.builder()
+
+        String imei = gpsData.getImei();
+
+        if (imei == null || imei.isBlank()) {
+            throw new IllegalArgumentException("La posición no trae IMEI");
+        }
+
+        // El IMEI debe corresponder a un vehículo registrado.
+        //
+        // La clave de ingesta impide que un tercero publique posiciones, pero no
+        // impide que un dispositivo legítimo —o un error de configuración— llene
+        // MongoDB con IMEI que no existen en el sistema. Además, esas posiciones
+        // se difundían por WebSocket a un topic que nadie puede escuchar, porque
+        // la autorización exige ser propietario de un vehículo con ese IMEI.
+        if (!vehiculoRepository.existsByImei(imei)) {
+            log.warn("Posición descartada: el IMEI {} no corresponde a ningún vehículo registrado", imei);
+            throw new RecursoNoEncontradoException(
+                    "No hay ningún vehículo registrado con el IMEI " + imei);
+        }
+
+        Instant momentoFix = gpsData.getRegistradoEn() != null
+                ? gpsData.getRegistradoEn()
+                : Instant.now();
+
+        GPSData entidad = GPSData.builder()
                 .imei(gpsData.getImei())
                 .latitud(gpsData.getLatitud())
                 .longitud(gpsData.getLongitud())
@@ -35,50 +76,56 @@ public class GPSDataService {
                 .gpsValido(gpsData.isGpsValido())
                 .acc(gpsData.isAcc())
                 .corteMotor(gpsData.isCorteMotor())
-                .registradoEn(Instant.now())
+                .registradoEn(momentoFix)
                 .creadosEn(Instant.now())
                 .build();
 
-        messagingTemplate.convertAndSend("/socket/gps/" + entity.getImei(), entity);
+        GPSData guardada = repository.save(entidad);
 
-        GPSData savedEntity = repository.save(entity);
-
-        // Guardar última posición en Redis (Clave: gps:posicion:<IMEI>)
         try {
-            redisTemplate.opsForValue().set(REDIS_PREFIX_GPS + savedEntity.getImei(), savedEntity);
-            log.info("Posición GPS guardada exitosamente en Redis para IMEI: {}", savedEntity.getImei());
+            redisTemplate.opsForValue().set(REDIS_PREFIX_GPS + guardada.getImei(), guardada);
         } catch (Exception e) {
-            log.error("No se pudo guardar la posición GPS en Redis: {}", e.getMessage());
+            // La caché es opcional: si Redis falla, la posición ya está en Mongo.
+            log.warn("No se pudo cachear la posición de {}: {}", guardada.getImei(), e.getMessage());
         }
 
-        return savedEntity;
+        messagingTemplate.convertAndSend("/socket/gps/" + guardada.getImei(), guardada);
+
+        log.debug("Posición de {} guardada y difundida", guardada.getImei());
+        return guardada;
     }
 
-    /**
-     * Obtiene la última posición conocida del GPS (Primero consulta Redis, si no existe consulta MongoDB)
-     */
+    /** Última posición conocida: primero Redis, si no MongoDB. */
     public Optional<GPSData> getLastPosition(String imei) {
         try {
-            Object cached = redisTemplate.opsForValue().get(REDIS_PREFIX_GPS + imei);
-            if (cached instanceof GPSData) {
-                log.info("Última posición obtenida desde Redis para IMEI: {}", imei);
-                return Optional.of((GPSData) cached);
+            Object cacheada = redisTemplate.opsForValue().get(REDIS_PREFIX_GPS + imei);
+            if (cacheada instanceof GPSData posicion) {
+                return Optional.of(posicion);
             }
         } catch (Exception e) {
-            log.error("Error consultando Redis para IMEI {}: {}", imei, e.getMessage());
+            log.warn("Error consultando Redis para {}: {}", imei, e.getMessage());
         }
 
-        log.info("Última posición obtenida desde MongoDB para IMEI: {}", imei);
-        Optional<GPSData> dbResult = repository.findFirstByImeiOrderByRegistradoEnDesc(imei);
+        Optional<GPSData> enBd = repository.findFirstByImeiOrderByRegistradoEnDesc(imei);
 
-        // Si se encontró en MongoDB pero no estaba en Redis, poblar Redis
-        dbResult.ifPresent(gps -> {
+        enBd.ifPresent(gps -> {
             try {
                 redisTemplate.opsForValue().set(REDIS_PREFIX_GPS + imei, gps);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("No se pudo repoblar la caché de {}: {}", imei, e.getMessage());
             }
         });
 
-        return dbResult;
+        return enBd;
+    }
+
+    /**
+     * Historial de recorrido en un rango de fechas.
+     *
+     * El método del repositorio existía desde el principio pero no lo llamaba
+     * nadie: no había servicio ni endpoint que lo expusiera.
+     */
+    public List<GPSData> getHistorial(String imei, Instant desde, Instant hasta) {
+        return repository.findByImeiAndRegistradoEnBetweenOrderByRegistradoEnDesc(imei, desde, hasta);
     }
 }
