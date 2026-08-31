@@ -29,7 +29,7 @@ function Pricing() {
                             </span>
 
                             <h3>
-                                $29
+                                $119.999
                                 <span>/mes</span>
                             </h3>
 
@@ -37,14 +37,14 @@ function Pricing() {
 
                         <ul className="caracteristicas-plan">
 
-                            <li><span>✓</span>1 Dispositivo Core-X</li>
-                            <li><span>✓</span>App Móvil Dashboard</li>
-                            <li><span>✓</span>Alertas de Geocerca (3)</li>
+                            <li><span>✓</span>1 Dispositivo GNXIS</li>
+                            <li><span>✓</span>App Web</li>
+                            <li><span>✓</span>Alertas de Geocerca</li>
 
                         </ul>
 
                         <button className="boton-precio secundario">
-                            Seleccionar Plan
+                            Hablar con Ventas
                         </button>
 
                     </div>
@@ -58,11 +58,11 @@ function Pricing() {
                         <div className="parte-superior-plan">
 
                             <span className="etiqueta-plan texto-destacado">
-                                Fleet Enterprise
+                                Empresarial
                             </span>
 
                             <h3>
-                                $149
+                                $499.999
                                 <span>/mes</span>
                             </h3>
 
@@ -70,8 +70,9 @@ function Pricing() {
 
                         <ul className="caracteristicas-plan">
 
-                            <li><span>✓</span>Hasta 10 Dispositivos</li>
-                            <li><span>✓</span>API Access & Webhooks</li>
+                            <li><span>✓</span>Hasta 5 Dispositivos GNXIS</li>
+                            <li><span>✓</span>App Web</li>
+                            <li><span>✓</span>Alertas de Geocerca</li>
                             <li><span>✓</span>Soporte Prioritario 24/7</li>
                             <li><span>✓</span>Reportes PDF Automatizados</li>
 

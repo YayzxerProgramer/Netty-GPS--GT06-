@@ -1,6 +1,6 @@
 .seccion-nosotros {
     position: relative;
-    padding: 180px 80px;
+    padding: var(--pad-seccion-y) var(--pad-seccion-x);
     background: #111411;
     overflow: hidden;
 }
@@ -12,28 +12,23 @@
 
 .parte-superior-nosotros {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 80px;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 5rem);
     align-items: end;
-    margin-bottom: 120px;
+    margin-bottom: clamp(4rem, 9vw, 7.5rem);
 }
 
-.etiqueta-seccion {
-    display: inline-block;
-    margin-bottom: 28px;
-    color: #b2cea8;
-    font-size: 12px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 5px;
+/* Faltaba en el CSS: se usa en Nosotros.jsx */
+.izquierda-nosotros {
+    min-width: 0;
 }
 
 .titulo-nosotros {
     margin: 0;
-    font-size: 58px;
+    font-size: clamp(2rem, 5.2vw, 3.625rem);
     line-height: 1.15;
     font-weight: 800;
-    letter-spacing: -2px;
+    letter-spacing: -0.03em;
     color: #f2f5f0;
     max-width: 900px;
 }
@@ -45,19 +40,19 @@
 .derecha-nosotros p {
     margin: 0;
     color: #9aa19a;
-    font-size: 18px;
+    font-size: clamp(1rem, 2vw, 1.125rem);
     line-height: 1.9;
 }
 
 .cuadricula-caracteristicas {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 2px;
 }
 
 .tarjeta-caracteristica {
     position: relative;
-    padding: 70px 50px;
+    padding: clamp(2.5rem, 5vw, 4.375rem) clamp(1.75rem, 3.5vw, 3.125rem);
     background: #1c211d;
     transition:
         transform 0.4s ease,
@@ -71,9 +66,10 @@
 }
 
 .icono-caracteristica {
-    margin-bottom: 36px;
+    margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
     color: #b2cea8;
-    font-size: 52px;
+    font-size: clamp(2.5rem, 5vw, 3.25rem);
+    line-height: 1;
     transition: 0.4s ease;
 }
 
@@ -84,7 +80,7 @@
 .tarjeta-caracteristica h3 {
     margin: 0 0 18px 0;
     color: #f1f4ef;
-    font-size: 28px;
+    font-size: clamp(1.35rem, 2.6vw, 1.75rem);
     font-weight: 800;
     letter-spacing: -1px;
 }
@@ -98,24 +94,18 @@
 
 @media (max-width: 1100px) {
     .parte-superior-nosotros {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
     }
 
+    /* Paso intermedio: 2 columnas en tablet antes de caer a 1 */
     .cuadricula-caracteristicas {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 768px) {
-    .seccion-nosotros {
-        padding: 120px 24px;
-    }
-
-    .titulo-nosotros {
-        font-size: 42px;
-    }
-
-    .tarjeta-caracteristica {
-        padding: 50px 32px;
+@media (max-width: 700px) {
+    .cuadricula-caracteristicas {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

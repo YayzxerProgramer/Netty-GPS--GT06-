@@ -1,7 +1,7 @@
 .pie-pagina {
-    padding: 60px 80px;
+    padding: clamp(2.5rem, 6vw, 3.75rem) var(--pad-seccion-x);
     background: #0b0d0b;
-    border-top: 1px solid rgba(178,206,168,0.06);
+    border-top: 1px solid rgba(178, 206, 168, 0.06);
 }
 
 .contenedor-pie {
@@ -11,28 +11,52 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
+    gap: clamp(1.5rem, 6vw, 6rem);
 }
 
 .logo-pie {
     color: #f5fff1;
-    font-size: 26px;
+    font-size: clamp(1.25rem, 3vw, 1.625rem);
     font-weight: 800;
+    letter-spacing: -0.02em;
 }
 
 .enlaces-pie {
     display: flex;
-    gap: 34px;
+    flex-wrap: wrap;
+    gap: clamp(1rem, 3vw, 2.125rem);
 }
 
 .enlaces-pie a {
-    color: rgba(255,255,255,0.38);
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tactil-min);
+    color: rgba(255, 255, 255, 0.38);
     text-decoration: none;
     font-size: 11px;
-    letter-spacing: 3px;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
+    transition: color 0.3s ease;
+}
+
+.enlaces-pie a:hover {
+    color: #b2cea8;
 }
 
 .derechos-pie {
-    color: rgba(255,255,255,0.35);
+    color: rgba(255, 255, 255, 0.35);
     font-size: 11px;
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 860px) {
+    .contenedor-pie {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .enlaces-pie {
+        justify-content: center;
+    }
 }
