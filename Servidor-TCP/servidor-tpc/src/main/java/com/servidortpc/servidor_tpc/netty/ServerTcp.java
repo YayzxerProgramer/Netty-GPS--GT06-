@@ -1,56 +1,75 @@
 package com.servidortpc.servidor_tpc.netty;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
-import com.servidortpc.servidor_tpc.Service.GpsDataService;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+/**
+ * Servidor TCP para los dispositivos GT06.
+ *
+ * El puerto pasa a ser configurable (gps.tcp.puerto). Estaba escrito a mano
+ * como 9000, y el Dockerfile del módulo expone el 8080 —el HTTP— pero NO el
+ * 9000, que es por donde entran los GPS de verdad.
+ *
+ * Se inyecta GpsInitializer como bean en lugar de construirlo a mano: antes
+ * existían dos instancias, la del contenedor de Spring y la creada con new, y
+ * la del contenedor no se usaba para nada.
+ */
 @Component
 public class ServerTcp {
 
-    private final GpsInitializer gpsInitializer;
-    private EventLoopGroup aceptarConexiones;
-    private EventLoopGroup procesaDatos;
-    @SuppressWarnings("unused")
-    private final GpsDataService gpsDataService;
-    @SuppressWarnings("unused")
-    private final RestTemplate restTemplate;
+    private static final Logger log = LoggerFactory.getLogger(ServerTcp.class);
 
-    public ServerTcp(GpsDataService gpsDataService, RestTemplate restTemplate) {
-        this.gpsDataService = gpsDataService;
-        this.restTemplate = restTemplate;
-        this.gpsInitializer = new GpsInitializer(gpsDataService, restTemplate);
+    private final GpsInitializer gpsInitializer;
+
+    private EventLoopGroup aceptarConexiones;
+    private EventLoopGroup procesarDatos;
+
+    @Value("${gps.tcp.puerto:9000}")
+    private int puerto;
+
+    public ServerTcp(GpsInitializer gpsInitializer) {
+        this.gpsInitializer = gpsInitializer;
     }
 
-    @SuppressWarnings("deprecation")
     @PostConstruct
-    public void iniciarServidor() throws Exception {
+    public void iniciarServidor() throws InterruptedException {
         aceptarConexiones = new NioEventLoopGroup(1);
-        procesaDatos = new NioEventLoopGroup();
+        procesarDatos = new NioEventLoopGroup();
 
-        ServerBootstrap server = new ServerBootstrap();
-
-        server
-                .group(aceptarConexiones, procesaDatos)
+        new ServerBootstrap()
+                .group(aceptarConexiones, procesarDatos)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(gpsInitializer);
+                // Reutilizar la dirección evita el "Address already in use" al
+                // reiniciar mientras quedan sockets en TIME_WAIT.
+                .option(ChannelOption.SO_REUSEADDR, true)
+                // Los GT06 mandan tramas pequeñas: sin esto, Nagle las retiene.
+                .childOption(ChannelOption.TCP_NODELAY, true)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childHandler(gpsInitializer)
+                .bind(puerto)
+                .sync();
 
-        server.bind(9000).sync();
-
-        System.out.println("TCP GPS Server escuchando en puerto 9000");
+        log.info("Servidor TCP GT06 escuchando en el puerto {}", puerto);
     }
 
     @PreDestroy
     public void cerrarServidor() {
-        aceptarConexiones.shutdownGracefully();
-        procesaDatos.shutdownGracefully();
+        log.info("Cerrando el servidor TCP");
+        if (aceptarConexiones != null) {
+            aceptarConexiones.shutdownGracefully();
+        }
+        if (procesarDatos != null) {
+            procesarDatos.shutdownGracefully();
+        }
     }
-
 }

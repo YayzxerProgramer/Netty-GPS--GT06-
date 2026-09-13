@@ -17,10 +17,11 @@
 .contenedor-barra {
     max-width: 1400px;
     margin: auto;
-    padding: 22px 60px;
+    padding: clamp(14px, 2.2vw, 22px) var(--pad-seccion-x);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
 }
 
 .logo {
@@ -28,24 +29,26 @@
     align-items: center;
     gap: 12px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .logo-icono {
     color: #b2cea8;
-    font-size: 28px;
+    font-size: clamp(22px, 3vw, 28px);
 }
 
 .logo-texto {
     color: #f5fff1;
-    font-size: 28px;
+    font-size: clamp(20px, 3vw, 28px);
     font-weight: 800;
     letter-spacing: -1px;
+    white-space: nowrap;
 }
 
 .enlaces-nav {
     display: flex;
     align-items: center;
-    gap: 42px;
+    gap: clamp(20px, 3.2vw, 42px);
 }
 
 .enlaces-nav a {
@@ -78,26 +81,26 @@
     width: 100%;
 }
 
+.acciones-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
 .boton-nav {
     padding: 14px 24px;
     border: none;
     border-radius: 10px;
-    background:
-        linear-gradient(to bottom right,
-            #b2cea8,
-            #354d2f);
+    background: linear-gradient(to bottom right, #b2cea8, #354d2f);
     color: #24331f;
     font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 2px;
     cursor: pointer;
+    white-space: nowrap;
     transition: 0.3s ease;
-}
-
-.boton-nav a {
-    text-decoration: none;
-    color: rgba(255, 255, 255, 0.65);
 }
 
 .boton-nav:hover {
@@ -106,23 +109,136 @@
     box-shadow: 0 10px 30px rgba(178, 206, 168, 0.2);
 }
 
-@media (max-width: 950px) {
-    .contenedor-barra {
-        padding: 20px 24px;
+/* ── Hamburguesa ──────────────────────────────────────────── */
+
+.boton-hamburguesa {
+    display: none;
+    width: var(--tactil-min);
+    height: var(--tactil-min);
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(178, 206, 168, 0.08);
+    border: 1px solid rgba(178, 206, 168, 0.15);
+}
+
+.icono-hamburguesa {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 20px;
+    height: 14px;
+}
+
+.icono-hamburguesa span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 2px;
+    background: #b2cea8;
+    transition: transform 0.3s ease, opacity 0.2s ease;
+}
+
+.icono-hamburguesa--activo span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.icono-hamburguesa--activo span:nth-child(2) {
+    opacity: 0;
+}
+
+.icono-hamburguesa--activo span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+/* ── Menú desplegable móvil ───────────────────────────────── */
+
+.menu-movil {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px var(--pad-seccion-x) 28px;
+    background: rgba(6, 20, 13, 0.98);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(178, 206, 168, 0.08);
+    animation: desplegar-menu 0.28s ease;
+}
+
+.menu-movil--abierto {
+    display: flex;
+}
+
+@keyframes desplegar-menu {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
     }
 
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.menu-movil a {
+    display: flex;
+    align-items: center;
+    min-height: var(--tactil-min);
+    padding: 4px 0;
+    color: rgba(255, 255, 255, 0.72);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.menu-movil a:active {
+    color: #b2cea8;
+}
+
+.boton-nav--movil {
+    margin-top: 16px;
+    width: 100%;
+    padding: 16px 24px;
+}
+
+.velo-menu {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.velo-menu--visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ── Breakpoints ──────────────────────────────────────────── */
+
+@media (max-width: 950px) {
     .enlaces-nav {
+        display: none;
+    }
+
+    .boton-hamburguesa {
+        display: flex;
+    }
+
+    /* En móvil el CTA vive dentro del menú desplegable */
+    .acciones-nav > .boton-nav {
         display: none;
     }
 }
 
 @media (max-width: 600px) {
-    .logo-texto {
+    .logo-icono {
         font-size: 22px;
-    }
-
-    .boton-nav {
-        padding: 12px 18px;
-        font-size: 10px;
     }
 }

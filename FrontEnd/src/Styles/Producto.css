@@ -1,6 +1,6 @@
 .seccion-producto {
     position: relative;
-    padding: 180px 80px;
+    padding: var(--pad-seccion-y) var(--pad-seccion-x);
     background: #0d0f0d;
     overflow: hidden;
 }
@@ -9,13 +9,14 @@
     max-width: 1400px;
     margin: auto;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 120px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(3rem, 8vw, 7.5rem);
     align-items: center;
 }
 
 .envoltorio-imagen-producto {
     position: relative;
+    min-width: 0;
 }
 
 .caja-imagen-producto {
@@ -46,7 +47,7 @@
     position: absolute;
     top: -40px;
     left: -40px;
-    padding: 34px;
+    padding: clamp(1.25rem, 3vw, 2.125rem);
     border-radius: 20px;
     background: rgba(28, 33, 29, 0.75);
     backdrop-filter: blur(20px);
@@ -57,31 +58,32 @@
 .metrica-flotante h3 {
     margin: 0 0 8px 0;
     color: #b2cea8;
-    font-size: 72px;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
     font-weight: 800;
     line-height: 1;
 }
 
 .metrica-flotante span {
     color: #9ea59e;
-    font-size: 12px;
+    font-size: clamp(10px, 1.5vw, 12px);
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 0.25em;
 }
 
 .contenido-producto {
     display: flex;
     flex-direction: column;
-    gap: 34px;
+    gap: clamp(1.5rem, 3.5vw, 2.125rem);
+    min-width: 0;
 }
 
 .titulo-producto {
     margin: 0;
-    font-size: 68px;
-    line-height: 0.95;
+    font-size: clamp(2.25rem, 6vw, 4.25rem);
+    line-height: 0.98;
     font-weight: 800;
-    letter-spacing: -3px;
+    letter-spacing: -0.035em;
     color: #f2f5f0;
 }
 
@@ -93,7 +95,7 @@
 .descripcion-producto {
     max-width: 620px;
     color: #a7ada5;
-    font-size: 20px;
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
     line-height: 1.9;
 }
 
@@ -103,7 +105,7 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
 }
 
 .caracteristicas-producto li {
@@ -111,7 +113,7 @@
     align-items: center;
     gap: 18px;
     color: #f2f5f0;
-    font-size: 17px;
+    font-size: clamp(0.95rem, 2vw, 1.0625rem);
 }
 
 .punto {
@@ -124,6 +126,7 @@
 
 .boton-especificaciones {
     width: fit-content;
+    min-height: var(--tactil-min);
     margin-top: 12px;
     display: flex;
     align-items: center;
@@ -133,8 +136,9 @@
     color: #b2cea8;
     font-size: 12px;
     font-weight: 800;
-    letter-spacing: 4px;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
+    text-align: left;
     cursor: pointer;
     transition: 0.3s ease;
 }
@@ -150,17 +154,34 @@
 
 @media (max-width: 1150px) {
     .contenedor-producto {
-        grid-template-columns: 1fr;
-        gap: 80px;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 5rem;
+    }
+
+    /* Deja sitio arriba para la métrica flotante */
+    .envoltorio-imagen-producto {
+        margin-top: 40px;
     }
 }
 
 @media (max-width: 768px) {
-    .seccion-producto {
-        padding: 120px 24px;
+    /* Ya no sobresale del contenedor: se ancla dentro de la imagen */
+    .metrica-flotante {
+        top: auto;
+        left: 16px;
+        bottom: 16px;
+        right: 16px;
+        width: auto;
+        border-radius: 16px;
     }
 
-    .titulo-producto {
-        font-size: 48px;
+    .envoltorio-imagen-producto {
+        margin-top: 0;
+    }
+
+    .boton-especificaciones {
+        width: 100%;
+        justify-content: space-between;
+        letter-spacing: 0.2em;
     }
 }

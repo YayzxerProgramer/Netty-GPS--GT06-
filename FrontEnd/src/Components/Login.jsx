@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { TypeAnimation } from 'react-type-animation';
 import { Link } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
-import { iniciarLoginGithub } from "../Service/GitgubService";
+import { iniciarLoginGithub } from "../Service/GithubService";
+import { guardarSesion, rutaInicial } from "../Service/sesion";
+import { API_URL } from "../Service/api";
 
 
 function CajaEstadistica({ valor, etiqueta }) {
@@ -102,7 +104,7 @@ function FormularioSesion() {
             contrasena
         }
 
-        fetch("http://localhost:8081/usuario/login", {
+        fetch(`${API_URL}/usuario/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(auth)
@@ -115,12 +117,12 @@ function FormularioSesion() {
                 return respuesta.json()
             })
             .then((data) => {
-                localStorage.setItem("token", data.token);
-                localStorage.setItem("usuario", data.usuario);
+                guardarSesion(data);
 
                 setError(false);
 
-                navigate("/panel-control");
+                // Un ADMIN entra al panel administrativo; el resto, al de control.
+                navigate(rutaInicial());
             })
             .catch((error) => {
                 console.error(error)
@@ -161,7 +163,7 @@ function FormularioSesion() {
 
                 // Enviar al backend
                 const backendRes = await fetch(
-                    "http://localhost:8081/usuario/google",
+                    `${API_URL}/usuario/google`,
                     {
                         method: "POST",
                         headers: {
@@ -184,10 +186,9 @@ function FormularioSesion() {
 
                 const data = await backendRes.json()
 
-                localStorage.setItem("token", data.token)
-                localStorage.setItem("usuario", data.usuario)
+                guardarSesion(data)
 
-                navigate("/panel-control")
+                navigate(rutaInicial())
 
             } catch (err) {
 

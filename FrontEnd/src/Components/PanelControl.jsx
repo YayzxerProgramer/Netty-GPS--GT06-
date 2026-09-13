@@ -4,6 +4,8 @@ import { useGpsSocket } from "../Service/GpsDataService";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "../Styles/PanelControl.css";
+import { cerrarSesion } from "../Service/sesion";
+import { API_URL } from "../Service/api";
 const IMEI = "0863874084559974";
 
 const sparkHeights = ["40%", "60%", "55%", "80%", "95%", "70%", "85%"];
@@ -42,7 +44,7 @@ export default function PanelControl() {
 
     useEffect(() => {
 
-        fetch(`http://localhost:8081/usuario/usuario/${usuario}`, {
+        fetch(`${API_URL}/usuario/usuario/${usuario}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -62,7 +64,7 @@ export default function PanelControl() {
 
         if (!usuarioData) return;
 
-        fetch(`http://localhost:8081/usuario/vehiculos/${usuarioData.id}`, {
+        fetch(`${API_URL}/usuario/vehiculos/${usuarioData.id}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -79,9 +81,8 @@ export default function PanelControl() {
     }, [usuarioData]);
 
     function cerrarSesion() {
-        localStorage.removeItem("token");
-        localStorage.removeItem("usuario");
-        navigate("/login");
+        cerrarSesion();
+        navigate("/login", { replace: true });
     }
 
     return (
@@ -219,7 +220,7 @@ export default function PanelControl() {
 
                         {/* MapaGPS toma todo el espacio disponible */}
                         <div className="contenedor-mapa-real">
-                            <MapaGPS />
+                            <MapaGPS position={position} connected={connected} />
                         </div>
 
                         <div className="superposicion-degradado"></div>

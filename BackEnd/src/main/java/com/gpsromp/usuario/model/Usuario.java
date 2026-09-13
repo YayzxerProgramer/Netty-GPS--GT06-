@@ -1,12 +1,11 @@
 package com.gpsromp.usuario.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import com.gpsromp.vehiculo.model.Vehiculo;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 import java.io.Serializable;
 
@@ -25,23 +24,30 @@ public class Usuario implements Serializable {
 
     private String apellido;
 
+    @Column(unique = true, nullable = false)
     private String usuario;
 
+    /**
+     * Hash BCrypt. @JsonIgnore es defensa en profundidad: la API responde con
+     * UsuarioResponse, que ni siquiera declara este campo, pero si alguien
+     * serializa la entidad por error el hash no sale.
+     */
+    @JsonIgnore
     private String contrasena;
 
+    @Column(unique = true, nullable = false)
     private String correo;
 
     private String telefono;
 
-    @Column(nullable = false)
-    private String rol = "USER";
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Rol rol = Rol.USER;
 
+    @Column(nullable = false)
     private Boolean activo = true;
 
     private String imagenUrl;
-
-    @OneToMany(mappedBy = "id_usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Vehiculo> vehiculos;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -49,10 +55,4 @@ public class Usuario implements Serializable {
 
     @UpdateTimestamp
     private LocalDateTime actualizadoEn;
-
-    public enum Rol {
-        ADMIN,
-        USER,
-        VIEWER
-    }
 }
