@@ -5,9 +5,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import com.gpsromp.Config.JwtUtil;
-import com.gpsromp.Config.ServicioLimiteIntentos;
-import com.gpsromp.Config.ServicioTokens;
+import com.gpsromp.config.JwtUtil;
+import com.gpsromp.config.ServicioLimiteIntentos;
+import com.gpsromp.config.ServicioTokens;
 import com.gpsromp.common.exception.OperacionNoPermitidaException;
 import com.gpsromp.usuario.dto.SesionResponse;
 import com.gpsromp.usuario.model.Usuario;

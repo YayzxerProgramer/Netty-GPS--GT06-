@@ -1,4 +1,4 @@
-package com.gpsromp.Config;
+package com.gpsromp.config;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -60,8 +60,7 @@ public class FiltroLimiteIntentos extends OncePerRequestFilter {
         String ruta = request.getRequestURI();
 
         boolean esPostCubierto = "POST".equals(request.getMethod()) && RUTAS_POST.contains(ruta);
-        boolean esConsultaDisponibilidad =
-                "GET".equals(request.getMethod()) && ruta.startsWith(PREFIJO_EXISTS);
+        boolean esConsultaDisponibilidad = "GET".equals(request.getMethod()) && ruta.startsWith(PREFIJO_EXISTS);
 
         return !(esPostCubierto || esConsultaDisponibilidad);
     }
