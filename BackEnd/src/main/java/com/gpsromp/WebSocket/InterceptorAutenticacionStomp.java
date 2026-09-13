@@ -12,9 +12,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import com.gpsromp.Config.JwtUtil;
-import com.gpsromp.Config.SeguridadService;
-import com.gpsromp.Config.ServicioDetallesUsuario;
+import com.gpsromp.config.JwtUtil;
+import com.gpsromp.config.SeguridadService;
+import com.gpsromp.config.ServicioDetallesUsuario;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

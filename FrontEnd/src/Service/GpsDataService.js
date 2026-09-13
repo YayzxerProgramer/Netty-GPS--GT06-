@@ -82,3 +82,74 @@ export function useGpsSocket(imei) {
 
   return { position, connected, error };
 }
+
+/**
+ * Suscripción a varias posiciones a la vez, para el monitor de flota.
+ *
+ * useGpsSocket abre un cliente STOMP por IMEI. Con veinte vehículos en
+ * pantalla eso serían veinte WebSockets contra el mismo servidor. Este hook
+ * abre uno solo y se suscribe a un destino por IMEI dentro de esa conexión.
+ *
+ * Devuelve un objeto { [imei]: posicion } que se va rellenando según llegan
+ * las tramas.
+ */
+export function useFlotaSocket(imeis) {
+  const [posiciones, setPosiciones] = useState({});
+  const [connected, setConnected] = useState(false);
+  const [errorConexion, setErrorConexion] = useState(null);
+
+  const token = obtenerToken();
+
+  // Clave estable: el array de IMEIs es nuevo en cada render del padre, y
+  // usarlo como dependencia reconectaba el WebSocket continuamente.
+  const clave = imeis.slice().sort().join(",");
+
+  useEffect(() => {
+    if (!token || !clave) return;
+
+    const lista = clave.split(",");
+
+    const client = new Client({
+      brokerURL: urlWebSocket(),
+      connectHeaders: { Authorization: `Bearer ${token}` },
+
+      onConnect: () => {
+        setConnected(true);
+        setErrorConexion(null);
+
+        lista.forEach((imei) => {
+          client.subscribe(`/socket/gps/${imei}`, (mensaje) => {
+            try {
+              const posicion = JSON.parse(mensaje.body);
+              setPosiciones((previas) => ({ ...previas, [imei]: posicion }));
+            } catch {
+              setErrorConexion("Mensaje de posición ilegible");
+            }
+          });
+        });
+      },
+
+      onStompError: (frame) => {
+        setConnected(false);
+        setErrorConexion(frame.headers?.message || "No se pudo conectar al servidor");
+      },
+
+      onWebSocketError: () => {
+        setConnected(false);
+        setErrorConexion("Sin conexión con el servidor");
+      },
+
+      onDisconnect: () => setConnected(false),
+
+      reconnectDelay: 5000,
+    });
+
+    client.activate();
+
+    return () => { client.deactivate(); };
+  }, [clave, token]);
+
+  const error = !token ? "Sesión no iniciada" : errorConexion;
+
+  return { posiciones, connected, error };
+}

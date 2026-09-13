@@ -41,7 +41,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?falta en .env}
       MONGO_INITDB_DATABASE: Romp_Gps
     ports:
-      - "127.0.0.1:27017:27017"
+      # 27018 y no 27017, por el mismo motivo que Postgres usa el 5435: en
+      # Windows el servicio nativo de MongoDB ocupa el 27017.
+      - "127.0.0.1:27018:27017"
     volumes:
       - mongodb_data:/data/db
     networks:

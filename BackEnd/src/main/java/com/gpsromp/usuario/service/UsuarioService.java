@@ -9,7 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.gpsromp.Config.ServicioTokens;
+import com.gpsromp.config.ServicioTokens;
 import com.gpsromp.common.exception.OperacionNoPermitidaException;
 import com.gpsromp.common.exception.RecursoDuplicadoException;
 import com.gpsromp.common.exception.RecursoNoEncontradoException;

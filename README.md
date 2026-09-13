@@ -58,9 +58,9 @@ Tres reglas que evitan los fallos más habituales:
 docker compose up -d
 ```
 
-Levanta PostgreSQL (**5435**, no 5432), MongoDB (27017) y Redis (6379), los tres publicados solo en `127.0.0.1` y con autenticación.
+Levanta PostgreSQL (**5435**, no 5432), MongoDB (**27018**, no 27017) y Redis (6379), los tres publicados solo en `127.0.0.1` y con autenticación.
 
-> El puerto de PostgreSQL es 5435 porque en Windows el servicio nativo ocupa el 5432 y gana las conexiones a `localhost` por delante del proxy de Docker.
+> Los puertos de PostgreSQL y MongoDB están desplazados porque en Windows los servicios nativos ocupan el 5432 y el 27017, y ganan las conexiones a `localhost` por delante del proxy de Docker.
 
 ### 3. Migración de base de datos
 
