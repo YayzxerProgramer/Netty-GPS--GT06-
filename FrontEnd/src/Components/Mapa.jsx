@@ -17,9 +17,11 @@ function lerp(a, b, t) {
  * Mapa de seguimiento.
  */
 function MapaGPS({ position, connected, onMapLoad }) {
-  const { isLoaded } = useJsApiLoader({
+  const esClaveValida = GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY.startsWith("AIzaSy");
+
+  const { isLoaded, loadError } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: esClaveValida ? GOOGLE_MAPS_API_KEY : "",
     libraries: GOOGLE_MAP_LIBRARIES,
   });
 
@@ -124,11 +126,32 @@ function MapaGPS({ position, connected, onMapLoad }) {
     { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#161916" }] },
   ];
 
-  if (!isLoaded) return <div>Cargando mapa...</div>;
+  if (!esClaveValida || loadError) {
+    return (
+      <div className="loading-screen" style={{ flexDirection: "column", padding: "2rem", textAlign: "center" }}>
+        <div style={{ background: "rgba(30, 41, 59, 0.95)", padding: "28px", borderRadius: "16px", border: "1px solid #3B82F6", maxWidth: "550px", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
+          <span style={{ fontSize: "42px" }}>🗺️</span>
+          <h3 style={{ color: "#60A5FA", margin: "14px 0 8px 0", fontSize: "20px" }}>Configuración de API Key de Google Maps Requerida</h3>
+          <p style={{ fontSize: "14px", color: "#94A3B8", lineHeight: "1.5" }}>
+            Para ver el mapa satelital en vivo, reproducir el historial y utilizar la recomendación de rutas, ingresa una API Key válida en <code style={{ color: "#F59E0B", fontWeight: "bold" }}>FrontEnd/.env</code>.
+          </p>
+          <div style={{ background: "#0F172A", padding: "12px", borderRadius: "8px", margin: "16px 0", fontSize: "13px", color: "#E2E8F0", fontFamily: "monospace", border: "1px solid #1E293B" }}>
+            VITE_GOOGLE_MAPS_API_KEY=AIzaSy...
+          </div>
+          <p style={{ fontSize: "12px", color: "#64748B" }}>
+            Crea la clave en Google Cloud Console activando: <i>Maps JavaScript API</i>, <i>Directions API</i> y <i>Places API</i>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoaded) return <div className="loading-screen">⚡ Cargando Mapa GPS Google...</div>;
 
   return (
-    <div>
+    <div style={{ width: "100%", height: "100%", minHeight: "500px" }}>
       <GoogleMap
+        mapContainerStyle={{ width: "100%", height: "100%" }}
         mapContainerClassName="map-container"
         center={centroDefault}
         zoom={15}
