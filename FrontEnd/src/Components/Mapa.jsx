@@ -5,6 +5,7 @@ import "../Styles/MapaGPS.css";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const ANIMATION_DURATION = 1000;
+const GOOGLE_MAP_LIBRARIES = ["places"];
 
 const centroDefault = { lat: 10.425, lng: -75.5402 };
 
@@ -14,19 +15,12 @@ function lerp(a, b, t) {
 
 /**
  * Mapa de seguimiento.
- *
- * ARREGLO: antes este componente llamaba a useGpsSocket por su cuenta, y
- * PanelControl —que es quien lo renderiza— lo llamaba también. Resultado: DOS
- * clientes STOMP suscritos al mismo topic por cada carga del panel. Ahora la
- * posición llega por props y la conexión es una sola, la del padre.
- *
- * El IMEI tampoco está ya escrito a mano: lo decide quien usa el componente.
  */
 function MapaGPS({ position, connected, onMapLoad }) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: ["places"], // Cargar biblioteca de Places para Autocomplete de rutas
+    libraries: GOOGLE_MAP_LIBRARIES,
   });
 
   const [path, setPath] = useState([]);
