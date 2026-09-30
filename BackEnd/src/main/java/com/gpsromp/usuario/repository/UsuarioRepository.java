@@ -20,9 +20,13 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
 
     Optional<Usuario> findByCorreo(String correo);
 
+    Optional<Usuario> findByTelefono(String telefono);
+
     boolean existsByUsuario(String usuario);
 
     boolean existsByCorreo(String correo);
+
+    boolean existsByTelefono(String telefono);
 
     /** Para la regla del último ADMIN y para la métrica del panel. */
     long countByRol(Rol rol);

@@ -1,6 +1,4 @@
-package com.gpsromp.WebSocket;
-
-import java.util.List;
+package com.gpsromp.websocket;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

@@ -89,20 +89,26 @@ function CampoEntrada({ tipo, etiqueta, placeholder, icono, enlaceAyuda, entrada
 
 function FormularioSesion() {
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
-    const [usuario, setUsuario] = useState("")
-    const [contrasena, setContrasena] = useState("")
-    const [error, setError] = useState(false)
-    const [cargandoGoogle, setCargandoGoogle] = useState(false)
+    const [modo, setModo] = useState("password"); // "password" | "sms"
+    const [usuario, setUsuario] = useState("");
+    const [contrasena, setContrasena] = useState("");
+
+    // SMS State
+    const [telefono, setTelefono] = useState("");
+    const [codigoOtp, setCodigoOtp] = useState("");
+    const [otpSolicitado, setOtpSolicitado] = useState(false);
+    const [cargandoSms, setCargandoSms] = useState(false);
+
+    const [error, setError] = useState(false);
+    const [mensajeError, setMensajeError] = useState("");
+    const [cargandoGoogle, setCargandoGoogle] = useState(false);
 
     /* ───── LOGIN NORMAL ───── */
     function autenticar() {
-
-        const auth = {
-            usuario,
-            contrasena
-        }
+        const auth = { usuario, contrasena };
+        setError(false);
 
         fetch(`${API_URL}/usuario/login`, {
             method: 'POST',
@@ -111,151 +117,234 @@ function FormularioSesion() {
         })
             .then((respuesta) => {
                 if (!respuesta.ok) {
-                    setError(true)
-                    throw new Error("Credenciales incorrectas")
+                    setError(true);
+                    setMensajeError("Usuario o contraseña incorrectos");
+                    throw new Error("Credenciales incorrectas");
                 }
-                return respuesta.json()
+                return respuesta.json();
             })
             .then((data) => {
                 guardarSesion(data);
-
-                setError(false);
-
-                // Un ADMIN entra al panel administrativo; el resto, al de control.
                 navigate(rutaInicial());
             })
-            .catch((error) => {
-                console.error(error)
-                setError(true)
-            })
+            .catch((err) => {
+                console.error(err);
+                setError(true);
+            });
+    }
+
+    /* ───── SMS OTP LOGIN ───── */
+    async function solicitarOtpSms() {
+        if (!telefono) {
+            setError(true);
+            setMensajeError("Ingresa tu número celular");
+            return;
+        }
+        setCargandoSms(true);
+        setError(false);
+
+        try {
+            const res = await fetch(`${API_URL}/usuario/sms/solicitar-codigo`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ telefono })
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.exito) {
+                throw new Error(data.mensaje || "Error al solicitar OTP");
+            }
+            setOtpSolicitado(true);
+        } catch (err) {
+            setError(true);
+            setMensajeError(err.message || "Error al enviar SMS");
+        } finally {
+            setCargandoSms(false);
+        }
+    }
+
+    async function verificarOtpSms() {
+        if (!codigoOtp) {
+            setError(true);
+            setMensajeError("Ingresa el código OTP recibido");
+            return;
+        }
+        setCargandoSms(true);
+        setError(false);
+
+        try {
+            const res = await fetch(`${API_URL}/usuario/sms/verificar-codigo`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ telefono, codigo: codigoOtp })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Código OTP inválido");
+            }
+
+            const data = await res.json();
+            guardarSesion(data);
+            navigate(rutaInicial());
+        } catch (err) {
+            setError(true);
+            setMensajeError(err.message || "Código inválido o expirado");
+        } finally {
+            setCargandoSms(false);
+        }
     }
 
     function formularioSubmit(e) {
-        e.preventDefault()
-        autenticar()
+        e.preventDefault();
+        if (modo === "password") {
+            autenticar();
+        } else {
+            if (!otpSolicitado) {
+                solicitarOtpSms();
+            } else {
+                verificarOtpSms();
+            }
+        }
     }
 
     /* ───── LOGIN GOOGLE ───── */
     const loginConGoogle = useGoogleLogin({
-
         onSuccess: async (respuestaGoogle) => {
-
-            setCargandoGoogle(true)
-            setError(false)
-
+            setCargandoGoogle(true);
+            setError(false);
             try {
-
-                // Obtener info del usuario desde Google
                 const infoRes = await fetch(
                     "https://www.googleapis.com/oauth2/v3/userinfo",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${respuestaGoogle.access_token}`,
-                        },
-                    }
-                )
+                    { headers: { Authorization: `Bearer ${respuestaGoogle.access_token}` } }
+                );
+                if (!infoRes.ok) throw new Error("No se pudo obtener información de Google");
+                const infoGoogle = await infoRes.json();
 
-                if (!infoRes.ok) {
-                    throw new Error("No se pudo obtener información de Google")
-                }
-
-                const infoGoogle = await infoRes.json()
-
-                // Enviar al backend
-                const backendRes = await fetch(
-                    `${API_URL}/usuario/google`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            tokenGoogle: respuestaGoogle.access_token,
-                            correo: infoGoogle.email,
-                            nombre: infoGoogle.name,
-                            imagenUrl: infoGoogle.picture,
-                            sub: infoGoogle.sub,
-                        }),
-                    }
-                )
+                const backendRes = await fetch(`${API_URL}/usuario/google`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        tokenGoogle: respuestaGoogle.access_token,
+                        correo: infoGoogle.email,
+                        nombre: infoGoogle.name,
+                        imagenUrl: infoGoogle.picture,
+                        sub: infoGoogle.sub,
+                    }),
+                });
 
                 if (!backendRes.ok) {
-                    const data = await backendRes.json()
-                    throw new Error(data.error || "Error al autenticar con Google")
+                    const data = await backendRes.json();
+                    throw new Error(data.error || "Error al autenticar con Google");
                 }
 
-                const data = await backendRes.json()
-
-                guardarSesion(data)
-
-                navigate(rutaInicial())
-
+                const data = await backendRes.json();
+                guardarSesion(data);
+                navigate(rutaInicial());
             } catch (err) {
-
-                console.error(err)
-                setError(true)
-
+                console.error(err);
+                setError(true);
+                setMensajeError(err.message || "Error al iniciar sesión con Google");
             } finally {
-
-                setCargandoGoogle(false)
-
+                setCargandoGoogle(false);
             }
         },
-
         onError: () => {
-
-            setError(true)
-
+            setError(true);
+            setMensajeError("Fallo en la autenticación con Google");
         },
-    })
+    });
 
     return (
         <div className="formulario-sesion-wrapper">
 
+            {/* Selector de Modo */}
+            <div style={{ display: "flex", background: "#F1F5F9", borderRadius: "8px", padding: "4px", marginBottom: "20px" }}>
+                <button
+                    type="button"
+                    onClick={() => { setModo("password"); setError(false); }}
+                    style={{ flex: 1, padding: "8px", border: "none", borderRadius: "6px", background: modo === "password" ? "#FFFFFF" : "transparent", color: modo === "password" ? "#0F172A" : "#64748B", fontWeight: "bold", cursor: "pointer" }}
+                >
+                    🔑 Contraseña
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setModo("sms"); setError(false); }}
+                    style={{ flex: 1, padding: "8px", border: "none", borderRadius: "6px", background: modo === "sms" ? "#FFFFFF" : "transparent", color: modo === "sms" ? "#0F172A" : "#64748B", fontWeight: "bold", cursor: "pointer" }}
+                >
+                    📱 SMS sin Contraseña
+                </button>
+            </div>
+
             <form className="formulario-sesion" onSubmit={formularioSubmit}>
 
-                {/* ───── BOTÓN GOOGLE ───── */}
                 <BotonesSociales
                     loginConGoogle={loginConGoogle}
                     cargandoGoogle={cargandoGoogle}
                 />
 
-                {/* ───── SEPARADOR ───── */}
                 <SeparadorOAuth />
 
-                {/* ───── USUARIO ───── */}
-                <CampoEntrada
-                    tipo="text"
-                    etiqueta="Usuario"
-                    placeholder="Usuario"
-                    icono="*"
-                    entrada={usuario}
-                    fun={(e) => setUsuario(e.target.value)}
-                    error={error}
-                />
+                {modo === "password" ? (
+                    <>
+                        <CampoEntrada
+                            tipo="text"
+                            etiqueta="Usuario"
+                            placeholder="Usuario"
+                            icono="*"
+                            entrada={usuario}
+                            fun={(e) => setUsuario(e.target.value)}
+                            error={error}
+                        />
 
-                {/* ───── CONTRASEÑA ───── */}
-                <CampoEntrada
-                    tipo="password"
-                    etiqueta="Contraseña"
-                    placeholder="••••••••"
-                    icono="•"
-                    entrada={contrasena}
-                    fun={(e) => setContrasena(e.target.value)}
-                    error={error}
-                />
+                        <CampoEntrada
+                            tipo="password"
+                            etiqueta="Contraseña"
+                            placeholder="••••••••"
+                            icono="•"
+                            entrada={contrasena}
+                            fun={(e) => setContrasena(e.target.value)}
+                            error={error}
+                        />
+                    </>
+                ) : (
+                    <>
+                        <CampoEntrada
+                            tipo="tel"
+                            etiqueta="Número Celular"
+                            placeholder="+573001234567"
+                            icono="📱"
+                            entrada={telefono}
+                            fun={(e) => setTelefono(e.target.value)}
+                            error={error}
+                        />
 
-                {/* ───── ERROR ───── */}
-                {
-                    error &&
+                        {otpSolicitado && (
+                            <CampoEntrada
+                                tipo="text"
+                                etiqueta="Código OTP (6 dígitos)"
+                                placeholder="123456"
+                                icono="💬"
+                                entrada={codigoOtp}
+                                fun={(e) => setCodigoOtp(e.target.value)}
+                                error={error}
+                            />
+                        )}
+                    </>
+                )}
+
+                {error && (
                     <p className="mensaje-error">
-                        Usuario o contraseña incorrectos
+                        {mensajeError || "Ocurrió un error en el inicio de sesión"}
                     </p>
-                }
+                )}
 
-                {/* ───── BOTÓN LOGIN ───── */}
                 <BotonSesion>
-                    Iniciar Sesión
+                    {modo === "password"
+                        ? "Iniciar Sesión"
+                        : !otpSolicitado
+                            ? cargandoSms ? "Enviando SMS..." : "Enviar Código SMS"
+                            : cargandoSms ? "Verificando..." : "Ingresar con OTP"}
                 </BotonSesion>
 
             </form>

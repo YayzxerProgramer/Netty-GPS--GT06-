@@ -121,11 +121,89 @@ public class GPSDataService {
 
     /**
      * Historial de recorrido en un rango de fechas.
-     *
-     * El método del repositorio existía desde el principio pero no lo llamaba
-     * nadie: no había servicio ni endpoint que lo expusiera.
      */
     public List<GPSData> getHistorial(String imei, Instant desde, Instant hasta) {
         return repository.findByImeiAndRegistradoEnBetweenOrderByRegistradoEnDesc(imei, desde, hasta);
+    }
+
+    /**
+     * Historial analizado con estadísticas completas y trazas en orden ascendente para playback.
+     */
+    public com.gpsromp.gps.dto.GPSHistorialResponse obtenerHistorialAnalizado(String imei, Instant desde, Instant hasta) {
+        List<GPSData> puntos = repository.findByImeiAndRegistradoEnBetweenOrderByRegistradoEnAsc(imei, desde, hasta);
+
+        double distanciaTotal = 0.0;
+        double maxVelocidad = 0.0;
+        double sumaVelocidades = 0.0;
+        int puntosValidos = 0;
+
+        java.util.List<com.gpsromp.gps.dto.GPSHistorialResponse.GPSParadaDTO> paradas = new java.util.ArrayList<>();
+        GPSData puntoParadaInicio = null;
+
+        for (int i = 0; i < puntos.size(); i++) {
+            GPSData actual = puntos.get(i);
+
+            int vel = actual.getVelocidad();
+            if (vel > maxVelocidad) maxVelocidad = vel;
+            sumaVelocidades += vel;
+            puntosValidos++;
+
+            // Calcular distancia con el punto anterior
+            if (i > 0) {
+                GPSData anterior = puntos.get(i - 1);
+                distanciaTotal += calcularHaversineKm(
+                        anterior.getLatitud(), anterior.getLongitud(),
+                        actual.getLatitud(), actual.getLongitud()
+                );
+            }
+
+            // Detectar paradas (velocidad <= 1 km/h o sin movimiento por > 3 minutos)
+            if (actual.getVelocidad() <= 1) {
+                if (puntoParadaInicio == null) {
+                    puntoParadaInicio = actual;
+                }
+            } else {
+                if (puntoParadaInicio != null) {
+                    long minutosDetenido = java.time.Duration.between(puntoParadaInicio.getRegistradoEn(), actual.getRegistradoEn()).toMinutes();
+                    if (minutosDetenido >= 3) {
+                        paradas.add(com.gpsromp.gps.dto.GPSHistorialResponse.GPSParadaDTO.builder()
+                                .latitud(puntoParadaInicio.getLatitud())
+                                .longitud(puntoParadaInicio.getLongitud())
+                                .inicio(puntoParadaInicio.getRegistradoEn().toString())
+                                .fin(actual.getRegistradoEn().toString())
+                                .duracionMinutos(minutosDetenido)
+                                .build());
+                    }
+                    puntoParadaInicio = null;
+                }
+            }
+        }
+
+        double velPromedio = puntosValidos > 0 ? (sumaVelocidades / puntosValidos) : 0.0;
+        long duracionMinutos = (!puntos.isEmpty())
+                ? java.time.Duration.between(puntos.get(0).getRegistradoEn(), puntos.get(puntos.size() - 1).getRegistradoEn()).toMinutes()
+                : 0;
+
+        return com.gpsromp.gps.dto.GPSHistorialResponse.builder()
+                .imei(imei)
+                .puntos(puntos)
+                .distanciaTotalKm(Math.round(distanciaTotal * 100.0) / 100.0)
+                .velocidadMaximaKmh(Math.round(maxVelocidad * 10.0) / 10.0)
+                .velocidadPromedioKmh(Math.round(velPromedio * 10.0) / 10.0)
+                .duracionTotalMinutos(duracionMinutos)
+                .cantidadParadas(paradas.size())
+                .paradas(paradas)
+                .build();
+    }
+
+    private double calcularHaversineKm(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radio de la Tierra en Km
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 }

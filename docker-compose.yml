@@ -1,25 +1,13 @@
-# ============================================================================
-# Bases de datos de RompGPS
-#
-# Las credenciales salen del archivo .env de esta carpeta (copiar .env.example).
-# Antes estaban escritas aquí en claro y versionadas.
-#
-# Se eliminó "version: '3.8'": es obsoleto en Compose v2 y emitía un warning en
-# cada comando.
-# ============================================================================
-
 services:
   # PostgreSQL - Usuarios y vehículos
   postgres:
     image: postgres:16-alpine
     container_name: rompgps-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:?falta POSTGRES_DB en .env}
-      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER en .env}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      # 5435 y no 5432: en Windows el servicio nativo de Postgres ocupa el 5432
-      # y gana las conexiones a localhost por delante del proxy de Docker.
       - "127.0.0.1:5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -37,8 +25,8 @@ services:
     image: mongo:7
     container_name: rompgps-mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:?falta en .env}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?falta en .env}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: Romp_Gps
     ports:
       - "127.0.0.1:27017:27017"
@@ -58,7 +46,7 @@ services:
     image: redis:7-alpine
     container_name: rompgps-redis
     # Sin requirepass, cualquiera con acceso al puerto lee la caché completa.
-    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?falta REDIS_PASSWORD en .env}", "--appendonly", "yes"]
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes"]
     ports:
       - "127.0.0.1:6379:6379"
     volumes:

@@ -15,4 +15,6 @@ public interface GPSDataRepository extends MongoRepository<GPSData, String> {
 
     // Historial por rango de fechas
     List<GPSData> findByImeiAndRegistradoEnBetweenOrderByRegistradoEnDesc(String imei, Instant desde, Instant hasta);
+
+    List<GPSData> findByImeiAndRegistradoEnBetweenOrderByRegistradoEnAsc(String imei, Instant desde, Instant hasta);
 }

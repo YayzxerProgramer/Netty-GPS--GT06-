@@ -12,24 +12,24 @@ import io.netty.handler.codec.ByteToMessageDecoder;
  * ARREGLA TRES FALLOS QUE HACÍAN PERDER POSICIONES:
  *
  * 1. PAQUETES FRAGMENTADOS. El handler anterior hacía resetReaderIndex() y
- *    return cuando faltaban bytes, dando por hecho que se volverían a entregar.
- *    Pero SimpleChannelInboundHandler libera el ByteBuf al salir y no había
- *    ningún decodificador en el pipeline, así que toda trama partida entre dos
- *    segmentos TCP se descartaba entera. ByteToMessageDecoder sí acumula: es
- *    exactamente la clase que Netty ofrece para esto.
+ * return cuando faltaban bytes, dando por hecho que se volverían a entregar.
+ * Pero SimpleChannelInboundHandler libera el ByteBuf al salir y no había
+ * ningún decodificador en el pipeline, así que toda trama partida entre dos
+ * segmentos TCP se descartaba entera. ByteToMessageDecoder sí acumula: es
+ * exactamente la clase que Netty ofrece para esto.
  *
  * 2. DOS BYTES DE MÁS POR TRAMA. En GT06 el byte de longitud incluye el CRC.
- *    El código leía el contenido, luego el 0D 0A, y después DOS BYTES MÁS que
- *    en realidad eran el 78 78 de la trama siguiente. Con dos paquetes en el
- *    mismo segmento TCP, el segundo se perdía.
+ * El código leía el contenido, luego el 0D 0A, y después DOS BYTES MÁS que
+ * en realidad eran el 78 78 de la trama siguiente. Con dos paquetes en el
+ * mismo segmento TCP, el segundo se perdía.
  *
  * 3. CRC SIN VALIDAR. Se leía y se descartaba, así que cualquier trama corrupta
- *    se procesaba como buena. Aquí se comprueba y las corruptas se descartan.
+ * se procesaba como buena. Aquí se comprueba y las corruptas se descartan.
  *
  * Estructura de la trama:
  *
- *   78 78 | LEN | PROTO | ...datos... | SERIAL(2) | CRC(2) | 0D 0A
- *           \_____________ LEN cuenta desde PROTO hasta CRC ______/
+ * 78 78 | LEN | PROTO | ...datos... | SERIAL(2) | CRC(2) | 0D 0A
+ * \_____________ LEN cuenta desde PROTO hasta CRC ______/
  */
 public class DecodificadorTramaGt06 extends ByteToMessageDecoder {
 
@@ -55,7 +55,7 @@ public class DecodificadorTramaGt06 extends ByteToMessageDecoder {
             int b1 = entrada.readUnsignedByte();
             int b2 = entrada.readUnsignedByte();
 
-            if (b1 != INICIO_1 || b2 != INICIO_2) {
+            if (b1 != 0x78 || b2 != INICIO_2) {
                 // Resincronizar: retroceder y avanzar un solo byte para buscar
                 // la siguiente cabecera sin saltarse una válida.
                 entrada.resetReaderIndex();

@@ -68,11 +68,21 @@ public class GpsServerHandler extends SimpleChannelInboundHandler<TramaGt06> {
         }
 
         switch (trama.protocolo()) {
-            case PROTO_LOGIN -> login(contexto, trama);
-            case PROTO_UBICACION -> ubicacion(trama);
-            case PROTO_HEARTBEAT -> heartbeat(contexto, trama);
-            case PROTO_ESTADO -> log.debug("Trama de estado (0x16) recibida de {}", imeiCorto());
-            default -> log.debug("Protocolo no soportado: {}", hex(trama.protocolo()));
+            case PROTO_LOGIN:
+                login(contexto, trama);
+                break;
+            case PROTO_UBICACION:
+                ubicacion(trama);
+                break;
+            case PROTO_HEARTBEAT:
+                heartbeat(contexto, trama);
+                break;
+            case PROTO_ESTADO:
+                log.debug("Trama de estado (0x16) recibida de {}", imeiCorto());
+                break;
+            default:
+                log.debug("Protocolo no soportado: {}", hex(trama.protocolo()));
+                break;
         }
     }
 

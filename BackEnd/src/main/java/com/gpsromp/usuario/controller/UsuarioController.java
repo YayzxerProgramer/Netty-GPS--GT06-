@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import com.gpsromp.Config.SeguridadService;
+import com.gpsromp.config.SeguridadService;
 import com.gpsromp.usuario.dto.*;
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.service.ServicioAutenticacion;

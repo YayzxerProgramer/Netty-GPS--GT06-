@@ -1,4 +1,4 @@
-package com.gpsromp.Config;
+package com.gpsromp.config;
 
 import java.util.List;
 
@@ -69,12 +69,16 @@ public class SecurityConfig {
 
                         // Autenticación y registro público
                         .requestMatchers(HttpMethod.POST, "/usuario/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuario/sms/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuario/google").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuario/github").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuario/github/callback").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuario/refrescar").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuario/logout").permitAll()
+
+                        // Webhook de pagos Wompi
+                        .requestMatchers(HttpMethod.POST, "/pagos/wompi/webhook").permitAll()
 
                         // Comprobación de disponibilidad durante el registro.
                         // Antes exigían token, así que el formulario de registro

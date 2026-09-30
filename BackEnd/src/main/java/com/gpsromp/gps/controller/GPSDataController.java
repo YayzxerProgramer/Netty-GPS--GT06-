@@ -61,6 +61,19 @@ public class GPSDataController {
         return ResponseEntity.ok(gpsDataService.getHistorial(imei, desde, hasta));
     }
 
+    @GetMapping("/historial-analizado/{imei}")
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiImei(#imei, authentication)")
+    public ResponseEntity<com.gpsromp.gps.dto.GPSHistorialResponse> historialAnalizado(
+            @PathVariable String imei,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta) {
+
+        if (desde.isAfter(hasta)) {
+            throw new IllegalArgumentException("'desde' debe ser anterior a 'hasta'");
+        }
+        return ResponseEntity.ok(gpsDataService.obtenerHistorialAnalizado(imei, desde, hasta));
+    }
+
     @GetMapping("/ultima-posicion/{imei}")
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiImei(#imei, authentication)")
     public ResponseEntity<GPSData> obtenerUltimaPosicionPorImei(@PathVariable String imei) {
