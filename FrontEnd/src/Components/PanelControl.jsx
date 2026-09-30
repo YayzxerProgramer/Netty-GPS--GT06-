@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import MapaGPS from "./Mapa";
+import HistorialRecorridos from "./HistorialRecorridos";
+import RecomendadorRutas from "./RecomendadorRutas";
 import { useGpsSocket } from "../Service/GpsDataService";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../Styles/PanelControl.css";
 import { cerrarSesion } from "../Service/sesion";
 import { API_URL } from "../Service/api";
@@ -13,10 +14,14 @@ const sparkHeights = ["40%", "60%", "55%", "80%", "95%", "70%", "85%"];
 export default function PanelControl() {
     const [usuarioData, setUsuarioData] = useState(null);
     const [vehiculos, setVehiculos] = useState([]);
+    const [vistaActiva, setVistaActiva] = useState("vivo"); // "vivo" | "historial" | "rutas"
+
+    const [mapaObj, setMapaObj] = useState(null);
+    const [googleObj, setGoogleObj] = useState(null);
 
     const [time, setTime] = useState("14:22:05");
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     const usuario = localStorage.getItem("usuario");
     const id_usuario = usuarioData ? usuarioData.id : null;
@@ -26,6 +31,11 @@ export default function PanelControl() {
     const token = localStorage.getItem("token");
     // Conectamos el WebSocket — todos los datos vienen de aquí
     const { position, connected } = useGpsSocket(IMEI);
+
+    const handleMapLoad = (map, google) => {
+        setMapaObj(map);
+        setGoogleObj(google);
+    };
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -120,58 +130,69 @@ export default function PanelControl() {
                         <button className="boton-rastrear">Track Now</button>
                     </div>
 
-                    {/* Lista vehículos */}
+                    {/* Lista vehículos y navegación de módulos */}
                     <div className="lista-vehiculos">
 
-                        <div className="elemento-activo">
+                        {/* Rastreo en Vivo */}
+                        <div
+                            className={`elemento-activo ${vistaActiva === "vivo" ? "seleccionado" : ""}`}
+                            onClick={() => setVistaActiva("vivo")}
+                            style={{ cursor: "pointer", borderLeft: vistaActiva === "vivo" ? "4px solid #2563EB" : "none" }}
+                        >
                             <div className="fila-icono">
                                 <span className="material-symbols-outlined icono-nav">near_me</span>
-                                <span>Live Location</span>
+                                <span>Rastreo En Vivo</span>
                             </div>
 
                             <div className="detalle-activo">
-                                <p className="etiqueta-unidad">
-                                    IMEI: {IMEI}
-                                </p>
-
+                                <p className="etiqueta-unidad">IMEI: {IMEI.slice(-8)}</p>
                                 <div className="fila-velocidad">
-                                    {/* Indicador de conexión y velocidad dinámicos */}
                                     <span className="indicador-velocidad">
-                                        <span
-                                            className="punto-pulsante"
-                                            style={{
-                                                backgroundColor: connected ? "#86a17d" : "#a05540"
-                                            }}
-                                        />
-                                        {connected
-                                            ? `${velocidad} km/h`
-                                            : "Desconectado"
-                                        }
+                                        <span className="punto-pulsante" style={{ backgroundColor: connected ? "#86a17d" : "#a05540" }} />
+                                        {connected ? `${velocidad} km/h` : "Offline"}
                                     </span>
                                     <span className="hora-registro">{time}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Tab corte motor */}
-                        <div className="tab-navegacion">
-                            <span className="material-symbols-outlined icono-tab">
-                                power_settings_new
-                            </span>
-                            <span className="texto-tab">Power Cut</span>
+                        {/* Historial de Recorridos */}
+                        <div
+                            className="tab-navegacion"
+                            onClick={() => setVistaActiva("historial")}
+                            style={{ cursor: "pointer", background: vistaActiva === "historial" ? "#1E293B" : "transparent", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px", color: vistaActiva === "historial" ? "#60A5FA" : "#94A3B8" }}
+                        >
+                            <span className="material-symbols-outlined icono-tab">history</span>
+                            <span className="texto-tab" style={{ fontWeight: "bold" }}>Historial de Recorridos</span>
                         </div>
 
-                        {/* Flota */}
-                        <div className="seccion-flota">
+                        {/* Recomendador de Rutas Rápidas */}
+                        <div
+                            className="tab-navegacion"
+                            onClick={() => setVistaActiva("rutas")}
+                            style={{ cursor: "pointer", background: vistaActiva === "rutas" ? "#1E293B" : "transparent", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px", color: vistaActiva === "rutas" ? "#10B981" : "#94A3B8" }}
+                        >
+                            <span className="material-symbols-outlined icono-tab">navigation</span>
+                            <span className="texto-tab" style={{ fontWeight: "bold" }}>Ruta Más Rápida</span>
+                        </div>
+
+                        {/* Planes y Pricing */}
+                        <div className="tab-navegacion">
+                            <span className="material-symbols-outlined icono-tab">payments</span>
+                            <span className="texto-tab">
+                                <Link to="/pricing" style={{ color: "#F59E0B", textDecoration: "none", fontWeight: "bold" }}>Ver Planes & Wompi</Link>
+                            </span>
+                        </div>
+
+                        {/* Flota Activa */}
+                        <div className="seccion-flota" style={{ marginTop: "16px" }}>
                             <h3 className="titulo-flota">Flota Activa</h3>
 
                             <div className="tarjetas-vehiculos">
-
-                                {/* Tarjeta dinámica del GPS conectado */}
                                 <div className="tarjeta-vehiculo">
                                     <div className="encabezado-tarjeta-panel">
-                                        <span className="nombre-vehiculo">{vehiculoActivo ? vehiculoActivo.placa : "Vehículo no disponible"}</span>
-                                        <span className="modelo-vehiculo">{vehiculoActivo ? vehiculoActivo.modelo : "Modelo no disponible"}</span>
+                                        <span className="nombre-vehiculo">{vehiculoActivo ? vehiculoActivo.placa : "Vehículo Activo"}</span>
+                                        <span className="modelo-vehiculo">{vehiculoActivo ? vehiculoActivo.modelo : "GT06 GPS"}</span>
                                         <span className={`etiqueta-estado ${connected ? "etiqueta-en-mapa" : "etiqueta-detenido"}`}>
                                             {connected ? "EN VIVO" : "OFFLINE"}
                                         </span>
@@ -193,7 +214,6 @@ export default function PanelControl() {
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -214,78 +234,80 @@ export default function PanelControl() {
 
                 </aside>
 
-                {/* Main — mapa real reemplaza la imagen estática */}
+                {/* Main — mapa real + componentes dinámicos */}
                 <main className="area-principal">
-                    <div className="fondo-mapa">
+                    <div className="fondo-mapa" style={{ position: "relative", overflowY: "auto" }}>
 
-                        {/* MapaGPS toma todo el espacio disponible */}
+                        {/* MapaGPS siempre visible en el fondo */}
                         <div className="contenedor-mapa-real">
-                            <MapaGPS position={position} connected={connected} />
+                            <MapaGPS position={position} connected={connected} onMapLoad={handleMapLoad} />
+                        </div>
+
+                        {/* Panel Flotante Dinámico sobre el Mapa */}
+                        <div style={{ position: "absolute", top: "20px", left: "20px", zIndex: 10, maxWidth: "450px", width: "calc(100% - 40px)" }}>
+                            {vistaActiva === "historial" && (
+                                <HistorialRecorridos imei={IMEI} mapa={mapaObj} google={googleObj} />
+                            )}
+
+                            {vistaActiva === "rutas" && (
+                                <RecomendadorRutas mapa={mapaObj} google={googleObj} posicionActualVehiculo={position} />
+                            )}
                         </div>
 
                         <div className="superposicion-degradado"></div>
 
-                        {/* HUD con datos dinámicos */}
-                        <div className="panel-hud">
-
-                            <div className="tarjeta-telemetria">
-                                <div className="encabezado-telemetria">
-                                    <span className="titulo-telemetria">Salud Global</span>
-                                    <span className="subtitulo-telemetria">Tiempo real</span>
-                                </div>
-
-                                <div className="metricas-telemetria">
-
-                                    <div className="fila-metrica">
-                                        <div className="encabezado-metrica">
-                                            <span className="nombre-metrica">Estabilidad de señal</span>
-                                            <span className="valor-metrica">
-                                                {connected ? "98%" : "0%"}
-                                            </span>
-                                        </div>
-                                        <div className="barra-progreso">
-                                            <div
-                                                className="relleno-progreso"
-                                                style={{ width: connected ? "98%" : "0%" }}
-                                            />
-                                        </div>
+                        {/* HUD de telemetría visible solo en modo Rastreo En Vivo */}
+                        {vistaActiva === "vivo" && (
+                            <div className="panel-hud">
+                                <div className="tarjeta-telemetria">
+                                    <div className="encabezado-telemetria">
+                                        <span className="titulo-telemetria">Salud Global</span>
+                                        <span className="subtitulo-telemetria">Tiempo real</span>
                                     </div>
 
-                                    <div className="fila-velocidad-hud">
-                                        <div className="bloque-velocidad">
-                                            <p className="etiqueta-velocidad">Velocidad actual</p>
-                                            {/* Velocidad dinámica desde el WebSocket */}
-                                            <p className="valor-velocidad">
-                                                {velocidad}
-                                                <span className="unidad-velocidad"> km/h</span>
-                                            </p>
+                                    <div className="metricas-telemetria">
+                                        <div className="fila-metrica">
+                                            <div className="encabezado-metrica">
+                                                <span className="nombre-metrica">Estabilidad de señal</span>
+                                                <span className="valor-metrica">{connected ? "98%" : "0%"}</span>
+                                            </div>
+                                            <div className="barra-progreso">
+                                                <div className="relleno-progreso" style={{ width: connected ? "98%" : "0%" }} />
+                                            </div>
                                         </div>
 
-                                        <div className="contenedor-sparkline">
-                                            <div className="barras-sparkline">
-                                                {sparkHeights.map((h, i) => (
-                                                    <div key={i} className="barra-spark" style={{ height: h }} />
-                                                ))}
+                                        <div className="fila-velocidad-hud">
+                                            <div className="bloque-velocidad">
+                                                <p className="etiqueta-velocidad">Velocidad actual</p>
+                                                <p className="valor-velocidad">
+                                                    {velocidad}
+                                                    <span className="unidad-velocidad"> km/h</span>
+                                                </p>
+                                            </div>
+
+                                            <div className="contenedor-sparkline">
+                                                <div className="barras-sparkline">
+                                                    {sparkHeights.map((h, i) => (
+                                                        <div key={i} className="barra-spark" style={{ height: h }} />
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
+                                <div className="panel-coordenadas">
+                                    <div className="fila-coordenadas">
+                                        <span>LAT: {lat}°</span>
+                                        <span>LNG: {lng}°</span>
+                                    </div>
+                                    <div className="fila-coordenadas">
+                                        <span>IMEI: {IMEI.slice(-8)}</span>
+                                        <span>GPS: {gpsValido ? "ACTIVO" : "INACTIVO"}</span>
+                                    </div>
                                 </div>
                             </div>
-
-                            {/* Coordenadas dinámicas desde el WebSocket */}
-                            <div className="panel-coordenadas">
-                                <div className="fila-coordenadas">
-                                    <span>LAT: {lat}°</span>
-                                    <span>LNG: {lng}°</span>
-                                </div>
-                                <div className="fila-coordenadas">
-                                    <span>IMEI: {IMEI.slice(-8)}</span>
-                                    <span>GPS: {gpsValido ? "ACTIVO" : "INACTIVO"}</span>
-                                </div>
-                            </div>
-
-                        </div>
+                        )}
 
                         <div className="pie-mapa-izq">
                             ROMP_NAV_SYSTEM_v4.2.1 // SECTOR_G12

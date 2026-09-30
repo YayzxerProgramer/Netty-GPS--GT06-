@@ -22,10 +22,11 @@ function lerp(a, b, t) {
  *
  * El IMEI tampoco está ya escrito a mano: lo decide quien usa el componente.
  */
-function MapaGPS({ position, connected }) {
+function MapaGPS({ position, connected, onMapLoad }) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ["places"], // Cargar biblioteca de Places para Autocomplete de rutas
   });
 
   const [path, setPath] = useState([]);
@@ -99,6 +100,9 @@ function MapaGPS({ position, connected }) {
   // para tener referencia directa y poder usar setPosition()
   const handleMapLoad = (map) => {
     mapRef.current = map;
+    if (onMapLoad) {
+      onMapLoad(map, window.google);
+    }
 
     const marker = new window.google.maps.Marker({
       map,
