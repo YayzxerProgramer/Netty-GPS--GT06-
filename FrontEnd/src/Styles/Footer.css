@@ -11,7 +11,7 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: clamp(1.5rem, 6vw, 6rem);
+    gap: 150px 
 }
 
 .logo-pie {

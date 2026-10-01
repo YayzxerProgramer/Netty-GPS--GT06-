@@ -1,3 +1,10 @@
+/* ============================================================
+   Pricing.css — Planes y precios
+   Tema oscuro/verde, coherente con Hero, Nosotros y Equipo.
+   Toda la presentación vive aquí: el JSX no lleva `style`,
+   porque los estilos inline no admiten media queries.
+   ============================================================ */
+
 .seccion-precios {
     padding: var(--pad-seccion-y) var(--pad-seccion-x);
     background: #111411;
@@ -8,162 +15,319 @@
     margin: auto;
 }
 
+/* ── Encabezado ───────────────────────────────────────────── */
+
 .encabezado-precios {
     text-align: center;
-    margin-bottom: clamp(3rem, 8vw, 6.25rem);
+    margin-bottom: clamp(2.5rem, 6vw, 4.5rem);
 }
 
 .encabezado-precios h2 {
     margin: 0;
     color: #f1f4ef;
-    font-size: clamp(2rem, 5.5vw, 3.5rem);
+    font-size: clamp(1.85rem, 5.2vw, 3.25rem);
     font-weight: 800;
     letter-spacing: -0.03em;
-    line-height: 1.1;
+    line-height: 1.12;
 }
 
+/* Antes era inline con #64748B: sobre el fondo oscuro daba ~4:1
+   y fallaba WCAG AA. Este tono queda en ~8:1. */
+.descripcion-precios {
+    max-width: 600px;
+    margin: 14px auto 0;
+    color: #a7ada5;
+    font-size: clamp(0.95rem, 2vw, 1.0625rem);
+    line-height: 1.8;
+}
+
+/* ── Conmutador mensual / anual ───────────────────────────── */
+
+.conmutador-facturacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.conmutador-etiqueta {
+    color: #9ea59e;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: color 0.25s ease;
+}
+
+.conmutador-etiqueta--activa {
+    color: #f1f4ef;
+}
+
+.conmutador-pista {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 999px;
+    background: #2a312a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+/* Expande el área táctil a 44px sin alterar el aspecto */
+.conmutador-pista::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+}
+
+.conmutador-pista[aria-checked="true"] {
+    background: linear-gradient(to bottom right, #b2cea8, #354d2f);
+    border-color: rgba(178, 206, 168, 0.4);
+}
+
+.conmutador-mando {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f1f4ef;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease;
+}
+
+.conmutador-pista[aria-checked="true"] .conmutador-mando {
+    transform: translateX(24px);
+}
+
+.insignia-ahorro {
+    margin-left: 6px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: rgba(178, 206, 168, 0.12);
+    border: 1px solid rgba(178, 206, 168, 0.28);
+    color: #b2cea8;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ── Cuadrícula ───────────────────────────────────────────── */
+
+/* El `min()` permite que la columna baje de 280px cuando el
+   viewport no da para más. Sin él, a 320px desbordaba 8px. */
 .cuadricula-precios {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(1.5rem, 3vw, 2.25rem);
-    align-items: start;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: clamp(1.25rem, 2.5vw, 1.5rem);
+    align-items: stretch;
+    margin-top: clamp(2rem, 5vw, 2.5rem);
 }
+
+/* ── Tarjeta ──────────────────────────────────────────────── */
 
 .tarjeta-precio {
     position: relative;
-    padding: clamp(2.5rem, 5vw, 3.75rem) clamp(1.75rem, 4vw, 3.125rem);
-    border-radius: 28px;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.5rem, 3.5vw, 2rem);
+    border-radius: 20px;
     background: #1c211d;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    overflow: hidden;
-    transition: 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: transform 0.35s ease, border-color 0.35s ease;
 }
 
 .tarjeta-precio:hover {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
+    border-color: rgba(178, 206, 168, 0.2);
 }
 
-.destacado {
-    border: 1px solid rgba(178, 206, 168, 0.28);
+.tarjeta-precio.destacado {
+    background: #19211a;
+    border: 1px solid rgba(178, 206, 168, 0.35);
+    box-shadow: 0 0 50px -12px rgba(178, 206, 168, 0.25);
 }
 
 .insignia-destacado {
     position: absolute;
-    top: 0;
-    right: 0;
-    padding: 10px 18px;
+    top: -12px;
+    right: 24px;
+    padding: 5px 14px;
+    border-radius: 999px;
     background: #b2cea8;
     color: #1d2819;
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: 0.25em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
+    white-space: nowrap;
 }
+
+/* ── Cabecera del plan ────────────────────────────────────── */
 
 .parte-superior-plan {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 10px;
 }
 
-/* Faltaba en el CSS: se usa en Pricing.jsx */
 .etiqueta-plan {
-    display: inline-block;
-    width: fit-content;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     color: #9ea59e;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    letter-spacing: 0.3em;
 }
 
-/* Faltaba en el CSS: se usa en Pricing.jsx */
-.texto-destacado {
+.etiqueta-plan.texto-destacado {
+    background: rgba(178, 206, 168, 0.1);
+    border-color: rgba(178, 206, 168, 0.25);
     color: #b2cea8;
 }
 
-.parte-superior-plan h3 {
-    margin: 0;
+.precio-plan {
+    margin: 6px 0 0;
     color: #f1f4ef;
-    font-size: clamp(2.25rem, 7vw, 4.5rem);
+    font-size: clamp(1.85rem, 5vw, 2.25rem);
     font-weight: 800;
     line-height: 1;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
 }
 
-.parte-superior-plan h3 span {
+.periodo-plan {
     color: #9ea59e;
-    font-size: 0.28em;
+    font-size: 0.42em;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0;
 }
+
+/* Hace visible el importe real antes de abrir el checkout */
+.nota-facturacion {
+    color: #b2cea8;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.descripcion-plan {
+    color: #a7ada5;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+/* ── Características ──────────────────────────────────────── */
 
 .caracteristicas-plan {
     list-style: none;
     padding: 0;
-    margin: clamp(2rem, 4vw, 3.125rem) 0;
+    margin: clamp(1.25rem, 3vw, 1.5rem) 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .caracteristicas-plan li {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    gap: 10px;
     color: #cdd3cb;
-    font-size: clamp(0.9rem, 1.8vw, 1rem);
-    line-height: 1.6;
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
-.caracteristicas-plan li span {
+.caracteristicas-plan .marca {
     flex-shrink: 0;
     color: #b2cea8;
     font-weight: 800;
 }
 
+.caracteristicas-plan li.excluida,
+.caracteristicas-plan li.excluida .marca {
+    color: #8d948b;
+}
+
+/* ── Botón de pago ────────────────────────────────────────── */
+
 .boton-precio {
     width: 100%;
     min-height: var(--tactil-min);
-    padding: 20px;
-    border-radius: 14px;
-    font-size: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.8rem;
     font-weight: 800;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.3;
     cursor: pointer;
     transition: 0.3s ease;
 }
 
-.primario {
+.boton-precio.primario {
     border: none;
     background: linear-gradient(to bottom right, #b2cea8, #354d2f);
-    color: #24331f;
+    color: #1d2819;
 }
 
-.primario:hover {
+.boton-precio.primario:hover {
     filter: brightness(1.08);
     box-shadow: 0 10px 30px rgba(178, 206, 168, 0.2);
 }
 
-.secundario {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: white;
-}
-
-.secundario:hover {
+.boton-precio.secundario {
     background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f4ef;
 }
 
-@media (max-width: 860px) {
-    .cuadricula-precios {
-        grid-template-columns: minmax(0, 1fr);
+.boton-precio.secundario:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(178, 206, 168, 0.25);
+}
+
+/* ── Resultado de la transacción ──────────────────────────── */
+
+.estado-pago {
+    margin-top: 1.5rem;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.estado-pago--ok {
+    background: rgba(178, 206, 168, 0.12);
+    border: 1px solid rgba(178, 206, 168, 0.3);
+    color: #b2cea8;
+}
+
+.estado-pago--error {
+    background: rgba(186, 87, 63, 0.12);
+    border: 1px solid rgba(186, 87, 63, 0.35);
+    color: #e0937f;
+}
+
+.estado-pago--pendiente {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cdd3cb;
+}
+
+@media (max-width: 420px) {
+    .insignia-destacado {
+        right: 12px;
     }
-}
 
-@media (max-width: 480px) {
     .boton-precio {
-        padding: 18px 14px;
-        font-size: 11px;
-        letter-spacing: 0.18em;
+        font-size: 0.75rem;
+        letter-spacing: 0.03em;
     }
 }
