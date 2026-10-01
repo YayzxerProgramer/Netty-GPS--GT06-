@@ -1,5 +1,5 @@
 import "../Styles/Login.css";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { TypeAnimation } from 'react-type-animation';
 import { Link } from "react-router-dom";
@@ -8,6 +8,80 @@ import { iniciarLoginGithub } from "../Service/GithubService";
 import { guardarSesion, rutaInicial } from "../Service/sesion";
 import { API_URL } from "../Service/api";
 
+/* ── Iconos ───────────────────────────────────────────────────
+   Todos en SVG con `currentColor` y el mismo grosor de trazo.
+   Antes se mezclaban emojis (🔑 📱 💬), que se dibujan con la
+   fuente del sistema y rompen la paleta, con caracteres sueltos
+   como `*` y `•` que no significaban nada.
+   ─────────────────────────────────────────────────────────── */
+
+const trazo = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+};
+
+function IconoUsuario({ className }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+            <path {...trazo} d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle {...trazo} cx="12" cy="7" r="4" />
+        </svg>
+    );
+}
+
+function IconoCandado({ className }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+            <rect {...trazo} x="3" y="11" width="18" height="11" rx="2" />
+            <path {...trazo} d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+    );
+}
+
+function IconoTelefono({ className }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+            <rect {...trazo} x="5" y="2" width="14" height="20" rx="2" />
+            <path {...trazo} d="M12 18h.01" />
+        </svg>
+    );
+}
+
+function IconoMensaje({ className }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+            <path {...trazo} d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+    );
+}
+
+function IconoAlerta({ className }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+            <circle {...trazo} cx="12" cy="12" r="10" />
+            <path {...trazo} d="M12 8v4M12 16h.01" />
+        </svg>
+    );
+}
+
+function IconoGoogle() {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="boton-social__icono" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09" /><path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23" /><path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93z" /><path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53" /></svg>
+    );
+}
+
+function IconoGitHub() {
+    return (
+        <svg className="boton-social__icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+        </svg>
+    );
+}
+
+/* ── Columna informativa ──────────────────────────────────── */
 
 function CajaEstadistica({ valor, etiqueta }) {
     return (
@@ -23,22 +97,15 @@ function InfoSesion() {
         <div className="info-sesion">
             <span className="info-sesion__etiqueta">Security Protocol</span>
 
-            <h1> Precision en cada <br />
+            <h1>
+                Precision en cada <br />
                 <TypeAnimation
-                    sequence={[
-                        ' Coordenada',
-                        2000,
-                        ' Kilometro',
-                        2000,
-                        ' Ruta',
-                        2000,
-                        ' Viaje',
-                        2000
-                    ]}
+                    sequence={['Coordenada', 2000, 'Kilometro', 2000, 'Ruta', 2000, 'Viaje', 2000]}
                     wrapper="span"
-                    speed={1}
-                    deletionSpeed={1}
-                    style={{ display: 'inline-block' }}
+                    /* speed 1 era la MÁS LENTA de la escala 1–99 */
+                    speed={50}
+                    deletionSpeed={60}
+                    className="info-sesion__animado"
                     repeat={Infinity}
                 />
             </h1>
@@ -58,137 +125,185 @@ function InfoSesion() {
     );
 }
 
-function CampoEntrada({ tipo, etiqueta, placeholder, icono, enlaceAyuda, entrada, fun, error }) {
+/* ── Campo de entrada ─────────────────────────────────────── */
 
+function CampoEntrada({
+    id, tipo, etiqueta, placeholder, Icono, botonAyuda,
+    entrada, fun, error, autoComplete, inputMode, maxLength,
+}) {
     return (
         <div className="grupo-campo">
-            {enlaceAyuda ? (
+            {botonAyuda ? (
                 <div className="grupo-campo__fila">
-                    <label className="grupo-campo__etiqueta">{etiqueta}</label>
-                    <a href={enlaceAyuda.href} className="grupo-campo__enlace">
-                        {enlaceAyuda.texto}
-                    </a>
+                    <label className="grupo-campo__etiqueta" htmlFor={id}>{etiqueta}</label>
+                    <button
+                        type="button"
+                        className="grupo-campo__boton-ayuda"
+                        onClick={botonAyuda.onClick}
+                    >
+                        {botonAyuda.texto}
+                    </button>
                 </div>
             ) : (
-                <label className="grupo-campo__etiqueta">{etiqueta}</label>
+                <label className="grupo-campo__etiqueta" htmlFor={id}>{etiqueta}</label>
             )}
 
-            <div className={`caja-entrada ${error ? "input-error" : ""}`}>
-                <span className="caja-entrada__icono">{icono}</span>
+            <div className="caja-entrada">
                 <input
+                    id={id}
+                    name={id}
                     type={tipo}
                     placeholder={placeholder}
-                    className="caja-entrada__input"
+                    className={`caja-entrada__input ${error ? "caja-entrada__input--error" : ""}`}
                     value={entrada}
                     onChange={fun}
+                    autoComplete={autoComplete}
+                    inputMode={inputMode}
+                    maxLength={maxLength}
+                    aria-invalid={error || undefined}
                 />
+                <span className="caja-entrada__icono">
+                    <Icono />
+                </span>
             </div>
         </div>
     );
 }
 
-function FormularioSesion() {
+/* ── Formulario ───────────────────────────────────────────── */
 
+function FormularioSesion() {
     const navigate = useNavigate();
 
     const [modo, setModo] = useState("password"); // "password" | "sms"
     const [usuario, setUsuario] = useState("");
     const [contrasena, setContrasena] = useState("");
 
-    // SMS State
     const [telefono, setTelefono] = useState("");
     const [codigoOtp, setCodigoOtp] = useState("");
     const [otpSolicitado, setOtpSolicitado] = useState(false);
-    const [cargandoSms, setCargandoSms] = useState(false);
 
-    const [error, setError] = useState(false);
-    const [mensajeError, setMensajeError] = useState("");
+    const [cargandoPassword, setCargandoPassword] = useState(false);
+    const [cargandoSms, setCargandoSms] = useState(false);
     const [cargandoGoogle, setCargandoGoogle] = useState(false);
 
+    const [mensajeError, setMensajeError] = useState("");
+    /* Antes un único `error` pintaba de rojo TODOS los campos a la
+       vez. Ahora sólo se marca el campo que falla la validación;
+       un fallo de credenciales muestra el aviso sin teñir nada. */
+    const [campoError, setCampoError] = useState(null);
+
+    const cargando = cargandoPassword || cargandoSms || cargandoGoogle;
+
+    function limpiarError() {
+        setMensajeError("");
+        setCampoError(null);
+    }
+
+    function cambiarModo(nuevo) {
+        setModo(nuevo);
+        limpiarError();
+    }
+
     /* ───── LOGIN NORMAL ───── */
-    function autenticar() {
-        const auth = { usuario, contrasena };
-        setError(false);
-
-        fetch(`${API_URL}/usuario/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(auth)
-        })
-            .then((respuesta) => {
-                if (!respuesta.ok) {
-                    setError(true);
-                    setMensajeError("Usuario o contraseña incorrectos");
-                    throw new Error("Credenciales incorrectas");
-                }
-                return respuesta.json();
-            })
-            .then((data) => {
-                guardarSesion(data);
-                navigate(rutaInicial());
-            })
-            .catch((err) => {
-                console.error(err);
-                setError(true);
-            });
-    }
-
-    /* ───── SMS OTP LOGIN ───── */
-    async function solicitarOtpSms() {
-        if (!telefono) {
-            setError(true);
-            setMensajeError("Ingresa tu número celular");
+    async function autenticar() {
+        if (!usuario.trim()) {
+            setCampoError("usuario");
+            setMensajeError("Ingresa tu usuario");
             return;
         }
-        setCargandoSms(true);
-        setError(false);
-
-        try {
-            const res = await fetch(`${API_URL}/usuario/sms/solicitar-codigo`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ telefono })
-            });
-
-            const data = await res.json();
-            if (!res.ok || !data.exito) {
-                throw new Error(data.mensaje || "Error al solicitar OTP");
-            }
-            setOtpSolicitado(true);
-        } catch (err) {
-            setError(true);
-            setMensajeError(err.message || "Error al enviar SMS");
-        } finally {
-            setCargandoSms(false);
-        }
-    }
-
-    async function verificarOtpSms() {
-        if (!codigoOtp) {
-            setError(true);
-            setMensajeError("Ingresa el código OTP recibido");
+        if (!contrasena) {
+            setCampoError("contrasena");
+            setMensajeError("Ingresa tu contraseña");
             return;
         }
-        setCargandoSms(true);
-        setError(false);
+
+        setCargandoPassword(true);
+        limpiarError();
 
         try {
-            const res = await fetch(`${API_URL}/usuario/sms/verificar-codigo`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ telefono, codigo: codigoOtp })
+            const res = await fetch(`${API_URL}/usuario/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario, contrasena }),
             });
 
             if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || "Código OTP inválido");
+                throw new Error("Usuario o contraseña incorrectos");
             }
 
             const data = await res.json();
             guardarSesion(data);
             navigate(rutaInicial());
         } catch (err) {
-            setError(true);
+            console.error(err);
+            setMensajeError(
+                err instanceof TypeError
+                    ? "No pudimos conectar con el servidor. Revisa tu conexión."
+                    : err.message
+            );
+        } finally {
+            setCargandoPassword(false);
+        }
+    }
+
+    /* ───── SMS OTP ───── */
+    async function solicitarOtpSms() {
+        if (!telefono.trim()) {
+            setCampoError("telefono");
+            setMensajeError("Ingresa tu número celular");
+            return;
+        }
+
+        setCargandoSms(true);
+        limpiarError();
+
+        try {
+            const res = await fetch(`${API_URL}/usuario/sms/solicitar-codigo`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ telefono }),
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.exito) {
+                throw new Error(data.mensaje || "Error al solicitar el código");
+            }
+            setOtpSolicitado(true);
+        } catch (err) {
+            setCampoError("telefono");
+            setMensajeError(err.message || "Error al enviar el SMS");
+        } finally {
+            setCargandoSms(false);
+        }
+    }
+
+    async function verificarOtpSms() {
+        if (!codigoOtp.trim()) {
+            setCampoError("otp");
+            setMensajeError("Ingresa el código que recibiste");
+            return;
+        }
+
+        setCargandoSms(true);
+        limpiarError();
+
+        try {
+            const res = await fetch(`${API_URL}/usuario/sms/verificar-codigo`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ telefono, codigo: codigoOtp }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Código inválido");
+            }
+
+            guardarSesion(data);
+            navigate(rutaInicial());
+        } catch (err) {
+            setCampoError("otp");
             setMensajeError(err.message || "Código inválido o expirado");
         } finally {
             setCargandoSms(false);
@@ -197,45 +312,33 @@ function FormularioSesion() {
 
     function formularioSubmit(e) {
         e.preventDefault();
+        if (cargando) return;
+
         if (modo === "password") {
             autenticar();
+        } else if (!otpSolicitado) {
+            solicitarOtpSms();
         } else {
-            if (!otpSolicitado) {
-                solicitarOtpSms();
-            } else {
-                verificarOtpSms();
-            }
+            verificarOtpSms();
         }
     }
 
-    /* ───── LOGIN GOOGLE ───── */
+    /* ───── GOOGLE ───── */
     const loginConGoogle = useGoogleLogin({
         onSuccess: async (respuestaGoogle) => {
             setCargandoGoogle(true);
-            setError(false);
+            limpiarError();
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-
                 const infoRes = await fetch(
                     "https://www.googleapis.com/oauth2/v3/userinfo",
-                    {
-                        headers: { Authorization: `Bearer ${respuestaGoogle.access_token}` },
-                        signal: controller.signal
-                    }
+                    { headers: { Authorization: `Bearer ${respuestaGoogle.access_token}` } }
                 );
-                clearTimeout(timeoutId);
-
-                if (!infoRes.ok) throw new Error("No se pudo obtener información del perfil de Google");
+                if (!infoRes.ok) throw new Error("No se pudo obtener información de Google");
                 const infoGoogle = await infoRes.json();
-
-                const controllerBackend = new AbortController();
-                const timeoutBackend = setTimeout(() => controllerBackend.abort(), 10000);
 
                 const backendRes = await fetch(`${API_URL}/usuario/google`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    signal: controllerBackend.signal,
                     body: JSON.stringify({
                         tokenGoogle: respuestaGoogle.access_token,
                         correo: infoGoogle.email,
@@ -244,182 +347,178 @@ function FormularioSesion() {
                         sub: infoGoogle.sub,
                     }),
                 });
-                clearTimeout(timeoutBackend);
 
                 if (!backendRes.ok) {
                     const data = await backendRes.json();
-                    throw new Error(data.error || "Error al autenticar con el servidor de ROMP GPS");
+                    throw new Error(data.error || "Error al autenticar con Google");
                 }
 
                 const data = await backendRes.json();
                 guardarSesion(data);
                 navigate(rutaInicial());
             } catch (err) {
-                console.error("DIAGNOSTICO FRONTEND GOOGLE:", err);
-                setError(true);
-                if (err.name === 'AbortError') {
-                    setMensajeError("Tiempo de espera agotado al conectar con el servidor. Verifica que el backend Java esté corriendo en el puerto 8081.");
-                } else {
-                    setMensajeError(err.message || "Error al iniciar sesión con Google");
-                }
+                console.error(err);
+                setMensajeError(err.message || "Error al iniciar sesión con Google");
             } finally {
                 setCargandoGoogle(false);
             }
         },
-        onError: (errResp) => {
-            console.error("DIAGNOSTICO FRONTEND GOOGLE ONERROR:", errResp);
-            setCargandoGoogle(false);
-            setError(true);
-            setMensajeError("Fallo la ventana de Google. Verifica los Orígenes Autorizados en Google Cloud.");
-        },
+        onError: () => setMensajeError("Fallo en la autenticación con Google"),
     });
+
+    const textoBoton = modo === "password"
+        ? (cargandoPassword ? "Verificando..." : "Iniciar Sesión")
+        : !otpSolicitado
+            ? (cargandoSms ? "Enviando SMS..." : "Enviar Código SMS")
+            : (cargandoSms ? "Verificando..." : "Ingresar con OTP");
 
     return (
         <div className="formulario-sesion-wrapper">
 
-            {/* Selector de Modo */}
-            <div style={{ display: "flex", background: "#F1F5F9", borderRadius: "8px", padding: "4px", marginBottom: "20px" }}>
+            <div className="selector-modo" role="tablist" aria-label="Método de acceso">
                 <button
                     type="button"
-                    onClick={() => { setModo("password"); setError(false); }}
-                    style={{ flex: 1, padding: "8px", border: "none", borderRadius: "6px", background: modo === "password" ? "#FFFFFF" : "transparent", color: modo === "password" ? "#0F172A" : "#64748B", fontWeight: "bold", cursor: "pointer" }}
+                    role="tab"
+                    aria-selected={modo === "password"}
+                    onClick={() => cambiarModo("password")}
+                    className={`selector-modo__opcion ${modo === "password" ? "selector-modo__opcion--activa" : ""}`}
                 >
-                    🔑 Contraseña
+                    <IconoCandado className="selector-modo__icono" />
+                    Contraseña
                 </button>
                 <button
                     type="button"
-                    onClick={() => { setModo("sms"); setError(false); }}
-                    style={{ flex: 1, padding: "8px", border: "none", borderRadius: "6px", background: modo === "sms" ? "#FFFFFF" : "transparent", color: modo === "sms" ? "#0F172A" : "#64748B", fontWeight: "bold", cursor: "pointer" }}
+                    role="tab"
+                    aria-selected={modo === "sms"}
+                    onClick={() => cambiarModo("sms")}
+                    className={`selector-modo__opcion ${modo === "sms" ? "selector-modo__opcion--activa" : ""}`}
                 >
-                    📱 SMS sin Contraseña
+                    <IconoTelefono className="selector-modo__icono" />
+                    Código SMS
                 </button>
             </div>
 
-            <form className="formulario-sesion" onSubmit={formularioSubmit}>
-
-                <BotonesSociales
-                    loginConGoogle={loginConGoogle}
-                    cargandoGoogle={cargandoGoogle}
-                />
-
-                <SeparadorOAuth />
+            <form className="formulario-sesion" onSubmit={formularioSubmit} noValidate>
 
                 {modo === "password" ? (
                     <>
                         <CampoEntrada
+                            id="usuario"
                             tipo="text"
                             etiqueta="Usuario"
-                            placeholder="Usuario"
-                            icono="*"
+                            placeholder="Tu nombre de usuario"
+                            Icono={IconoUsuario}
                             entrada={usuario}
-                            fun={(e) => setUsuario(e.target.value)}
-                            error={error}
+                            fun={(e) => { setUsuario(e.target.value); limpiarError(); }}
+                            error={campoError === "usuario"}
+                            autoComplete="username"
                         />
 
                         <CampoEntrada
+                            id="contrasena"
                             tipo="password"
                             etiqueta="Contraseña"
                             placeholder="••••••••"
-                            icono="•"
+                            Icono={IconoCandado}
                             entrada={contrasena}
-                            fun={(e) => setContrasena(e.target.value)}
-                            error={error}
+                            fun={(e) => { setContrasena(e.target.value); limpiarError(); }}
+                            error={campoError === "contrasena"}
+                            autoComplete="current-password"
+                            /* No hay ruta pública de recuperación, pero sí un
+                               acceso sin contraseña por SMS: lo reutilizamos. */
+                            botonAyuda={{
+                                texto: "¿Olvidaste tu contraseña?",
+                                onClick: () => cambiarModo("sms"),
+                            }}
                         />
                     </>
                 ) : (
                     <>
                         <CampoEntrada
+                            id="telefono"
                             tipo="tel"
                             etiqueta="Número Celular"
-                            placeholder="+573001234567"
-                            icono="📱"
+                            placeholder="+57 300 123 4567"
+                            Icono={IconoTelefono}
                             entrada={telefono}
-                            fun={(e) => setTelefono(e.target.value)}
-                            error={error}
+                            fun={(e) => { setTelefono(e.target.value); limpiarError(); }}
+                            error={campoError === "telefono"}
+                            autoComplete="tel"
+                            inputMode="tel"
                         />
 
                         {otpSolicitado && (
                             <CampoEntrada
+                                id="codigo-otp"
                                 tipo="text"
-                                etiqueta="Código OTP (6 dígitos)"
+                                etiqueta="Código de 6 dígitos"
                                 placeholder="123456"
-                                icono="💬"
+                                Icono={IconoMensaje}
                                 entrada={codigoOtp}
-                                fun={(e) => setCodigoOtp(e.target.value)}
-                                error={error}
+                                fun={(e) => { setCodigoOtp(e.target.value); limpiarError(); }}
+                                error={campoError === "otp"}
+                                /* Permite el autorrelleno del SMS en iOS */
+                                autoComplete="one-time-code"
+                                inputMode="numeric"
+                                maxLength={6}
                             />
                         )}
                     </>
                 )}
 
-                {error && (
-                    <p className="mensaje-error">
-                        {mensajeError || "Ocurrió un error en el inicio de sesión"}
-                    </p>
+                {mensajeError && (
+                    <div className="alerta-error" role="alert">
+                        <IconoAlerta className="alerta-error__icono" />
+                        <span>{mensajeError}</span>
+                    </div>
                 )}
 
-                <BotonSesion>
-                    {modo === "password"
-                        ? "Iniciar Sesión"
-                        : !otpSolicitado
-                            ? cargandoSms ? "Enviando SMS..." : "Enviar Código SMS"
-                            : cargandoSms ? "Verificando..." : "Ingresar con OTP"}
-                </BotonSesion>
+                <button type="submit" className="boton-sesion" disabled={cargando}>
+                    {cargando
+                        ? <span className="boton-sesion__spinner" aria-hidden="true" />
+                        : null}
+                    {textoBoton}
+                    {!cargando && <span className="boton-sesion__flecha">→</span>}
+                </button>
+
+                {/* El separador va AQUÍ: antes quedaba encima de los
+                    botones sociales, así que anunciaba "o continúa con"
+                    después de aquello con lo que se continúa. */}
+                <SeparadorOAuth />
+
+                <BotonesSociales
+                    loginConGoogle={loginConGoogle}
+                    cargandoGoogle={cargandoGoogle}
+                    deshabilitado={cargando}
+                />
 
             </form>
-
         </div>
     );
 }
 
-function BotonSesion({ children }) {
-    return (
-        <button type="submit" className="boton-sesion">
-            {children}
-            <span className="boton-sesion__flecha">→</span>
-        </button>
-    );
-}
-
-function IconoGoogle() {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" className="boton-social__icono" viewBox="0 0 24 24"><path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09" /><path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23" /><path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93z" /><path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53" /></svg>
-    );
-}
-
-function IconoGitHub() {
-    return (
-        <svg className="boton-social__icono" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-        </svg>
-    );
-}
-
-function BotonesSociales({ loginConGoogle, cargandoGoogle }) {
+function BotonesSociales({ loginConGoogle, cargandoGoogle, deshabilitado }) {
     return (
         <div className="botones-sociales">
-
             <button
                 type="button"
                 className="boton-social boton-social--google"
                 onClick={() => loginConGoogle()}
-                disabled={cargandoGoogle}
+                disabled={deshabilitado}
             >
                 <IconoGoogle />
-
-                <span>
-                    {cargandoGoogle ? "Conectando..." : "Google"}
-                </span>
+                <span>{cargandoGoogle ? "Conectando..." : "Google"}</span>
             </button>
 
             <button
                 type="button"
                 className="boton-social boton-social--github"
-                onClick= {iniciarLoginGithub }>
+                onClick={iniciarLoginGithub}
+                disabled={deshabilitado}
+            >
                 <IconoGitHub />
                 <span>GitHub</span>
             </button>
-
         </div>
     );
 }
@@ -434,11 +533,12 @@ function SeparadorOAuth() {
     );
 }
 
-
 function TarjetaSesion() {
     return (
         <div className="tarjeta-sesion">
-            <div className="ancla-hud">LAT: 40.7128° N | LON: 74.0060° W</div>
+            {/* Cartagena, igual que el centro por defecto de Mapa.jsx.
+                Antes estaban las coordenadas de Nueva York. */}
+            <div className="ancla-hud">LAT: 10.4236° N | LON: 75.5478° W</div>
 
             <div className="encabezado-tarjeta">
                 <h2>Area de Clientes</h2>
@@ -502,10 +602,10 @@ function EncabezadoSesion() {
                 <span className="texto-marca">ROMP GPS</span>
             </div>
 
-            <a href="/" className="enlace-inicio">
+            <Link to="/" className="enlace-inicio">
                 <span className="enlace-inicio__flecha">←</span>
                 Volver al Inicio
-            </a>
+            </Link>
         </header>
     );
 }
@@ -520,9 +620,7 @@ function PiePagina() {
     return (
         <footer className="barra-pie-sesion">
             <div className="marca-pie">ROMP GPS</div>
-
             <p className="derechos-pie">© 2024 ROMP GPS. Precision Navigation.</p>
-
             <nav className="navegacion-pie">
                 {ENLACES_PIE.map(({ texto, href }) => (
                     <a key={texto} href={href}>{texto}</a>

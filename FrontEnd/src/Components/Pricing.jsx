@@ -1,182 +1,261 @@
 import { useState } from "react";
 import "../Styles/Pricing.css";
 
+const DESCUENTO_ANUAL = 0.8;   // 20% de ahorro al prepagar el año
+const MESES_ANIO = 12;
+
+/* Única fuente de verdad de los precios. Tanto el importe que se
+muestra como el que va al checkout se derivan de `precioMensual`,
+   así que no pueden quedar desalineados. */
+const PLANES = [
+    {
+        id: "personal",
+        nombre: "Personal (Moto / Auto)",
+        precioMensual: 24900,
+        unidad: "/mes",
+        descripcion: "Para usuarios particulares que buscan seguridad diaria.",
+        destacado: false,
+        caracteristicas: [
+            { texto: "1 Dispositivo GPS GT06", incluida: true },
+            { texto: "Ubicación en tiempo real (actualización 15s)", incluida: true },
+            { texto: "Historial de recorridos (7 días)", incluida: true },
+            { texto: "Apagado de motor desde la app", incluida: true },
+            { texto: "Alertas por SMS directos", incluida: false },
+        ],
+    },
+    {
+        id: "pro",
+        nombre: "Flotas & Negocios Pro",
+        precioMensual: 44900,
+        unidad: "/mes por vehículo",
+        descripcion: "Para flotas pequeñas y medianas con monitoreo intensivo.",
+        destacado: true,
+        caracteristicas: [
+            { texto: "Posicionamiento ultrarrápido (5 segundos)", incluida: true },
+            { texto: "Historial extendido (90 días)", incluida: true },
+            { texto: "Recomendador de rutas rápidas (Google Maps)", incluida: true },
+            { texto: "Alertas push y SMS ilimitadas (OTP + corte)", incluida: true },
+            { texto: "Reportes de velocidad y paradas en PDF", incluida: true },
+        ],
+    },
+    {
+        id: "enterprise",
+        nombre: "Empresarial Custom",
+        precioMensual: 79900,
+        unidad: "/mes",
+        descripcion: "Soluciones corporativas con API REST dedicada.",
+        destacado: false,
+        caracteristicas: [
+            { texto: "Dispositivos ilimitados", incluida: true },
+            { texto: "Acceso API REST para integraciones ERP", incluida: true },
+            { texto: "Soporte técnico prioritario 24/7", incluida: true },
+            { texto: "Geocercas y subcuentas ilimitadas", incluida: true },
+        ],
+    },
+];
+
+const LLAVE_PRUEBAS = "pub_test_Q5y15286524589254823";
+const wompiPublicKey = import.meta.env.VITE_WOMPI_PUB_KEY || LLAVE_PRUEBAS;
+
+if (!import.meta.env.VITE_WOMPI_PUB_KEY) {
+    // Antes caía en la llave de pruebas sin avisar: en producción eso
+    // significa procesar pagos contra el entorno de test en silencio.
+    console.warn(
+        "[Pricing] Falta VITE_WOMPI_PUB_KEY. Se usará la llave de PRUEBAS de Wompi."
+    );
+}
+
+const formatoCOP = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+});
+
+/** Lo que se muestra en la tarjeta: importe por mes. */
+const precioPorMes = (plan, anual) =>
+    anual ? Math.round(plan.precioMensual * DESCUENTO_ANUAL) : plan.precioMensual;
+
+/** Lo que realmente se cobra: el año completo si la facturación es anual. */
+const precioACobrar = (plan, anual) =>
+    anual
+        ? Math.round(plan.precioMensual * MESES_ANIO * DESCUENTO_ANUAL)
+        : plan.precioMensual;
+
 function Pricing() {
     const [facturacionAnual, setFacturacionAnual] = useState(false);
+    const [estadoPago, setEstadoPago] = useState(null);
 
-    const wompiPublicKey = import.meta.env.VITE_WOMPI_PUB_KEY || "pub_test_Q5y15286524589254823";
+    const lanzarCheckout = (plan, referencia, montoCentavos) => {
+        if (!window.WidgetCheckout) return;
 
-    const abriWompiCheckout = (planNombre, precioMes) => {
-        const precioTotalCOP = (facturacionAnual ? precioMes * 12 * 0.8 : precioMes) * 100; // En centavos
-        const referenciaUnica = `SUB-${Date.now()}-${planNombre.toUpperCase()}`;
+        const checkout = new window.WidgetCheckout({
+            currency: "COP",
+            amountInCents: montoCentavos,
+            reference: referencia,
+            publicKey: wompiPublicKey,
+            // Ojo: /panel-control está detrás de RutaProtegida. Si no hay
+            // sesión activa, el usuario acaba en /login. Ver nota al pie.
+            redirectUrl: window.location.origin + "/panel-control",
+        });
 
-        // Cargar script dinámico de Wompi Widget si no existe
-        if (!window.WidgetCheckout) {
-            const script = document.createElement("script");
-            script.src = "https://checkout.wompi.co/widget.js";
-            script.async = true;
-            script.onload = () => lanzarCheckout(referenciaUnica, precioTotalCOP, planNombre);
-            document.body.appendChild(script);
-        } else {
-            lanzarCheckout(referenciaUnica, precioTotalCOP, planNombre);
-        }
+        checkout.open((result) => {
+            const transaccion = result?.transaction;
+
+            if (!transaccion) {
+                setEstadoPago({
+                    tipo: "pendiente",
+                    mensaje: "No recibimos confirmación de la transacción. Revisa tu correo antes de volver a intentarlo.",
+                });
+                return;
+            }
+
+            if (transaccion.status === "APPROVED") {
+                setEstadoPago({
+                    tipo: "ok",
+                    mensaje: `Pago aprobado para el plan ${plan.nombre}. Referencia: ${referencia}`,
+                });
+            } else if (transaccion.status === "DECLINED") {
+                setEstadoPago({
+                    tipo: "error",
+                    mensaje: "El pago fue rechazado. Verifica los datos o prueba con otro medio.",
+                });
+            } else {
+                setEstadoPago({
+                    tipo: "pendiente",
+                    mensaje: `Transacción en estado "${transaccion.status}". Te avisaremos cuando se confirme.`,
+                });
+            }
+        });
     };
 
-    const lanzarCheckout = (referencia, montoCentavos, plan) => {
-        if (window.WidgetCheckout) {
-            const checkout = new window.WidgetCheckout({
-                currency: "COP",
-                amountInCents: montoCentavos,
-                reference: referencia,
-                publicKey: wompiPublicKey,
-                redirectUrl: window.location.origin + "/panel-control",
-            });
+    const abrirWompiCheckout = (plan) => {
+        const montoCentavos = precioACobrar(plan, facturacionAnual) * 100;
+        // eslint-disable-next-line react-hooks/purity
+        const referencia = `SUB-${Date.now()}-${plan.id.toUpperCase()}`;
 
-            checkout.open((result) => {
-                const transaction = result.transaction;
-                console.log("Resultado transacción Wompi:", transaction);
-            });
+        setEstadoPago(null);
+
+        if (window.WidgetCheckout) {
+            lanzarCheckout(plan, referencia, montoCentavos);
+            return;
         }
+
+        const script = document.createElement("script");
+        script.src = "https://checkout.wompi.co/widget.js";
+        script.async = true;
+        script.onload = () => lanzarCheckout(plan, referencia, montoCentavos);
+        script.onerror = () =>
+            setEstadoPago({
+                tipo: "error",
+                mensaje: "No pudimos cargar la pasarela de pago. Revisa tu conexión e inténtalo de nuevo.",
+            });
+        document.body.appendChild(script);
     };
 
     return (
         <section className="seccion-precios" id="pricing">
             <div className="contenedor-precios">
+
                 <div className="encabezado-precios">
-                    <span className="etiqueta-seccion">Planes y Precios Específicos</span>
-                    <h2>Protección Inteligente para tu Vehículo o Flota</h2>
-                    <p style={{ color: "#64748B", maxWidth: "600px", margin: "12px auto 0" }}>
-                        Selecciona la cobertura que mejor se adapte a tus necesidades. Cancela en cualquier momento sin cláusulas de permanencia.
+                    <span className="etiqueta-seccion">Planes y Precios</span>
+                    <h2>Protección inteligente para tu vehículo o flota</h2>
+                    <p className="descripcion-precios">
+                        Selecciona la cobertura que mejor se adapte a tus necesidades.
+                        Cancela en cualquier momento sin cláusulas de permanencia.
                     </p>
 
-                    {/* Toggle Facturación Mensual / Anual */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "24px" }}>
-                        <span style={{ fontWeight: !facturacionAnual ? "bold" : "normal", color: "#1E293B" }}>Mensual</span>
-                        <div
-                            onClick={() => setFacturacionAnual(!facturacionAnual)}
-                            style={{
-                                width: "52px",
-                                height: "28px",
-                                background: facturacionAnual ? "#2563EB" : "#CBD5E1",
-                                borderRadius: "14px",
-                                padding: "2px",
-                                cursor: "pointer",
-                                transition: "background 0.3s",
-                            }}
+                    <div className="conmutador-facturacion">
+                        <span className={`conmutador-etiqueta ${!facturacionAnual ? "conmutador-etiqueta--activa" : ""}`}>
+                            Mensual
+                        </span>
+
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={facturacionAnual}
+                            aria-label="Activar facturación anual con 20% de ahorro"
+                            className="conmutador-pista"
+                            onClick={() => setFacturacionAnual((v) => !v)}
                         >
-                            <div
-                                style={{
-                                    width: "24px",
-                                    height: "24px",
-                                    background: "white",
-                                    borderRadius: "50%",
-                                    transform: facturacionAnual ? "translateX(24px)" : "translateX(0)",
-                                    transition: "transform 0.3s",
-                                }}
-                            />
-                        </div>
-                        <span style={{ fontWeight: facturacionAnual ? "bold" : "normal", color: "#1E293B" }}>
-                            Anual <span style={{ background: "#DCFCE7", color: "#166534", padding: "2px 8px", borderRadius: "12px", fontSize: "12px", marginLeft: "4px" }}>Ahorra 20%</span>
+                            <span className="conmutador-mando" />
+                        </button>
+
+                        <span className={`conmutador-etiqueta ${facturacionAnual ? "conmutador-etiqueta--activa" : ""}`}>
+                            Anual
+                            <span className="insignia-ahorro">Ahorra 20%</span>
                         </span>
                     </div>
                 </div>
 
-                <div className="cuadricula-precios" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px", marginTop: "40px" }}>
-                    
-                    {/* Plan 1: Personal */}
-                    <div className="tarjeta-precio" style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: "16px", padding: "32px", display: "flex", flexDirection: "column" }}>
-                        <div className="parte-superior-plan">
-                            <span className="etiqueta-plan" style={{ background: "#F1F5F9", color: "#475569", padding: "4px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold" }}>
-                                Personal (Moto / Auto)
-                            </span>
-                            <h3 style={{ fontSize: "32px", margin: "16px 0 8px", color: "#0F172A" }}>
-                                ${facturacionAnual ? "19.900" : "24.900"}
-                                <span style={{ fontSize: "14px", color: "#64748B" }}>/mes</span>
-                            </h3>
-                            <p style={{ fontSize: "13px", color: "#64748B" }}>Para usuarios particulares que buscan seguridad diaria.</p>
-                        </div>
+                <div className="cuadricula-precios">
+                    {PLANES.map((plan) => {
+                        const porMes = precioPorMes(plan, facturacionAnual);
+                        const aCobrar = precioACobrar(plan, facturacionAnual);
 
-                        <ul className="caracteristicas-plan" style={{ listStyle: "none", padding: 0, margin: "24px 0", flex: 1 }}>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ 1 Dispositivo GPS GT06</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ Ubicación en Tiempo Real (Actualización 15s)</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ Historial de Recorridos (7 Días)</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ Apagado de Motor desde App</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#94A3B8" }}>✕ Alertas por SMS directos</li>
-                        </ul>
+                        return (
+                            <div
+                                key={plan.id}
+                                className={`tarjeta-precio ${plan.destacado ? "destacado" : ""}`}
+                            >
+                                {plan.destacado && (
+                                    <div className="insignia-destacado">Recomendado</div>
+                                )}
 
-                        <button
-                            onClick={() => abriWompiCheckout("personal", 24900)}
-                            className="boton-precio secundario"
-                            style={{ width: "100%", padding: "12px", borderRadius: "8px", background: "#F1F5F9", color: "#0F172A", border: "none", fontWeight: "bold", cursor: "pointer" }}
-                        >
-                            Pagar con Wompi (PSE / Nequi / Tarjeta)
-                        </button>
-                    </div>
+                                <div className="parte-superior-plan">
+                                    <span className={`etiqueta-plan ${plan.destacado ? "texto-destacado" : ""}`}>
+                                        {plan.nombre}
+                                    </span>
 
-                    {/* Plan 2: Flota Pro (Destacado) */}
-                    <div className="tarjeta-precio destacado" style={{ background: "#0F172A", color: "white", border: "2px solid #3B82F6", borderRadius: "16px", padding: "32px", display: "flex", flexDirection: "column", position: "relative" }}>
-                        <div className="insignia-destacado" style={{ position: "absolute", top: "-12px", right: "24px", background: "#2563EB", color: "white", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}>
-                            Recomendado
-                        </div>
+                                    <h3 className="precio-plan">
+                                        {formatoCOP.format(porMes)}
+                                        <span className="periodo-plan">{plan.unidad}</span>
+                                    </h3>
 
-                        <div className="parte-superior-plan">
-                            <span className="etiqueta-plan texto-destacado" style={{ background: "#1E293B", color: "#60A5FA", padding: "4px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold" }}>
-                                Flotas & Negocios Pro
-                            </span>
-                            <h3 style={{ fontSize: "32px", margin: "16px 0 8px", color: "white" }}>
-                                ${facturacionAnual ? "35.900" : "44.900"}
-                                <span style={{ fontSize: "14px", color: "#94A3B8" }}>/mes por vehículo</span>
-                            </h3>
-                            <p style={{ fontSize: "13px", color: "#94A3B8" }}>Para flotas pequeñas y medianas con monitoreo intensivo.</p>
-                        </div>
+                                    {/* El importe real, visible ANTES de abrir el checkout */}
+                                    {facturacionAnual && (
+                                        <span className="nota-facturacion">
+                                            Se factura {formatoCOP.format(aCobrar)} hoy, por 12 meses
+                                        </span>
+                                    )}
 
-                        <ul className="caracteristicas-plan" style={{ listStyle: "none", padding: 0, margin: "24px 0", flex: 1 }}>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#E2E8F0" }}>✓ Posicionamiento Ultrarrápido (5 segundos)</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#E2E8F0" }}>✓ Historial Extendido (90 Días)</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#E2E8F0" }}>✓ Recomendador de Rutas Rápida (Google Maps)</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#E2E8F0" }}>✓ Alertas Push & SMS Ilimitadas (OTP + Corte)</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#E2E8F0" }}>✓ Reportes de Velocidad y Paradas en PDF</li>
-                        </ul>
+                                    <p className="descripcion-plan">{plan.descripcion}</p>
+                                </div>
 
-                        <button
-                            onClick={() => abriWompiCheckout("pro", 44900)}
-                            className="boton-precio primario"
-                            style={{ width: "100%", padding: "12px", borderRadius: "8px", background: "#2563EB", color: "white", border: "none", fontWeight: "bold", cursor: "pointer" }}
-                        >
-                            Pagar con Wompi (PSE / Nequi / Tarjeta)
-                        </button>
-                    </div>
+                                <ul className="caracteristicas-plan">
+                                    {plan.caracteristicas.map(({ texto, incluida }) => (
+                                        <li key={texto} className={incluida ? "" : "excluida"}>
+                                            <span className="marca" aria-hidden="true">
+                                                {incluida ? "✓" : "✕"}
+                                            </span>
+                                            {texto}
+                                        </li>
+                                    ))}
+                                </ul>
 
-                    {/* Plan 3: Enterprise */}
-                    <div className="tarjeta-precio" style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: "16px", padding: "32px", display: "flex", flexDirection: "column" }}>
-                        <div className="parte-superior-plan">
-                            <span className="etiqueta-plan" style={{ background: "#F1F5F9", color: "#475569", padding: "4px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold" }}>
-                                Empresarial Custom
-                            </span>
-                            <h3 style={{ fontSize: "32px", margin: "16px 0 8px", color: "#0F172A" }}>
-                                ${facturacionAnual ? "63.900" : "79.900"}
-                                <span style={{ fontSize: "14px", color: "#64748B" }}>/mes</span>
-                            </h3>
-                            <p style={{ fontSize: "13px", color: "#64748B" }}>Soluciones corporativas con API REST dedicada.</p>
-                        </div>
-
-                        <ul className="caracteristicas-plan" style={{ listStyle: "none", padding: 0, margin: "24px 0", flex: 1 }}>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ Dispositivos Ilimitados</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ Acceso API REST para Integraciones ERP</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ Soporte Técnico Prioritario 24/7</li>
-                            <li style={{ padding: "8px 0", fontSize: "14px", color: "#334155" }}>✓ Geocercas y Subcuentas Ilimitadas</li>
-                        </ul>
-
-                        <button
-                            onClick={() => abriWompiCheckout("enterprise", 79900)}
-                            className="boton-precio secundario"
-                            style={{ width: "100%", padding: "12px", borderRadius: "8px", background: "#F1F5F9", color: "#0F172A", border: "none", fontWeight: "bold", cursor: "pointer" }}
-                        >
-                            Pagar con Wompi (PSE / Nequi / Tarjeta)
-                        </button>
-                    </div>
-
+                                <button
+                                    type="button"
+                                    onClick={() => abrirWompiCheckout(plan)}
+                                    className={`boton-precio ${plan.destacado ? "primario" : "secundario"}`}
+                                >
+                                    {facturacionAnual
+                                        ? `Pagar 12 meses · ${formatoCOP.format(aCobrar)}`
+                                        : `Pagar ${formatoCOP.format(aCobrar)} · PSE / Nequi / Tarjeta`}
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
+
+                {estadoPago && (
+                    <div
+                        className={`estado-pago estado-pago--${estadoPago.tipo}`}
+                        role="status"
+                        aria-live="polite"
+                    >
+                        {estadoPago.mensaje}
+                    </div>
+                )}
+
             </div>
         </section>
     );

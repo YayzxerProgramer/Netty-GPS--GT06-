@@ -1,39 +1,80 @@
 .map-container {
     width: 100%;
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
-    box-shadow: 0 0 0 1px #1e293b, 0 10px 40px rgba(0, 0, 0, 0.5);
+    background: #0f120e;
 }
 
 .loading-screen {
-    height: 100vh;
+    height: 100%;
     display: grid;
     place-items: center;
-    background: #020617;
-    color: white;
-    font-size: 18px;
-    font-weight: 500;
+    background: #0f120e;
+    color: #a7ada5;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .04em;
 }
 
-::-webkit-scrollbar {
-    width: 10px;
+/* Aviso cuando falta la API Key: se coloca a la derecha de la barra lateral */
+.mapa-aviso {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 96px 24px 24px 392px;
+    background: radial-gradient(circle at 70% 55%, rgba(178, 206, 168, .08), transparent 55%), #0f120e;
+    font-family: 'Manrope', sans-serif;
 }
 
-::-webkit-scrollbar-track {
-    background: #020617;
+.mapa-aviso-tarjeta {
+    max-width: 520px;
+    padding: 28px;
+    border-radius: 20px;
+    background: rgba(21, 26, 20, .84);
+    border: 1px solid rgba(178, 206, 168, .16);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .45);
+    color: #a7ada5;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #1e293b;
-    border-radius: 999px;
+.mapa-aviso-icono {
+    font-size: 36px;
+    color: #b2cea8;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+.mapa-aviso-tarjeta h3 {
+    margin: 12px 0 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #f2f5f0;
 }
 
-@media (max-width: 768px) {
-    .map-container {
-        height: calc(100vh - 120px);
+.mapa-aviso-tarjeta code {
+    color: #e0b97a;
+    font-weight: 700;
+}
+
+.mapa-aviso-tarjeta pre {
+    margin: 14px 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #0f120e;
+    border: 1px solid rgba(178, 206, 168, .12);
+    color: #dbe6d6;
+    font-size: 13px;
+    white-space: pre-wrap;
+}
+
+.mapa-aviso-nota {
+    font-size: 12px;
+    color: #7d857a;
+}
+
+@media (max-width: 759px) {
+    .mapa-aviso {
+        padding: 96px 16px 60vh;
     }
 }
