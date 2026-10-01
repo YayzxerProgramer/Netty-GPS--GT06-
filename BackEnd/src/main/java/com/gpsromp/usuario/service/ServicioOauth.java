@@ -118,17 +118,31 @@ public class ServicioOauth {
             }
 
             String audiencia = (String) info.get("aud");
-            if (!googleClientId.equals(audiencia)) {
-                log.warn("Token de Google con audiencia ajena: aud={}", audiencia);
+            String azp = (String) info.get("azp");
+
+            String configuredId = googleClientId != null ? googleClientId.trim() : "";
+            String activeId = "523594818943-0kibahdpukmp2uce2ub672r4r0a8s0at.apps.googleusercontent.com";
+            String recAud = audiencia != null ? audiencia.trim() : "";
+            String recAzp = azp != null ? azp.trim() : "";
+
+            log.info("DIAGNOSTICO GOOGLE OAUTH -> Configured ClientID: [{}], Active ID: [{}]", configuredId, activeId);
+            log.info("DIAGNOSTICO GOOGLE OAUTH -> Token info body: {}", info);
+            log.info("DIAGNOSTICO GOOGLE OAUTH -> Recibido aud: [{}], azp: [{}]", recAud, recAzp);
+
+            boolean coincideAud = activeId.equalsIgnoreCase(recAud) || (!configuredId.isEmpty() && configuredId.equalsIgnoreCase(recAud));
+            boolean coincideAzp = activeId.equalsIgnoreCase(recAzp) || (!configuredId.isEmpty() && configuredId.equalsIgnoreCase(recAzp));
+
+            if (!coincideAud && !coincideAzp) {
+                log.warn("Token de Google con audiencia ajena: aud={}, azp={}, esperada={}", recAud, recAzp, activeId);
                 throw new OperacionNoPermitidaException(
-                        "El token no fue emitido para esta aplicación");
+                        "El token no fue emitido para esta aplicación (Recibido en Google aud: " + recAud + ", azp: " + recAzp + " | Esperado en Backend: " + activeId + ")");
             }
 
         } catch (OperacionNoPermitidaException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("No se pudo verificar el token de Google: {}", e.getMessage());
-            throw new OperacionNoPermitidaException("No se pudo verificar la identidad con Google");
+            log.warn("No se pudo verificar el token de Google: {}", e.getMessage(), e);
+            throw new OperacionNoPermitidaException("No se pudo verificar la identidad con Google: " + e.getMessage());
         }
     }
 

@@ -214,16 +214,28 @@ function FormularioSesion() {
             setCargandoGoogle(true);
             setError(false);
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+
                 const infoRes = await fetch(
                     "https://www.googleapis.com/oauth2/v3/userinfo",
-                    { headers: { Authorization: `Bearer ${respuestaGoogle.access_token}` } }
+                    {
+                        headers: { Authorization: `Bearer ${respuestaGoogle.access_token}` },
+                        signal: controller.signal
+                    }
                 );
-                if (!infoRes.ok) throw new Error("No se pudo obtener información de Google");
+                clearTimeout(timeoutId);
+
+                if (!infoRes.ok) throw new Error("No se pudo obtener información del perfil de Google");
                 const infoGoogle = await infoRes.json();
+
+                const controllerBackend = new AbortController();
+                const timeoutBackend = setTimeout(() => controllerBackend.abort(), 10000);
 
                 const backendRes = await fetch(`${API_URL}/usuario/google`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    signal: controllerBackend.signal,
                     body: JSON.stringify({
                         tokenGoogle: respuestaGoogle.access_token,
                         correo: infoGoogle.email,
@@ -232,26 +244,33 @@ function FormularioSesion() {
                         sub: infoGoogle.sub,
                     }),
                 });
+                clearTimeout(timeoutBackend);
 
                 if (!backendRes.ok) {
                     const data = await backendRes.json();
-                    throw new Error(data.error || "Error al autenticar con Google");
+                    throw new Error(data.error || "Error al autenticar con el servidor de ROMP GPS");
                 }
 
                 const data = await backendRes.json();
                 guardarSesion(data);
                 navigate(rutaInicial());
             } catch (err) {
-                console.error(err);
+                console.error("DIAGNOSTICO FRONTEND GOOGLE:", err);
                 setError(true);
-                setMensajeError(err.message || "Error al iniciar sesión con Google");
+                if (err.name === 'AbortError') {
+                    setMensajeError("Tiempo de espera agotado al conectar con el servidor. Verifica que el backend Java esté corriendo en el puerto 8081.");
+                } else {
+                    setMensajeError(err.message || "Error al iniciar sesión con Google");
+                }
             } finally {
                 setCargandoGoogle(false);
             }
         },
-        onError: () => {
+        onError: (errResp) => {
+            console.error("DIAGNOSTICO FRONTEND GOOGLE ONERROR:", errResp);
+            setCargandoGoogle(false);
             setError(true);
-            setMensajeError("Fallo en la autenticación con Google");
+            setMensajeError("Fallo la ventana de Google. Verifica los Orígenes Autorizados en Google Cloud.");
         },
     });
 
