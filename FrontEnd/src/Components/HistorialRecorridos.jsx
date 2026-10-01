@@ -1,295 +1,362 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { get } from "../Service/api";
-import "../Styles/MapaGPS.css";
+import iconoMoto from "../assets/motorcycle.svg";
+import { distancia, decimal, horaMinutos, crearMarcadorHtml, htmlPunto, encuadrar } from "./mapaUtils";
 
-export default function HistorialRecorridos({ imei, mapa, google }) {
-    const [fechaPreset, setFechaPreset] = useState("hoy");
-    const [fechaInicio, setFechaInicio] = useState("");
-    const [fechaFin, setFechaFin] = useState("");
-    const [cargando, setCargando] = useState(false);
+const PRESETS = [["hoy", "Hoy"], ["ayer", "Ayer"], ["7dias", "7 días"]];
+const VELOCIDADES = [1, 2, 5, 10];
+
+// Un hueco sin reportes o una parada larga separan un recorrido del siguiente.
+const HUECO_MS = 10 * 60 * 1000;
+const PARADA_LARGA_MS = 15 * 60 * 1000;
+const MIN_KM = 0.1;
+
+const HTML_UNIDAD = `<div style="width:34px;height:34px;border-radius:50%;background:#b2cea8;box-shadow:0 0 18px rgba(178,206,168,.7),0 0 0 3px rgba(15,18,14,.85);display:grid;place-items:center"><img src="${iconoMoto}" alt="" style="width:18px;height:18px;filter:brightness(0);opacity:.78"></div>`;
+const HTML_DESTINO = `<span class="material-symbols-outlined" style="font-size:30px;color:#b2cea8;font-variation-settings:'FILL' 1">location_on</span>`;
+
+// Nombres de lugar ya resueltos, compartidos entre montajes de la pestaña.
+const cacheLugares = new Map();
+
+const ms = (p) => Date.parse(p.registradoEn);
+const aLatLng = (p) => ({ lat: p.latitud, lng: p.longitud });
+
+function rangoDe(preset) {
+    const hasta = new Date();
+    const desde = new Date();
+    if (preset === "hoy") {
+        desde.setHours(0, 0, 0, 0);
+    } else if (preset === "ayer") {
+        desde.setDate(desde.getDate() - 1);
+        desde.setHours(0, 0, 0, 0);
+        hasta.setDate(hasta.getDate() - 1);
+        hasta.setHours(23, 59, 59, 999);
+    } else {
+        desde.setDate(desde.getDate() - 7);
+    }
+    return { desde, hasta };
+}
+
+function etiquetaDia(fecha) {
+    const d = new Date(fecha);
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+    if (d.toDateString() === hoy.toDateString()) return "Hoy";
+    if (d.toDateString() === ayer.toDateString()) return "Ayer";
+    const texto = d.toLocaleDateString("es-CO", { weekday: "short", day: "numeric" }).replace(".", "");
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+/**
+ * El backend devuelve todos los puntos del rango; aquí se parten en
+ * recorridos usando los huecos sin reportes y las paradas largas.
+ */
+function separarRecorridos(puntos, paradas) {
+    const recorridos = [];
+    let actual = [];
+    let quietoDesde = -1;
+
+    const cerrar = () => {
+        let ini = 0;
+        let fin = actual.length - 1;
+        while (ini < fin && actual[ini].velocidad <= 1) ini++;
+        while (fin > ini && actual[fin].velocidad <= 1) fin--;
+        const tramo = actual.slice(Math.max(0, ini - 1), fin + 2);
+        actual = [];
+        quietoDesde = -1;
+        if (tramo.length < 2) return;
+
+        let metros = 0;
+        let vmax = 0;
+        for (let k = 1; k < tramo.length; k++) {
+            metros += distancia(aLatLng(tramo[k - 1]), aLatLng(tramo[k]));
+            vmax = Math.max(vmax, tramo[k].velocidad);
+        }
+        if (metros / 1000 < MIN_KM) return;
+
+        const t0 = ms(tramo[0]);
+        const t1 = ms(tramo[tramo.length - 1]);
+        recorridos.push({
+            id: `${t0}`,
+            puntos: tramo,
+            inicio: t0,
+            fin: t1,
+            km: metros / 1000,
+            min: Math.max(1, Math.round((t1 - t0) / 60000)),
+            vmax,
+            paradas: (paradas || []).filter((p) => {
+                const t = Date.parse(p.inicio);
+                return t >= t0 && t <= t1;
+            }),
+        });
+    };
+
+    puntos.forEach((p) => {
+        const anterior = actual[actual.length - 1];
+        if (anterior && ms(p) - ms(anterior) > HUECO_MS) cerrar();
+        actual.push(p);
+
+        if (p.velocidad > 1) {
+            quietoDesde = -1;
+        } else if (quietoDesde < 0) {
+            quietoDesde = actual.length - 1;
+        } else if (ms(p) - ms(actual[quietoDesde]) > PARADA_LARGA_MS) {
+            cerrar();
+            actual = [p];
+            quietoDesde = 0;
+        }
+    });
+    cerrar();
+
+    return recorridos.reverse(); // más reciente primero
+}
+
+function nombreDeLugar(resultado) {
+    const tipos = ["neighborhood", "sublocality_level_1", "sublocality", "route", "locality"];
+    for (const tipo of tipos) {
+        const c = resultado.address_components.find((x) => x.types.includes(tipo));
+        if (c) return c.short_name;
+    }
+    return null;
+}
+
+function geocodificar(geocoder, punto) {
+    const clave = `${punto.lat.toFixed(3)},${punto.lng.toFixed(3)}`;
+    if (cacheLugares.has(clave)) return Promise.resolve(cacheLugares.get(clave));
+    return geocoder.geocode({ location: punto })
+        .then(({ results }) => {
+            const nombre = results[0] ? nombreDeLugar(results[0]) : null;
+            cacheLugares.set(clave, nombre);
+            return nombre;
+        })
+        .catch(() => null);
+}
+
+export default function HistorialRecorridos({ imei, placa, mapa, google }) {
+    const [preset, setPreset] = useState("hoy");
+    const [cargando, setCargando] = useState(Boolean(imei));
     const [error, setError] = useState(null);
+    const [recorridos, setRecorridos] = useState([]);
+    const [lugares, setLugares] = useState({});
 
-    const [historial, setHistorial] = useState(null);
+    const [selId, setSelId] = useState(null);
+    const [indice, setIndice] = useState(0);
     const [reproduciendo, setReproduciendo] = useState(false);
-    const [indiceActual, setIndiceActual] = useState(0);
-    const [velocidadSimulacion, setVelocidadSimulacion] = useState(1);
+    const [velocidad, setVelocidad] = useState(2);
 
-    const polylineRef = useRef(null);
-    const markerRef = useRef(null);
-    const stopMarkersRef = useRef([]);
-    const intervalRef = useRef(null);
+    const progresoRef = useRef(null);
+    const marcadorRef = useRef(null);
 
-    // Actualizar fechas según preset
+    const seleccionado = recorridos.find((r) => r.id === selId) || null;
+    const maximo = seleccionado ? seleccionado.puntos.length - 1 : 0;
+
+    // Consulta del rango cada vez que cambia el preset o la unidad
     useEffect(() => {
-        const ahora = new Date();
-        let inicio = new Date();
+        if (!imei) return;
+        let vigente = true;
+        const { desde, hasta } = rangoDe(preset);
 
-        if (fechaPreset === "hoy") {
-            inicio.setHours(0, 0, 0, 0);
-        } else if (fechaPreset === "ayer") {
-            inicio.setDate(inicio.getDate() - 1);
-            inicio.setHours(0, 0, 0, 0);
-            ahora.setDate(ahora.getDate() - 1);
-            ahora.setHours(23, 59, 59, 999);
-        } else if (fechaPreset === "7dias") {
-            inicio.setDate(inicio.getDate() - 7);
-        }
+        get(`/gps/historial-analizado/${imei}?desde=${desde.toISOString()}&hasta=${hasta.toISOString()}`)
+            .then((res) => {
+                if (!vigente) return;
+                const lista = separarRecorridos(res?.puntos || [], res?.paradas);
+                setRecorridos(lista);
+                if (!lista.length) setError("No hay recorridos en este periodo.");
+            })
+            .catch((err) => vigente && setError(err.message || "Error al consultar el historial"))
+            .finally(() => vigente && setCargando(false));
 
-        setFechaInicio(inicio.toISOString().slice(0, 16));
-        setFechaFin(ahora.toISOString().slice(0, 16));
-    }, [fechaPreset]);
+        return () => { vigente = false; };
+    }, [imei, preset]);
 
-    const buscarHistorial = async () => {
-        if (!imei) {
-            setError("Selecciona un vehículo con IMEI válido");
-            return;
-        }
-        setCargando(true);
-        setError(null);
-        limpiarMapa();
+    // Nombres de origen y destino (Geocoding), uno a uno para no saturar la API
+    useEffect(() => {
+        if (!google || !recorridos.length) return;
+        let vigente = true;
+        const geocoder = new google.maps.Geocoder();
 
-        try {
-            const isoInicio = new Date(fechaInicio).toISOString();
-            const isoFin = new Date(fechaFin).toISOString();
-
-            const res = await get(`/gps/historial-analizado/${imei}?desde=${isoInicio}&hasta=${isoFin}`);
-            setHistorial(res);
-            setIndiceActual(0);
-
-            if (res && res.puntos && res.puntos.length > 0 && mapa && google) {
-                renderizarRuta(res.puntos, res.paradas);
-            } else {
-                setError("No hay registros de recorrido en el rango seleccionado.");
+        (async () => {
+            for (const r of recorridos.slice(0, 15)) {
+                const desde = await geocodificar(geocoder, aLatLng(r.puntos[0]));
+                const hasta = await geocodificar(geocoder, aLatLng(r.puntos[r.puntos.length - 1]));
+                if (!vigente) return;
+                if (desde || hasta) {
+                    setLugares((prev) => ({ ...prev, [r.id]: `${desde || "Inicio"} → ${hasta || "Destino"}` }));
+                }
             }
-        } catch (err) {
-            setError(err.message || "Error al consultar el historial");
-        } finally {
-            setCargando(false);
-        }
-    };
+        })();
 
-    const limpiarMapa = () => {
-        if (polylineRef.current) polylineRef.current.setMap(null);
-        if (markerRef.current) markerRef.current.setMap(null);
-        stopMarkersRef.current.forEach((m) => m.setMap(null));
-        stopMarkersRef.current = [];
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        setReproduciendo(false);
-    };
+        return () => { vigente = false; };
+    }, [google, recorridos]);
 
-    const renderizarRuta = (puntos, paradas) => {
-        const path = puntos.map((p) => ({ lat: p.latitud, lng: p.longitud }));
-
-        // Dibujar Polyline en el mapa
-        polylineRef.current = new google.maps.Polyline({
-            path: path,
-            geodesic: true,
-            strokeColor: "#3B82F6",
-            strokeOpacity: 0.8,
-            strokeWeight: 5,
-            map: mapa,
-        });
-
-        // Marcadores de paradas
-        if (paradas && paradas.length > 0) {
-            paradas.forEach((parada, idx) => {
-                const stopMarker = new google.maps.Marker({
-                    position: { lat: parada.latitud, lng: parada.longitud },
-                    map: mapa,
-                    title: `Parada ${idx + 1}: ${parada.duracionMinutos} min`,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 7,
-                        fillColor: "#EF4444",
-                        fillOpacity: 1,
-                        strokeColor: "#FFFFFF",
-                        strokeWeight: 2,
-                    },
-                });
-                stopMarkersRef.current.push(stopMarker);
-            });
-        }
-
-        // Marcador del vehículo en el primer punto
-        markerRef.current = new google.maps.Marker({
-            position: path[0],
-            map: mapa,
-            title: "Vehículo",
-            icon: {
-                url: "/icons/motorcycle.svg",
-                scaledSize: new google.maps.Size(40, 40),
-            },
-        });
-
-        // Ajustar zoom del mapa a la ruta
-        const bounds = new google.maps.LatLngBounds();
-        path.forEach((pt) => bounds.extend(pt));
-        mapa.fitBounds(bounds);
-    };
-
-    // Reproductor de trazado
+    // Dibujo del recorrido seleccionado
     useEffect(() => {
-        if (reproduciendo && historial && historial.puntos.length > 0) {
-            const delay = 500 / velocidadSimulacion;
-            intervalRef.current = setInterval(() => {
-                setIndiceActual((prev) => {
-                    if (prev >= historial.puntos.length - 1) {
-                        setReproduciendo(false);
-                        return prev;
-                    }
-                    const siguiente = prev + 1;
-                    const punto = historial.puntos[siguiente];
+        if (!seleccionado || !mapa || !google) return;
+        const ruta = seleccionado.puntos.map(aLatLng);
+        const capas = [];
+        const linea = (opciones) => {
+            const l = new google.maps.Polyline({ path: ruta, map: mapa, clickable: false, ...opciones });
+            capas.push(l);
+            return l;
+        };
 
-                    if (markerRef.current && mapa) {
-                        const newPos = { lat: punto.latitud, lng: punto.longitud };
-                        markerRef.current.setPosition(newPos);
-                    }
-                    return siguiente;
-                });
-            }, delay);
-        } else {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-        }
+        linea({ strokeColor: "#0f120e", strokeOpacity: 0.85, strokeWeight: 10 });
+        linea({ strokeColor: "#b2cea8", strokeOpacity: 0.35, strokeWeight: 5 });
+        progresoRef.current = linea({ path: ruta.slice(0, 2), strokeColor: "#b2cea8", strokeOpacity: 1, strokeWeight: 5 });
+
+        capas.push(crearMarcadorHtml(google, { mapa, posicion: ruta[0], html: htmlPunto("#b2cea8", 14), ancho: 14, alto: 14 }));
+        capas.push(crearMarcadorHtml(google, { mapa, posicion: ruta[ruta.length - 1], html: HTML_DESTINO, ancho: 30, alto: 30, anclaY: 28 }));
+        seleccionado.paradas.forEach((p) => {
+            capas.push(crearMarcadorHtml(google, { mapa, posicion: aLatLng(p), html: htmlPunto("#c9826c", 12), ancho: 12, alto: 12 }));
+        });
+        marcadorRef.current = crearMarcadorHtml(google, { mapa, posicion: ruta[0], html: HTML_UNIDAD, ancho: 34, alto: 34, zIndex: 9 });
+        capas.push(marcadorRef.current);
+
+        encuadrar(google, mapa, ruta);
 
         return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current);
+            capas.forEach((c) => c.setMap(null));
+            progresoRef.current = null;
+            marcadorRef.current = null;
         };
-    }, [reproduciendo, velocidadSimulacion, historial]);
+    }, [seleccionado, mapa, google]);
 
-    const handleSliderChange = (e) => {
-        const val = parseInt(e.target.value, 10);
-        setIndiceActual(val);
-        if (historial && historial.puntos[val] && markerRef.current) {
-            const pt = historial.puntos[val];
-            markerRef.current.setPosition({ lat: pt.latitud, lng: pt.longitud });
-        }
+    // Posición del reproductor sobre el mapa
+    useEffect(() => {
+        if (!seleccionado || !marcadorRef.current) return;
+        const ruta = seleccionado.puntos.map(aLatLng);
+        const i = Math.min(indice, ruta.length - 1);
+        marcadorRef.current.setPosition(ruta[i]);
+        progresoRef.current?.setPath(ruta.slice(0, Math.max(2, i + 1)));
+    }, [indice, seleccionado]);
+
+    // Reproducción: se detiene sola al llegar al final del recorrido
+    const enReproduccion = reproduciendo && indice < maximo;
+
+    useEffect(() => {
+        if (!enReproduccion) return;
+        const id = setInterval(() => setIndice((i) => Math.min(i + velocidad, maximo)), 90);
+        return () => clearInterval(id);
+    }, [enReproduccion, velocidad, maximo]);
+
+    const elegirPreset = (id) => {
+        if (id === preset) return;
+        setReproduciendo(false);
+        setCargando(true);
+        setError(null);
+        setRecorridos([]);
+        setSelId(null);
+        setPreset(id);
     };
 
-    const puntoActual = historial?.puntos?.[indiceActual];
+    const elegirRecorrido = (id) => {
+        setReproduciendo(false);
+        setIndice(0);
+        setSelId(id);
+    };
+
+    const alternarReproduccion = () => {
+        if (!enReproduccion && indice >= maximo) setIndice(0);
+        setReproduciendo(!enReproduccion);
+    };
+
+    const resumen = useMemo(() => {
+        const km = recorridos.reduce((a, r) => a + r.km, 0);
+        return `${recorridos.length} ${recorridos.length === 1 ? "recorrido" : "recorridos"} · ${decimal(km)} km`;
+    }, [recorridos]);
+
+    const punto = seleccionado?.puntos[Math.min(indice, maximo)];
 
     return (
-        <div style={{ background: "white", padding: "16px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginBottom: "16px" }}>
-            <h3 style={{ margin: "0 0 12px 0", color: "#1F2937", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>📜</span> Historial de Recorridos
-            </h3>
-
-            {/* Filtros de Fecha */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
-                <button
-                    onClick={() => setFechaPreset("hoy")}
-                    style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #D1D5DB", background: fechaPreset === "hoy" ? "#2563EB" : "#F3F4F6", color: fechaPreset === "hoy" ? "white" : "#374151", cursor: "pointer" }}
-                >
-                    Hoy
-                </button>
-                <button
-                    onClick={() => setFechaPreset("ayer")}
-                    style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #D1D5DB", background: fechaPreset === "ayer" ? "#2563EB" : "#F3F4F6", color: fechaPreset === "ayer" ? "white" : "#374151", cursor: "pointer" }}
-                >
-                    Ayer
-                </button>
-                <button
-                    onClick={() => setFechaPreset("7dias")}
-                    style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #D1D5DB", background: fechaPreset === "7dias" ? "#2563EB" : "#F3F4F6", color: fechaPreset === "7dias" ? "white" : "#374151", cursor: "pointer" }}
-                >
-                    Últimos 7 días
-                </button>
-            </div>
-
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center", marginBottom: "16px" }}>
-                <input
-                    type="datetime-local"
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                    style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #D1D5DB" }}
-                />
-                <span>a</span>
-                <input
-                    type="datetime-local"
-                    value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
-                    style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #D1D5DB" }}
-                />
-                <button
-                    onClick={buscarHistorial}
-                    disabled={cargando}
-                    style={{ padding: "8px 16px", borderRadius: "6px", background: "#2563EB", color: "white", border: "none", fontWeight: "bold", cursor: "pointer" }}
-                >
-                    {cargando ? "Consultando..." : "Consultar Ruta"}
-                </button>
-            </div>
-
-            {error && <p style={{ color: "#EF4444", fontSize: "14px", marginTop: "4px" }}>{error}</p>}
-
-            {/* Estadísticas del Recorrido */}
-            {historial && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "8px", background: "#F8FAFC", padding: "12px", borderRadius: "8px", marginBottom: "16px" }}>
-                    <div>
-                        <span style={{ fontSize: "12px", color: "#64748B" }}>Distancia Total</span>
-                        <p style={{ margin: 0, fontWeight: "bold", fontSize: "16px", color: "#0F172A" }}>{historial.distanciaTotalKm} km</p>
-                    </div>
-                    <div>
-                        <span style={{ fontSize: "12px", color: "#64748B" }}>Vel. Máxima</span>
-                        <p style={{ margin: 0, fontWeight: "bold", fontSize: "16px", color: "#0F172A" }}>{historial.velocidadMaximaKmh} km/h</p>
-                    </div>
-                    <div>
-                        <span style={{ fontSize: "12px", color: "#64748B" }}>Vel. Promedio</span>
-                        <p style={{ margin: 0, fontWeight: "bold", fontSize: "16px", color: "#0F172A" }}>{historial.velocidadPromedioKmh} km/h</p>
-                    </div>
-                    <div>
-                        <span style={{ fontSize: "12px", color: "#64748B" }}>Paradas</span>
-                        <p style={{ margin: 0, fontWeight: "bold", fontSize: "16px", color: "#EF4444" }}>{historial.cantidadParadas}</p>
-                    </div>
+        <div className="pc-cuerpo">
+            <div className="pc-encabezado-seccion pc-encabezado-fila">
+                <div>
+                    <div className="pc-sobretitulo">Recorridos · {placa || "Unidad"}</div>
+                    <div className="pc-titulo">Historial</div>
                 </div>
-            )}
+                {!cargando && recorridos.length > 0 && <div className="pc-nota">{resumen}</div>}
+            </div>
 
-            {/* Reproductor Animado */}
-            {historial && historial.puntos && historial.puntos.length > 0 && (
-                <div style={{ background: "#1E293B", color: "white", padding: "16px", borderRadius: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                        <div style={{ display: "flex", gap: "8px" }}>
-                            <button
-                                onClick={() => setReproduciendo(!reproduciendo)}
-                                style={{ padding: "8px 16px", borderRadius: "6px", background: reproduciendo ? "#EF4444" : "#10B981", color: "white", border: "none", fontWeight: "bold", cursor: "pointer" }}
-                            >
-                                {reproduciendo ? "⏸ Pausar" : "▶ Reproducir"}
-                            </button>
-                            <button
-                                onClick={() => { setIndiceActual(0); setReproduciendo(false); }}
-                                style={{ padding: "8px 12px", borderRadius: "6px", background: "#475569", color: "white", border: "none", cursor: "pointer" }}
-                            >
-                                🔄 Reiniciar
-                            </button>
-                        </div>
-                        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-                            <span style={{ fontSize: "12px" }}>Velocidad:</span>
-                            {[1, 2, 5, 10].map((v) => (
-                                <button
-                                    key={v}
-                                    onClick={() => setVelocidadSimulacion(v)}
-                                    style={{ padding: "4px 8px", borderRadius: "4px", border: "none", background: velocidadSimulacion === v ? "#3B82F6" : "#334155", color: "white", cursor: "pointer" }}
-                                >
-                                    {v}x
+            <div className="pc-segmentado" role="group" aria-label="Periodo">
+                {PRESETS.map(([id, etiqueta]) => (
+                    <button
+                        key={id}
+                        className={`pc-segmento ${preset === id ? "activo" : ""}`}
+                        aria-pressed={preset === id}
+                        onClick={() => elegirPreset(id)}
+                    >
+                        {etiqueta}
+                    </button>
+                ))}
+            </div>
+
+            {cargando && <div className="pc-estado">Cargando recorridos…</div>}
+            {!cargando && error && <div className="pc-estado">{error}</div>}
+
+            <div className="pc-lista">
+                {recorridos.map((r) => (
+                    <button
+                        key={r.id}
+                        className={`pc-fila-tarjeta ${selId === r.id ? "activo" : ""}`}
+                        onClick={() => elegirRecorrido(r.id)}
+                    >
+                        <span className="pc-icono-caja"><span className="material-symbols-outlined">route</span></span>
+                        <span className="pc-fila-texto">
+                            <span className="pc-fila-meta">
+                                <span>{etiquetaDia(r.inicio)}</span>{horaMinutos(r.inicio)} – {horaMinutos(r.fin)}
+                            </span>
+                            <span className="pc-fila-titulo">{lugares[r.id] || `Recorrido de ${decimal(r.km)} km`}</span>
+                        </span>
+                        <span className="pc-fila-cifras">
+                            <span className="pc-cifra">{decimal(r.km)}<small> km</small></span>
+                            <span className="pc-nota">{r.min} min</span>
+                        </span>
+                    </button>
+                ))}
+            </div>
+
+            {seleccionado && (
+                <>
+                    <div className="pc-metricas pc-metricas-2">
+                        <div className="pc-metrica"><div className="pc-metrica-etiqueta">Distancia</div><div className="pc-metrica-valor">{decimal(seleccionado.km)} km</div></div>
+                        <div className="pc-metrica"><div className="pc-metrica-etiqueta">Duración</div><div className="pc-metrica-valor">{seleccionado.min} min</div></div>
+                        <div className="pc-metrica"><div className="pc-metrica-etiqueta">Vel. máxima</div><div className="pc-metrica-valor">{seleccionado.vmax} km/h</div></div>
+                        <div className="pc-metrica"><div className="pc-metrica-etiqueta">Paradas</div><div className="pc-metrica-valor pc-texto-peligro">{seleccionado.paradas.length}</div></div>
+                    </div>
+
+                    <div className="pc-reproductor">
+                        <div className="pc-reproductor-controles">
+                            <div className="pc-fila-botones">
+                                <button className="pc-boton-redondo primario" onClick={alternarReproduccion} aria-label={enReproduccion ? "Pausar" : "Reproducir"}>
+                                    <span className="material-symbols-outlined icono-relleno">{enReproduccion ? "pause" : "play_arrow"}</span>
                                 </button>
-                            ))}
+                                <button className="pc-boton-redondo" onClick={() => { setReproduciendo(false); setIndice(0); }} aria-label="Reiniciar">
+                                    <span className="material-symbols-outlined">replay</span>
+                                </button>
+                            </div>
+                            <div className="pc-velocidades" role="group" aria-label="Velocidad de reproducción">
+                                {VELOCIDADES.map((v) => (
+                                    <button key={v} className={velocidad === v ? "activo" : ""} aria-pressed={velocidad === v} onClick={() => setVelocidad(v)}>
+                                        {v}x
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max={maximo}
+                            value={Math.min(indice, maximo)}
+                            onChange={(e) => { setReproduciendo(false); setIndice(Number(e.target.value)); }}
+                            aria-label="Posición en el recorrido"
+                            className="pc-deslizador"
+                        />
+                        <div className="pc-reproductor-pie">
+                            <span>{punto ? new Date(punto.registradoEn).toLocaleTimeString("es-CO", { hour12: false }) : "--:--"}</span>
+                            <span>{punto ? punto.velocidad : 0} km/h</span>
                         </div>
                     </div>
-
-                    <input
-                        type="range"
-                        min="0"
-                        max={historial.puntos.length - 1}
-                        value={indiceActual}
-                        onChange={handleSliderChange}
-                        style={{ width: "100%", cursor: "pointer" }}
-                    />
-
-                    {puntoActual && (
-                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "13px", color: "#94A3B8" }}>
-                            <span>Hora: {new Date(puntoActual.registradoEn).toLocaleTimeString()}</span>
-                            <span>Velocidad: {puntoActual.velocidad} km/h</span>
-                        </div>
-                    )}
-                </div>
+                </>
             )}
         </div>
     );

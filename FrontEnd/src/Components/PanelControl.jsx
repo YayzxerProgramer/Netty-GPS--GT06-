@@ -1,325 +1,520 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import MapaGPS from "./Mapa";
 import HistorialRecorridos from "./HistorialRecorridos";
 import RecomendadorRutas from "./RecomendadorRutas";
 import { useGpsSocket } from "../Service/GpsDataService";
-import { useNavigate, Link } from "react-router-dom";
+import { get, post } from "../Service/api";
+import { cerrarSesion, obtenerUsuario } from "../Service/sesion";
+import iconoMoto from "../assets/motorcycle.svg";
 import "../Styles/PanelControl.css";
-import { cerrarSesion } from "../Service/sesion";
-import { API_URL } from "../Service/api";
-const IMEI = "0863874084559974";
 
-const sparkHeights = ["40%", "60%", "55%", "80%", "95%", "70%", "85%"];
+const AVATAR_RESPALDO = "https://lh3.googleusercontent.com/aida-public/AB6AXuAY2LUZy8-2hH4EHpzk3fYPcKWGWO-KFLJi026AWK5hVL8IclrSHzl6nHY3IZDOrMGLfe0y5DCDS_FbOuiQ876MODJCixKpcuhqt9IP42G9ZbNMWt3Bdr3dMicj7oIubOipTqySE4VggkfaXCfjOuO0VP9fVLkKxVRfzrtRfRQW7ZCt9glPMhZinrCn3jhl-cG33Ww0CnjKHUBe4ScbYvWaYi-tMR7xoPPQbShkWGwwFivAB0UuhNoOHFCQlvudSkPAz5W2aANPLQE";
+
+const PESTANAS = [
+    ["vivo", "En vivo", "near_me"],
+    ["hist", "Historial", "history"],
+    ["nav", "Navegar", "navigation"],
+];
+
+// Cantidad de reportes que alimentan la gráfica de velocidad y la calidad de señal
+const MUESTRAS = 18;
+
+function haceCuanto(fecha) {
+    if (!fecha) return "Sin reportes";
+    const min = Math.round((Date.now() - Date.parse(fecha)) / 60000);
+    if (min < 1) return "Hace instantes";
+    if (min < 60) return `Hace ${min} min`;
+    if (min < 60 * 24) return `Hace ${Math.round(min / 60)} h`;
+    return `Hace ${Math.round(min / 1440)} d`;
+}
+
+function leerSim(imei) {
+    try {
+        return localStorage.getItem(`romp:sim:${imei}`) || "";
+    } catch {
+        return "";
+    }
+}
+
+function guardarSim(imei, telefono) {
+    try {
+        localStorage.setItem(`romp:sim:${imei}`, telefono);
+    } catch {
+        // Sin almacenamiento: se pedirá de nuevo la próxima vez.
+    }
+}
 
 export default function PanelControl() {
-    const [usuarioData, setUsuarioData] = useState(null);
-    const [vehiculos, setVehiculos] = useState([]);
-    const [vistaActiva, setVistaActiva] = useState("vivo"); // "vivo" | "historial" | "rutas"
-
-    const [mapaObj, setMapaObj] = useState(null);
-    const [googleObj, setGoogleObj] = useState(null);
-
-    const [time, setTime] = useState("14:22:05");
-
     const navigate = useNavigate();
 
-    const usuario = localStorage.getItem("usuario");
-    const id_usuario = usuarioData ? usuarioData.id : null;
+    const [usuarioData, setUsuarioData] = useState(null);
+    const [vehiculos, setVehiculos] = useState([]);
+    const [selId, setSelId] = useState(null);
+    const [ultima, setUltima] = useState(null);
+    const [vistosOtros, setVistosOtros] = useState({});
 
-    const vehiculoActivo = vehiculos.find(vehiculo => vehiculo.activo);
+    const [pestana, setPestana] = useState("vivo");
+    const [mapa, setMapa] = useState(null);
+    const [google, setGoogle] = useState(null);
+    const [siguiendo, setSiguiendo] = useState(true);
+    const [navegando, setNavegando] = useState(false);
+    const [capa, setCapa] = useState(null);
 
-    const token = localStorage.getItem("token");
-    // Conectamos el WebSocket — todos los datos vienen de aquí
-    const { position, connected } = useGpsSocket(IMEI);
+    const [hora, setHora] = useState("--:--:--");
+    const [muestras, setMuestras] = useState([]);
+    const [toast, setToast] = useState("");
+    const [dialogo, setDialogo] = useState(null); // null | "corte" | "restablecer"
+    const [telefonoSim, setTelefonoSim] = useState("");
+    const [enviando, setEnviando] = useState(false);
+    const [errorDialogo, setErrorDialogo] = useState(null);
+    const toastRef = useRef(null);
 
-    const handleMapLoad = (map, google) => {
-        setMapaObj(map);
-        setGoogleObj(google);
-    };
+    const vehiculoSel = vehiculos.find((v) => v.id === selId)
+        || vehiculos.find((v) => v.activo)
+        || vehiculos[0]
+        || null;
+    const imei = vehiculoSel?.imei || null;
+    const placa = vehiculoSel?.placa || "Unidad";
+    const otros = vehiculos.filter((v) => v !== vehiculoSel);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const now = new Date();
-            setTime(now.toLocaleTimeString("es-MX", { hour12: false }));
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+    // Un solo WebSocket, para la unidad seleccionada
+    const { position: posSocket, connected } = useGpsSocket(imei);
 
-    // Formateamos coordenadas con fallback si no hay señal aún
-    const lat = position ? position.latitud.toFixed(4) : "---";
-    const lng = position ? position.longitud.toFixed(4) : "---";
+    // Hasta que llegue el primer mensaje en vivo se muestra la última posición guardada.
+    const position = posSocket?.imei === imei ? posSocket : ultima?.imei === imei ? ultima : null;
+
     const velocidad = position ? position.velocidad : 0;
-    const motorEncendido = position ? position.acc : false;
-    const gpsValido = position ? position.gpsValido : false;
+    const motorEncendido = Boolean(position?.acc);
+    const gpsValido = Boolean(position?.gpsValido);
+    const inmovilizado = Boolean(position?.corteMotor);
+    const lat = position ? Number(position.latitud).toFixed(4) : "---";
+    const lng = position ? Number(position.longitud).toFixed(4) : "---";
 
     useEffect(() => {
-
-        fetch(`${API_URL}/usuario/usuario/${usuario}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then((respuesta) => respuesta.json())
-            .then((data) => {
-                setUsuarioData(data);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
+        const id = setInterval(() => setHora(new Date().toLocaleTimeString("es-CO", { hour12: false })), 1000);
+        return () => clearInterval(id);
     }, []);
 
     useEffect(() => {
+        get(`/usuario/usuario/${obtenerUsuario()}`)
+            .then(setUsuarioData)
+            .catch((error) => console.error(error));
+    }, []);
 
+    useEffect(() => {
         if (!usuarioData) return;
-
-        fetch(`${API_URL}/usuario/vehiculos/${usuarioData.id}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then((respuesta) => respuesta.json())
-            .then((data) => {
-                setVehiculos(data);
-            })
-            .catch((error) => {
-                console.error(error)
-            });
+        get(`/usuario/vehiculos/${usuarioData.id}`)
+            .then((data) => setVehiculos(Array.isArray(data) ? data : []))
+            .catch((error) => console.error(error));
     }, [usuarioData]);
 
-    function cerrarSesion() {
+    useEffect(() => {
+        if (!imei) return;
+        let vigente = true;
+        get(`/gps/ultima-posicion/${imei}`)
+            .then((p) => vigente && setUltima(p))
+            .catch(() => vigente && setUltima(null));
+        return () => { vigente = false; };
+    }, [imei]);
+
+    // Último reporte de las demás unidades, para la lista de la flota
+    useEffect(() => {
+        if (!otros.length) return;
+        let vigente = true;
+        Promise.all(otros.map((v) => get(`/gps/ultima-posicion/${v.imei}`)
+            .then((p) => [v.imei, p?.registradoEn])
+            .catch(() => [v.imei, null])))
+            .then((pares) => vigente && setVistosOtros(Object.fromEntries(pares)));
+        return () => { vigente = false; };
+        // Solo cuando cambia la composición de la flota o la unidad elegida.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vehiculos, imei]);
+
+    // Cada mensaje nuevo del socket se suma a las muestras (ajuste durante el render,
+    // para no encadenar un segundo render desde un efecto).
+    const [ultimoMensaje, setUltimoMensaje] = useState(null);
+    if (posSocket && posSocket !== ultimoMensaje) {
+        setUltimoMensaje(posSocket);
+        setMuestras((m) => [...m.slice(-(MUESTRAS - 1)), { v: posSocket.velocidad, valido: posSocket.gpsValido }]);
+    }
+
+    const avisar = useCallback((mensaje) => {
+        clearTimeout(toastRef.current);
+        setToast(mensaje);
+        toastRef.current = setTimeout(() => setToast(""), 3200);
+    }, []);
+
+    useEffect(() => () => clearTimeout(toastRef.current), []);
+
+    const alNavegar = useCallback((activo) => {
+        setNavegando(activo);
+        if (activo) setSiguiendo(true);
+    }, []);
+
+    const posicionLatLng = position ? { lat: Number(position.latitud), lng: Number(position.longitud) } : null;
+
+    const cambiarPestana = (id) => {
+        if (id === pestana) return;
+        setPestana(id);
+        setSiguiendo(id === "vivo");
+        if (mapa && posicionLatLng && id !== "hist") {
+            mapa.setZoom(id === "vivo" ? 16 : 14);
+            mapa.panTo(posicionLatLng);
+        }
+    };
+
+    const elegirVehiculo = (id) => {
+        setSelId(id);
+        setMuestras([]);
+        setSiguiendo(true);
+    };
+
+    const recentrar = () => {
+        setSiguiendo(true);
+        if (mapa && posicionLatLng) {
+            mapa.panTo(posicionLatLng);
+            mapa.setZoom(navegando ? 17 : 16);
+        }
+    };
+
+    const abrirDialogo = () => {
+        setTelefonoSim(leerSim(imei));
+        setErrorDialogo(null);
+        setDialogo(inmovilizado ? "restablecer" : "corte");
+    };
+
+    const cerrarDialogo = useCallback(() => {
+        if (!enviando) setDialogo(null);
+    }, [enviando]);
+
+    useEffect(() => {
+        if (!dialogo) return;
+        const alTeclear = (e) => e.key === "Escape" && cerrarDialogo();
+        window.addEventListener("keydown", alTeclear);
+        return () => window.removeEventListener("keydown", alTeclear);
+    }, [dialogo, cerrarDialogo]);
+
+    const enviarComando = async (e) => {
+        e.preventDefault();
+        const telefono = telefonoSim.trim();
+        if (!telefono) {
+            setErrorDialogo("Escribe el número de la SIM del GPS.");
+            return;
+        }
+        setEnviando(true);
+        setErrorDialogo(null);
+        try {
+            const res = await post("/gps/comando-sms", {
+                imei,
+                comando: dialogo === "corte" ? "CORTE_MOTOR" : "RESTAURAR_MOTOR",
+                telefonoSim: telefono,
+            });
+            guardarSim(imei, telefono);
+            setDialogo(null);
+            avisar(res?.mensaje || (dialogo === "corte" ? `Orden de corte enviada a ${placa}` : `Orden de restablecer enviada a ${placa}`));
+        } catch (err) {
+            setErrorDialogo(err.message || "No se pudo enviar el comando.");
+        } finally {
+            setEnviando(false);
+        }
+    };
+
+    function salir() {
         cerrarSesion();
         navigate("/login", { replace: true });
     }
 
+    // ── Valores derivados para la vista ─────────────────────
+    const enLinea = connected && Boolean(posSocket);
+    const etiquetaVivo = !connected ? "Sin conexión" : navegando ? "Navegando" : inmovilizado ? "Inmovilizado" : "En vivo";
+    const colorVivo = connected && !inmovilizado ? "#b2cea8" : "#c9826c";
+
+    const estado = inmovilizado
+        ? { texto: "INMOVILIZADO", clase: "peligro" }
+        : enLinea
+            ? { texto: "EN VIVO", clase: "acento" }
+            : { texto: "OFFLINE", clase: "" };
+
+    const calidad = muestras.length
+        ? `${Math.round((muestras.filter((m) => m.valido).length / muestras.length) * 100)}%`
+        : "—";
+    const maxVel = Math.max(60, ...muestras.map((m) => m.v));
+    const barras = Array.from({ length: MUESTRAS }, (_, k) => muestras[k - (MUESTRAS - muestras.length)]);
+
+    const activas = vehiculos.filter((v) => v.activo).length;
+
     return (
-        <div className="romp-root">
-
-            {/* Barra de navegación superior */}
-            <nav className="barra-nav-superior">
-                <div className="marca-logo">
-                    <span className="material-symbols-outlined icono-logo">explore</span>
-                    ROMP GPS
-                </div>
-                <button className="boton-clientes" onClick={cerrarSesion}>
-                    Cerrar Sesión
-                </button>
-            </nav>
-            <div className="contenedor-principal">
-
-                {/* Barra lateral */}
-                <aside className="barra-lateral">
-
-                    {/* Perfil de usuario */}
-                    <div className="seccion-perfil">
-                        <div className="fila-perfil">
-                            <div className="avatar-perfil">
-                                <img
-                                    alt="Perfil de usuario"
-                                    src={usuarioData?.imagenUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuAY2LUZy8-2hH4EHpzk3fYPcKWGWO-KFLJi026AWK5hVL8IclrSHzl6nHY3IZDOrMGLfe0y5DCDS_FbOuiQ876MODJCixKpcuhqt9IP42G9ZbNMWt3Bdr3dMicj7oIubOipTqySE4VggkfaXCfjOuO0VP9fVLkKxVRfzrtRfRQW7ZCt9glPMhZinrCn3jhl-cG33Ww0CnjKHUBe4ScbYvWaYi-tMR7xoPPQbShkWGwwFivAB0UuhNoOHFCQlvudSkPAz5W2aANPLQE"}
-                                />
-                            </div>
-                            <div className="datos-perfil">
-                                <h2>{usuarioData ? usuarioData.usuario : "Usuario"}</h2>
-                                <p>Unidades activas: 1</p>
-                            </div>
-                        </div>
-                        <button className="boton-rastrear">Track Now</button>
-                    </div>
-
-                    {/* Lista vehículos y navegación de módulos */}
-                    <div className="lista-vehiculos">
-
-                        {/* Rastreo en Vivo */}
-                        <div
-                            className={`elemento-activo ${vistaActiva === "vivo" ? "seleccionado" : ""}`}
-                            onClick={() => setVistaActiva("vivo")}
-                            style={{ cursor: "pointer", borderLeft: vistaActiva === "vivo" ? "4px solid #2563EB" : "none" }}
-                        >
-                            <div className="fila-icono">
-                                <span className="material-symbols-outlined icono-nav">near_me</span>
-                                <span>Rastreo En Vivo</span>
-                            </div>
-
-                            <div className="detalle-activo">
-                                <p className="etiqueta-unidad">IMEI: {IMEI.slice(-8)}</p>
-                                <div className="fila-velocidad">
-                                    <span className="indicador-velocidad">
-                                        <span className="punto-pulsante" style={{ backgroundColor: connected ? "#86a17d" : "#a05540" }} />
-                                        {connected ? `${velocidad} km/h` : "Offline"}
-                                    </span>
-                                    <span className="hora-registro">{time}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Historial de Recorridos */}
-                        <div
-                            className="tab-navegacion"
-                            onClick={() => setVistaActiva("historial")}
-                            style={{ cursor: "pointer", background: vistaActiva === "historial" ? "#1E293B" : "transparent", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px", color: vistaActiva === "historial" ? "#60A5FA" : "#94A3B8" }}
-                        >
-                            <span className="material-symbols-outlined icono-tab">history</span>
-                            <span className="texto-tab" style={{ fontWeight: "bold" }}>Historial de Recorridos</span>
-                        </div>
-
-                        {/* Recomendador de Rutas Rápidas */}
-                        <div
-                            className="tab-navegacion"
-                            onClick={() => setVistaActiva("rutas")}
-                            style={{ cursor: "pointer", background: vistaActiva === "rutas" ? "#1E293B" : "transparent", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px", color: vistaActiva === "rutas" ? "#10B981" : "#94A3B8" }}
-                        >
-                            <span className="material-symbols-outlined icono-tab">navigation</span>
-                            <span className="texto-tab" style={{ fontWeight: "bold" }}>Ruta Más Rápida</span>
-                        </div>
-
-                        {/* Planes y Pricing */}
-                        <div className="tab-navegacion">
-                            <span className="material-symbols-outlined icono-tab">payments</span>
-                            <span className="texto-tab">
-                                <Link to="/pricing" style={{ color: "#F59E0B", textDecoration: "none", fontWeight: "bold" }}>Ver Planes & Wompi</Link>
-                            </span>
-                        </div>
-
-                        {/* Flota Activa */}
-                        <div className="seccion-flota" style={{ marginTop: "16px" }}>
-                            <h3 className="titulo-flota">Flota Activa</h3>
-
-                            <div className="tarjetas-vehiculos">
-                                <div className="tarjeta-vehiculo">
-                                    <div className="encabezado-tarjeta-panel">
-                                        <span className="nombre-vehiculo">{vehiculoActivo ? vehiculoActivo.placa : "Vehículo Activo"}</span>
-                                        <span className="modelo-vehiculo">{vehiculoActivo ? vehiculoActivo.modelo : "GT06 GPS"}</span>
-                                        <span className={`etiqueta-estado ${connected ? "etiqueta-en-mapa" : "etiqueta-detenido"}`}>
-                                            {connected ? "EN VIVO" : "OFFLINE"}
-                                        </span>
-                                    </div>
-
-                                    <div className="grilla-datos">
-                                        <div className="dato-item">
-                                            <span className="dato-etiqueta">Motor</span>
-                                            <span className={motorEncendido ? "dato-valor-activo" : "dato-valor-error"}>
-                                                {motorEncendido ? "Encendido" : "Apagado"}
-                                            </span>
-                                        </div>
-
-                                        <div className="dato-item">
-                                            <span className="dato-etiqueta">GPS</span>
-                                            <span className={gpsValido ? "dato-valor-normal" : "dato-valor-apagado"}>
-                                                {gpsValido ? "Válido" : "Sin señal"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Footer sidebar */}
-                    <div className="pie-barra-lateral">
-                        <div className="tab-pie">
-                            <span className="material-symbols-outlined icono-pie">settings</span>
-                            <span className="texto-pie">
-                                <Link to="/configuracion">Configuración</Link>
-                            </span>
-                        </div>
-                        <div className="tab-pie">
-                            <span className="material-symbols-outlined icono-pie">help</span>
-                            <span className="texto-pie">Soporte</span>
-                        </div>
-                    </div>
-
-                </aside>
-
-                {/* Main — mapa real + componentes dinámicos */}
-                <main className="area-principal">
-                    <div className="fondo-mapa" style={{ position: "relative", overflowY: "auto" }}>
-
-                        {/* MapaGPS siempre visible en el fondo */}
-                        <div className="contenedor-mapa-real">
-                            <MapaGPS position={position} connected={connected} onMapLoad={handleMapLoad} />
-                        </div>
-
-                        {/* Panel Flotante Dinámico sobre el Mapa */}
-                        <div style={{ position: "absolute", top: "20px", left: "20px", zIndex: 10, maxWidth: "450px", width: "calc(100% - 40px)" }}>
-                            {vistaActiva === "historial" && (
-                                <HistorialRecorridos imei={IMEI} mapa={mapaObj} google={googleObj} />
-                            )}
-
-                            {vistaActiva === "rutas" && (
-                                <RecomendadorRutas mapa={mapaObj} google={googleObj} posicionActualVehiculo={position} />
-                            )}
-                        </div>
-
-                        <div className="superposicion-degradado"></div>
-
-                        {/* HUD de telemetría visible solo en modo Rastreo En Vivo */}
-                        {vistaActiva === "vivo" && (
-                            <div className="panel-hud">
-                                <div className="tarjeta-telemetria">
-                                    <div className="encabezado-telemetria">
-                                        <span className="titulo-telemetria">Salud Global</span>
-                                        <span className="subtitulo-telemetria">Tiempo real</span>
-                                    </div>
-
-                                    <div className="metricas-telemetria">
-                                        <div className="fila-metrica">
-                                            <div className="encabezado-metrica">
-                                                <span className="nombre-metrica">Estabilidad de señal</span>
-                                                <span className="valor-metrica">{connected ? "98%" : "0%"}</span>
-                                            </div>
-                                            <div className="barra-progreso">
-                                                <div className="relleno-progreso" style={{ width: connected ? "98%" : "0%" }} />
-                                            </div>
-                                        </div>
-
-                                        <div className="fila-velocidad-hud">
-                                            <div className="bloque-velocidad">
-                                                <p className="etiqueta-velocidad">Velocidad actual</p>
-                                                <p className="valor-velocidad">
-                                                    {velocidad}
-                                                    <span className="unidad-velocidad"> km/h</span>
-                                                </p>
-                                            </div>
-
-                                            <div className="contenedor-sparkline">
-                                                <div className="barras-sparkline">
-                                                    {sparkHeights.map((h, i) => (
-                                                        <div key={i} className="barra-spark" style={{ height: h }} />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="panel-coordenadas">
-                                    <div className="fila-coordenadas">
-                                        <span>LAT: {lat}°</span>
-                                        <span>LNG: {lng}°</span>
-                                    </div>
-                                    <div className="fila-coordenadas">
-                                        <span>IMEI: {IMEI.slice(-8)}</span>
-                                        <span>GPS: {gpsValido ? "ACTIVO" : "INACTIVO"}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="pie-mapa-izq">
-                            ROMP_NAV_SYSTEM_v4.2.1 // SECTOR_G12
-                        </div>
-                        <div className="pie-mapa-der">
-                            ENCRYPTED_SIGNAL_LOCK // 0xFF2A
-                        </div>
-
-                    </div>
-                </main>
-
+        <div className="pc-raiz">
+            <div className="pc-mapa">
+                <MapaGPS
+                    position={position}
+                    siguiendo={siguiendo}
+                    atenuado={pestana === "hist"}
+                    onArrastre={() => setSiguiendo(false)}
+                    onMapLoad={(m, g) => { setMapa(m); setGoogle(g); }}
+                />
             </div>
+            <div className="pc-velo" />
+
+            {/* ── Cabecera ── */}
+            <header className="pc-cabecera">
+                <div className="pc-vidrio pc-cabecera-marca">
+                    <div className="pc-logo">
+                        <span className="material-symbols-outlined icono-relleno">explore</span>
+                        ROMP GPS
+                    </div>
+                    <div className="pc-separador" />
+                    <div className="pc-en-vivo">
+                        <span className="pc-punto" style={{ background: colorVivo }} />
+                        {etiquetaVivo}
+                    </div>
+                    <div className="pc-reloj">{hora}</div>
+                </div>
+
+                <div className="pc-vidrio pc-cabecera-usuario">
+                    <Link to="/configuracion" className="pc-boton-icono" title="Configuración" aria-label="Configuración">
+                        <span className="material-symbols-outlined">settings</span>
+                    </Link>
+                    <div className="pc-separador" />
+                    <img className="pc-avatar" alt="Perfil" src={usuarioData?.imagenUrl || AVATAR_RESPALDO} />
+                    <div className="pc-usuario">
+                        <span>{usuarioData?.nombre || usuarioData?.usuario || "Usuario"}</span>
+                        <small>{activas} {activas === 1 ? "unidad activa" : "unidades activas"}</small>
+                    </div>
+                    <button className="pc-boton-salir" onClick={salir}>
+                        <span className="material-symbols-outlined">logout</span>Salir
+                    </button>
+                </div>
+            </header>
+
+            {/* ── Barra lateral ── */}
+            <aside className="pc-lateral">
+                <div className="pc-pestanas" role="tablist">
+                    {PESTANAS.map(([id, etiqueta, icono]) => (
+                        <button
+                            key={id}
+                            role="tab"
+                            aria-selected={pestana === id}
+                            className={pestana === id ? "activo" : ""}
+                            onClick={() => cambiarPestana(id)}
+                        >
+                            <span className="material-symbols-outlined">{icono}</span>{etiqueta}
+                        </button>
+                    ))}
+                </div>
+
+                {pestana === "vivo" && (
+                    <>
+                        <div className="pc-encabezado-seccion pc-encabezado-fila pc-encabezado-flota">
+                            <div>
+                                <div className="pc-sobretitulo">Mi flota</div>
+                                <div className="pc-titulo">Unidades</div>
+                            </div>
+                            <div className="pc-nota">{vehiculos.length} {vehiculos.length === 1 ? "unidad" : "unidades"}</div>
+                        </div>
+
+                        <div className="pc-cuerpo pc-cuerpo-flota">
+                            {!vehiculoSel && <div className="pc-estado">Aún no tienes unidades registradas.</div>}
+
+                            {vehiculoSel && (
+                                <div className="pc-unidad">
+                                    <div className="pc-unidad-cabeza">
+                                        <div className="pc-unidad-identidad">
+                                            <div className="pc-unidad-icono"><img src={iconoMoto} alt="" /></div>
+                                            <div>
+                                                <div className="pc-unidad-placa">{placa}</div>
+                                                <div className="pc-nota">{vehiculoSel.modelo || "GPS GT06"}</div>
+                                            </div>
+                                        </div>
+                                        <span className={`pc-etiqueta ${estado.clase}`}>{estado.texto}</span>
+                                    </div>
+
+                                    <div className="pc-metricas pc-metricas-3">
+                                        <div className="pc-metrica">
+                                            <div className="pc-metrica-etiqueta">Velocidad</div>
+                                            <div className="pc-metrica-valor pc-metrica-valor-chico">{velocidad}<small> km/h</small></div>
+                                        </div>
+                                        <div className="pc-metrica">
+                                            <div className="pc-metrica-etiqueta">Motor</div>
+                                            <div className={`pc-metrica-texto ${motorEncendido ? "pc-texto-acento" : "pc-texto-peligro"}`}>
+                                                {motorEncendido ? "Encendido" : "Apagado"}
+                                            </div>
+                                        </div>
+                                        <div className="pc-metrica">
+                                            <div className="pc-metrica-etiqueta">GPS</div>
+                                            <div className={`pc-metrica-texto ${gpsValido ? "" : "pc-texto-peligro"}`}>{gpsValido ? "Válido" : "Sin señal"}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pc-imei">IMEI {imei}</div>
+
+                                    <div className="pc-par-botones">
+                                        <button className={`pc-boton-seguir ${siguiendo ? "activo" : ""}`} onClick={() => (siguiendo ? setSiguiendo(false) : recentrar())}>
+                                            <span className="material-symbols-outlined icono-relleno">near_me</span>{siguiendo ? "Siguiendo" : "Seguir"}
+                                        </button>
+                                        <button className="pc-boton-peligro" onClick={abrirDialogo}>
+                                            <span className="material-symbols-outlined">power_settings_new</span>{inmovilizado ? "Restablecer" : "Corte motor"}
+                                        </button>
+                                    </div>
+
+                                    <div className="pc-par-botones pc-par-botones-borde">
+                                        <button className="pc-boton-contorno" onClick={() => cambiarPestana("hist")}>
+                                            <span className="material-symbols-outlined">history</span>Ver historial
+                                        </button>
+                                        <button className="pc-boton-contorno" onClick={() => cambiarPestana("nav")}>
+                                            <span className="material-symbols-outlined">navigation</span>Navegar
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {otros.map((v) => (
+                                <button key={v.id} className="pc-unidad-otra" onClick={() => elegirVehiculo(v.id)} title={`Ver ${v.placa}`}>
+                                    <div className="pc-unidad-icono pc-unidad-icono-tenue"><img src={iconoMoto} alt="" /></div>
+                                    <div className="pc-fila-texto">
+                                        <span className="pc-unidad-otra-placa">{v.placa}</span>
+                                        <span className="pc-nota">{v.modelo}</span>
+                                    </div>
+                                    <div className="pc-unidad-otra-estado">
+                                        <span>ÚLTIMO REPORTE</span>
+                                        <small>{haceCuanto(vistosOtros[v.imei])}</small>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {pestana === "hist" && (
+                    <HistorialRecorridos imei={imei} placa={placa} mapa={mapa} google={google} />
+                )}
+
+                {pestana === "nav" && (
+                    <RecomendadorRutas
+                        mapa={mapa}
+                        google={google}
+                        position={position}
+                        velocidad={velocidad}
+                        capa={capa}
+                        onNavegando={alNavegar}
+                        avisar={avisar}
+                    />
+                )}
+
+                <div className="pc-lateral-pie">
+                    <Link to="/configuracion"><span className="material-symbols-outlined">settings</span>Configuración</Link>
+                </div>
+            </aside>
+
+            {/* ── Telemetría (solo en vivo) ── */}
+            {pestana === "vivo" && (
+                <section className="pc-telemetria" aria-label="Telemetría">
+                    <div className="pc-telemetria-tarjeta">
+                        <div className="pc-telemetria-cabeza">
+                            <span>Telemetría</span>
+                            <small>{enLinea ? "Tiempo real" : "Último reporte"}</small>
+                        </div>
+                        <div className="pc-telemetria-velocidad">
+                            <div>
+                                <div className="pc-velocidad-grande">{velocidad}</div>
+                                <div className="pc-nota">km/h · velocidad actual</div>
+                            </div>
+                            <div className="pc-chispa" aria-hidden="true">
+                                {barras.map((m, k) => (
+                                    <div
+                                        key={k}
+                                        style={{
+                                            height: `${m ? Math.max(4, Math.round((m.v / maxVel) * 100)) : 4}%`,
+                                            background: k === MUESTRAS - 1 && m ? "#b2cea8" : "rgba(178,206,168,.28)",
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="pc-senal">
+                            <div className="pc-senal-cabeza">
+                                <span>Calidad de señal GPS</span>
+                                <strong>{calidad}</strong>
+                            </div>
+                            <div className="pc-senal-barra">
+                                <div style={{ width: muestras.length ? calidad : "0%" }} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pc-coordenadas">
+                        <div><small>LAT</small><span>{lat}°</span></div>
+                        <div><small>LNG</small><span>{lng}°</span></div>
+                        <div><small>IMEI</small><span>{imei ? imei.slice(-8) : "---"}</span></div>
+                        <div><small>GPS</small><span className={gpsValido ? "pc-texto-acento" : "pc-texto-peligro"}>{gpsValido ? "ACTIVO" : "INACTIVO"}</span></div>
+                    </div>
+                </section>
+            )}
+
+            {/* Capa para los paneles de navegación paso a paso */}
+            <div ref={setCapa} />
+
+            {/* ── Controles del mapa ── */}
+            <div className="pc-zoom">
+                <button onClick={() => mapa?.setZoom(mapa.getZoom() + 1)} title="Acercar" aria-label="Acercar">
+                    <span className="material-symbols-outlined">add</span>
+                </button>
+                <button onClick={() => mapa?.setZoom(mapa.getZoom() - 1)} title="Alejar" aria-label="Alejar">
+                    <span className="material-symbols-outlined">remove</span>
+                </button>
+                <button className="pc-zoom-centrar" onClick={recentrar} title="Centrar en la unidad" aria-label="Centrar en la unidad">
+                    <span className="material-symbols-outlined">my_location</span>
+                </button>
+            </div>
+
+            {toast && (
+                <div className="pc-toast" role="status">
+                    <span className="material-symbols-outlined">check_circle</span>{toast}
+                </div>
+            )}
+
+            {dialogo && (
+                <div className="pc-fondo-dialogo" onClick={cerrarDialogo}>
+                    <form
+                        className="pc-dialogo"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="pc-dialogo-titulo"
+                        onClick={(e) => e.stopPropagation()}
+                        onSubmit={enviarComando}
+                    >
+                        <div className={`pc-dialogo-icono ${dialogo === "restablecer" ? "acento" : ""}`}>
+                            <span className="material-symbols-outlined">power_settings_new</span>
+                        </div>
+                        <h2 id="pc-dialogo-titulo">
+                            {dialogo === "corte" ? `¿Cortar el motor de ${placa}?` : `¿Restablecer el motor de ${placa}?`}
+                        </h2>
+                        <p>
+                            {dialogo === "corte"
+                                ? `La unidad va a ${velocidad} km/h. La orden se envía por SMS a la SIM del GPS y el vehículo quedará inmovilizado hasta que restablezcas el motor.`
+                                : "La orden se envía por SMS a la SIM del GPS y el motor volverá a encender con normalidad."}
+                        </p>
+                        <label className="pc-campo">
+                            <span>Número de la SIM del GPS</span>
+                            <input
+                                type="tel"
+                                value={telefonoSim}
+                                onChange={(e) => setTelefonoSim(e.target.value)}
+                                placeholder="+57 300 000 0000"
+                                autoFocus
+                            />
+                        </label>
+                        {errorDialogo && <div className="pc-dialogo-error">{errorDialogo}</div>}
+                        <div className="pc-dialogo-acciones">
+                            <button type="button" className="pc-boton-secundario" onClick={cerrarDialogo} disabled={enviando}>Cancelar</button>
+                            <button type="submit" className={dialogo === "corte" ? "pc-boton-confirmar-peligro" : "pc-boton-confirmar"} disabled={enviando}>
+                                {enviando ? "Enviando…" : dialogo === "corte" ? "Confirmar corte" : "Restablecer motor"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 }
