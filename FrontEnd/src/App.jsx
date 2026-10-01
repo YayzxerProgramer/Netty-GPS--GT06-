@@ -14,6 +14,7 @@ import AuthCallback from './Components/AuthCallback'
 import CambiarContrasena from './Components/CambiarContrasena'
 import Dashboard from './Components/Dashboard'
 import RutaProtegida from './Components/RutaProtegida'
+import './Styles/Base.css'
 import './Styles/App.css'
 
 function App() {
