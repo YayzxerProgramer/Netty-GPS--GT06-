@@ -60,7 +60,7 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, UUID> {
     long contarSinDuenno();
 
     /** ¿Es este usuario el propietario del vehículo con ese IMEI? Para autorizar consultas GPS. */
-    @Query("SELECT COUNT(v) > 0 FROM Vehiculo v WHERE v.imei = :imei AND v.id_usuario = :idUsuario")
+    @Query("SELECT CASE WHEN COUNT(v) > 0 THEN true ELSE false END FROM Vehiculo v WHERE v.imei = :imei AND v.id_usuario = :idUsuario")
     boolean existePorImeiYUsuario(@Param("imei") String imei, @Param("idUsuario") UUID idUsuario);
 
     /** Listado del panel: búsqueda por placa, IMEI o modelo, con filtros. */

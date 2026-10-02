@@ -52,33 +52,56 @@ public class GPSDataController {
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiImei(#imei, authentication)")
     public ResponseEntity<List<GPSData>> historial(
             @PathVariable String imei,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta) {
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta) {
 
-        if (desde.isAfter(hasta)) {
+        Instant desdeInstant = parsearInstant(desde, Instant.now().minus(java.time.Duration.ofDays(1)));
+        Instant hastaInstant = parsearInstant(hasta, Instant.now());
+
+        if (desdeInstant.isAfter(hastaInstant)) {
             throw new IllegalArgumentException("'desde' debe ser anterior a 'hasta'");
         }
-        return ResponseEntity.ok(gpsDataService.getHistorial(imei, desde, hasta));
+        return ResponseEntity.ok(gpsDataService.getHistorial(imei, desdeInstant, hastaInstant));
     }
 
     @GetMapping("/historial-analizado/{imei}")
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiImei(#imei, authentication)")
     public ResponseEntity<com.gpsromp.gps.dto.GPSHistorialResponse> historialAnalizado(
             @PathVariable String imei,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant desde,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant hasta) {
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta) {
 
-        if (desde.isAfter(hasta)) {
+        Instant desdeInstant = parsearInstant(desde, Instant.now().minus(java.time.Duration.ofDays(1)));
+        Instant hastaInstant = parsearInstant(hasta, Instant.now());
+
+        if (desdeInstant.isAfter(hastaInstant)) {
             throw new IllegalArgumentException("'desde' debe ser anterior a 'hasta'");
         }
-        return ResponseEntity.ok(gpsDataService.obtenerHistorialAnalizado(imei, desde, hasta));
+        return ResponseEntity.ok(gpsDataService.obtenerHistorialAnalizado(imei, desdeInstant, hastaInstant));
+    }
+
+    private Instant parsearInstant(String val, Instant fallback) {
+        if (val == null || val.isBlank()) return fallback;
+        try {
+            return Instant.parse(val);
+        } catch (Exception e) {
+            try {
+                return java.time.OffsetDateTime.parse(val).toInstant();
+            } catch (Exception ex) {
+                try {
+                    return java.time.LocalDate.parse(val).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+                } catch (Exception ex2) {
+                    throw new IllegalArgumentException("Formato de fecha inválido: " + val);
+                }
+            }
+        }
     }
 
     @GetMapping("/ultima-posicion/{imei}")
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esMiImei(#imei, authentication)")
     public ResponseEntity<GPSData> obtenerUltimaPosicionPorImei(@PathVariable String imei) {
-        return ResponseEntity.ok(gpsDataService.getLastPosition(imei)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No hay posiciones registradas para el IMEI " + imei)));
+        return gpsDataService.getLastPosition(imei)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 }

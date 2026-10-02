@@ -218,13 +218,28 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
 
         const peticion = ++peticionRef.current;
         setCalculando(true);
-        new google.maps.DirectionsService().route({
-            origin: vehiculo,
-            destination: { placeId: lugar.placeId },
-            travelMode: google.maps.TravelMode.DRIVING,
-            provideRouteAlternatives: true,
-            drivingOptions: { departureTime: new Date(), trafficModel: "bestguess" },
-        })
+
+        const destinoArg = lugar.placeId
+            ? { placeId: lugar.placeId }
+            : (lugar.nombre || lugar.sub || lugar);
+
+        const ds = new google.maps.DirectionsService();
+
+        const intentarRuta = (conTrafico) => {
+            const req = {
+                origin: new google.maps.LatLng(vehiculo.lat, vehiculo.lng),
+                destination: destinoArg,
+                travelMode: google.maps.TravelMode.DRIVING,
+                provideRouteAlternatives: true,
+            };
+            if (conTrafico) {
+                req.drivingOptions = { departureTime: new Date(), trafficModel: "bestguess" };
+            }
+            return ds.route(req);
+        };
+
+        intentarRuta(true)
+            .catch(() => intentarRuta(false))
             .then((resultado) => {
                 if (peticion !== peticionRef.current) return;
                 const lista = resultado.routes.map((r) => {
@@ -243,7 +258,12 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
                 }).sort((a, b) => a.segundos - b.segundos);
                 setRutas(lista);
             })
-            .catch(() => peticion === peticionRef.current && setError("No se pudo calcular la ruta hasta ese destino."))
+            .catch((err) => {
+                console.error("Error al calcular ruta:", err);
+                if (peticion === peticionRef.current) {
+                    setError("No se pudo calcular la ruta hasta ese destino.");
+                }
+            })
             .finally(() => peticion === peticionRef.current && setCalculando(false));
     };
 
@@ -367,7 +387,15 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
 
             {!destino && (
                 <>
-                    <label className="pc-buscador">
+                    <form
+                        className="pc-buscador"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            if (consulta.trim()) {
+                                elegirDestino({ placeId: null, nombre: consulta.trim(), sub: "Búsqueda directa" });
+                            }
+                        }}
+                    >
                         <span className="material-symbols-outlined">search</span>
                         <input
                             value={consulta}
@@ -375,20 +403,36 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
                                 setConsulta(e.target.value);
                                 if (!e.target.value.trim()) setPredicciones([]);
                             }}
-                            placeholder="Buscar un lugar o dirección"
+                            placeholder="Escribe un lugar y presiona Enter..."
                             aria-label="Buscar destino"
                         />
-                    </label>
+                    </form>
 
                     <div className="pc-lista-compacta">
+                        {consulta.trim() && (
+                            <button
+                                className="pc-lugar"
+                                style={{ background: "rgba(178, 206, 168, 0.12)", border: "1px solid rgba(178, 206, 168, 0.3)" }}
+                                onClick={() => elegirDestino({ placeId: null, nombre: consulta.trim(), sub: "Calcular ruta a este destino" })}
+                            >
+                                <span className="pc-lugar-icono">
+                                    <span className="material-symbols-outlined" style={{ color: "#b2cea8" }}>near_me</span>
+                                </span>
+                                <span className="pc-fila-texto">
+                                    <span className="pc-lugar-nombre">Ir a "{consulta.trim()}"</span>
+                                    <span className="pc-nota">Presiona Enter o clic para calcular ruta</span>
+                                </span>
+                            </button>
+                        )}
+
                         {lugaresListados.length > 0 && (
-                            <div className="pc-rotulo">{consulta.trim() ? "RESULTADOS" : "RECIENTES"}</div>
+                            <div className="pc-rotulo">{consulta.trim() ? "SUGERENCIAS" : "RECIENTES"}</div>
                         )}
                         {!consulta.trim() && !recientes.length && (
-                            <div className="pc-estado">Escribe una dirección, un barrio o un lugar.</div>
+                            <div className="pc-estado">Escribe una dirección, barrio o ciudad y presiona Enter.</div>
                         )}
-                        {lugaresListados.map((l) => (
-                            <button key={l.placeId} className="pc-lugar" onClick={() => elegirDestino(l)}>
+                        {lugaresListados.map((l, idx) => (
+                            <button key={l.placeId || idx} className="pc-lugar" onClick={() => elegirDestino(l)}>
                                 <span className="pc-lugar-icono">
                                     <span className="material-symbols-outlined">{consulta.trim() ? "location_on" : "history"}</span>
                                 </span>

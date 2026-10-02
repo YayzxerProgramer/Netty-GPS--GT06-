@@ -120,11 +120,12 @@ public class ManejadorGlobalErrores {
         return construir(HttpStatus.UNAUTHORIZED, "No autenticado", req);
     }
 
-    /** Último recurso: se registra con stacktrace y se responde sin filtrar detalles internos. */
+    /** Último recurso: se registra con stacktrace y se responde detallando el error. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> inesperado(Exception e, HttpServletRequest req) {
         log.error("Error no controlado en {} {}", req.getMethod(), req.getRequestURI(), e);
-        return construir(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor", req);
+        String mensaje = (e.getMessage() != null && !e.getMessage().isBlank()) ? e.getMessage() : "Error interno del servidor";
+        return construir(HttpStatus.INTERNAL_SERVER_ERROR, mensaje, req);
     }
 
     private ResponseEntity<ErrorResponse> construir(HttpStatus estado, String mensaje, HttpServletRequest req) {

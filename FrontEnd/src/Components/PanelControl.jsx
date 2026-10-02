@@ -257,6 +257,33 @@ export default function PanelControl() {
             </div>
             <div className="pc-velo" />
 
+            {/* Aviso de última posición vista cuando el GPS está offline */}
+            {!enLinea && position && (
+                <div style={{
+                    position: "absolute",
+                    top: "80px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    zIndex: 20,
+                    background: "rgba(21, 26, 20, 0.92)",
+                    color: "#F2F5F0",
+                    padding: "8px 18px",
+                    borderRadius: "30px",
+                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(239, 68, 68, 0.4)",
+                    pointerEvents: "none"
+                }}>
+                    <span className="material-symbols-outlined" style={{ color: "#EF4444", fontSize: "20px" }}>wifi_off</span>
+                    <span>Dispositivo desconectado — Mostrando última posición vista <strong>({haceCuanto(position.registradoEn)})</strong></span>
+                </div>
+            )}
+
             {/* ── Cabecera ── */}
             <header className="pc-cabecera">
                 <div className="pc-vidrio pc-cabecera-marca">

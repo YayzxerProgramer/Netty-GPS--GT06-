@@ -69,8 +69,17 @@ public class SeguridadService {
         if (imei == null || imei.isBlank() || auth == null || auth.getName() == null) {
             return false;
         }
+        if (esAdmin(auth)) {
+            return true;
+        }
         return usuarioRepository.findByUsuario(auth.getName())
-                .map(u -> vehiculoRepository.existePorImeiYUsuario(imei, u.getId()))
+                .map(u -> {
+                    boolean esDueno = vehiculoRepository.existePorImeiYUsuario(imei, u.getId());
+                    if (esDueno) return true;
+                    return vehiculoRepository.findByImei(imei)
+                            .map(v -> v.getId_usuario() == null || u.getId().equals(v.getId_usuario()))
+                            .orElse(true);
+                })
                 .orElse(false);
     }
 

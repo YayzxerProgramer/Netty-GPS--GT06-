@@ -127,10 +127,25 @@ public class GPSDataService {
     }
 
     /**
+    /**
      * Historial analizado con estadísticas completas y trazas en orden ascendente para playback.
      */
     public com.gpsromp.gps.dto.GPSHistorialResponse obtenerHistorialAnalizado(String imei, Instant desde, Instant hasta) {
-        List<GPSData> puntos = repository.findByImeiAndRegistradoEnBetweenOrderByRegistradoEnAsc(imei, desde, hasta);
+        List<GPSData> puntos = Optional.ofNullable(repository.findByImeiAndRegistradoEnBetweenOrderByRegistradoEnAsc(imei, desde, hasta))
+                .orElseGet(List::of);
+
+        if (puntos.isEmpty()) {
+            return com.gpsromp.gps.dto.GPSHistorialResponse.builder()
+                    .imei(imei)
+                    .puntos(List.of())
+                    .distanciaTotalKm(0.0)
+                    .velocidadMaximaKmh(0.0)
+                    .velocidadPromedioKmh(0.0)
+                    .duracionTotalMinutos(0L)
+                    .cantidadParadas(0)
+                    .paradas(List.of())
+                    .build();
+        }
 
         double distanciaTotal = 0.0;
         double maxVelocidad = 0.0;
@@ -164,13 +179,16 @@ public class GPSDataService {
                 }
             } else {
                 if (puntoParadaInicio != null) {
-                    long minutosDetenido = java.time.Duration.between(puntoParadaInicio.getRegistradoEn(), actual.getRegistradoEn()).toMinutes();
+                    Instant tInicio = puntoParadaInicio.getRegistradoEn() != null ? puntoParadaInicio.getRegistradoEn() : Instant.now();
+                    Instant tFin = actual.getRegistradoEn() != null ? actual.getRegistradoEn() : Instant.now();
+                    long minutosDetenido = java.time.Duration.between(tInicio, tFin).toMinutes();
+
                     if (minutosDetenido >= 3) {
                         paradas.add(com.gpsromp.gps.dto.GPSHistorialResponse.GPSParadaDTO.builder()
                                 .latitud(puntoParadaInicio.getLatitud())
                                 .longitud(puntoParadaInicio.getLongitud())
-                                .inicio(puntoParadaInicio.getRegistradoEn().toString())
-                                .fin(actual.getRegistradoEn().toString())
+                                .inicio(tInicio.toString())
+                                .fin(tFin.toString())
                                 .duracionMinutos(minutosDetenido)
                                 .build());
                     }
@@ -180,9 +198,9 @@ public class GPSDataService {
         }
 
         double velPromedio = puntosValidos > 0 ? (sumaVelocidades / puntosValidos) : 0.0;
-        long duracionMinutos = (!puntos.isEmpty())
-                ? java.time.Duration.between(puntos.get(0).getRegistradoEn(), puntos.get(puntos.size() - 1).getRegistradoEn()).toMinutes()
-                : 0;
+        Instant t0 = puntos.get(0).getRegistradoEn() != null ? puntos.get(0).getRegistradoEn() : Instant.now();
+        Instant tN = puntos.get(puntos.size() - 1).getRegistradoEn() != null ? puntos.get(puntos.size() - 1).getRegistradoEn() : Instant.now();
+        long duracionMinutos = java.time.Duration.between(t0, tN).toMinutes();
 
         return com.gpsromp.gps.dto.GPSHistorialResponse.builder()
                 .imei(imei)

@@ -1,7 +1,6 @@
 import { GoogleMap, useJsApiLoader, Polyline } from "@react-google-maps/api";
 import { useState, useRef, useEffect } from "react";
-import iconoMoto from "../assets/motorcycle.svg";
-import { ESTILO_MAPA, crearMarcadorHtml } from "./mapaUtils";
+import carIcon from "../assets/motorcycle.svg";
 import "../Styles/MapaGPS.css";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -10,55 +9,38 @@ const GOOGLE_MAP_LIBRARIES = ["places"];
 
 const centroDefault = { lat: 10.425, lng: -75.5402 };
 
-const OPCIONES_MAPA = {
-  styles: ESTILO_MAPA,
-  disableDefaultUI: true,
-  gestureHandling: "greedy",
-  clickableIcons: false,
-  backgroundColor: "#0f120e",
-};
-
-const HTML_UNIDAD = `<div style="position:relative;width:48px;height:48px"><span style="position:absolute;inset:0;border-radius:50%;background:rgba(178,206,168,.35);animation:romp-ping 2s ease-out infinite"></span><div style="position:absolute;inset:6px;border-radius:50%;background:#b2cea8;box-shadow:0 0 28px rgba(178,206,168,.75),0 0 0 3px rgba(15,18,14,.8);display:grid;place-items:center"><img src="${iconoMoto}" alt="" style="width:22px;height:22px;filter:brightness(0);opacity:.78"></div></div>`;
-
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-/**
- * Mapa de seguimiento.
- *
- * siguiendo: si es true, el mapa se centra en cada posición nueva.
- * atenuado:  baja la opacidad de la unidad y su estela (pestaña Historial).
- * onArrastre: el usuario movió el mapa a mano (deja de seguir a la unidad).
- */
-function MapaGPS({ position, siguiendo = true, atenuado = false, onMapLoad, onArrastre }) {
-  const esClaveValida = GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY.startsWith("AIzaSy");
+const darkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#121412" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#121412" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#9ea89e" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#dce4dc" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#6e8a66" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#1a1e1a" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#383e38" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3a5235" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#86A17D" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0d100d" }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#161916" }] },
+];
 
-  const { isLoaded, loadError } = useJsApiLoader({
+function MapaGPS({ position, connected, onMapLoad }) {
+  const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: esClaveValida ? GOOGLE_MAPS_API_KEY : "",
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY || "",
     libraries: GOOGLE_MAP_LIBRARIES,
-    language: "es",
-    region: "CO",
   });
 
   const [path, setPath] = useState([]);
   const mapRef = useRef(null);
-
   const markerRef = useRef(null);
-  const animationRef = useRef(null);     // requestAnimationFrame ID
-  const startPosRef = useRef(null);      // posición donde empezó la animación
-  const targetPosRef = useRef(null);     // posición destino
-  const startTimeRef = useRef(null);     // timestamp de inicio
-  const siguiendoRef = useRef(siguiendo);
-  const onArrastreRef = useRef(onArrastre);
-  const positionRef = useRef(position);
-
-  useEffect(() => {
-    siguiendoRef.current = siguiendo;
-    onArrastreRef.current = onArrastre;
-    positionRef.current = position;
-  });
+  const animationRef = useRef(null);
+  const startPosRef = useRef(null);
+  const targetPosRef = useRef(null);
+  const startTimeRef = useRef(null);
 
   // Cuando llega una nueva posición, arrancamos la animación
   useEffect(() => {
@@ -69,27 +51,19 @@ function MapaGPS({ position, siguiendo = true, atenuado = false, onMapLoad, onAr
       lng: Number(position.longitud),
     };
 
-    // Agregar al path para la Polyline
     setPath((prev) => [...prev, newTarget]);
 
-    // Posición actual del marcador como punto de inicio
-    const currentPos = markerRef.current.getPosition();
-
-    // Con el primer fix se acerca el mapa a la unidad; después solo se panea
-    // si el usuario no ha movido el mapa por su cuenta.
     if (mapRef.current) {
-      if (!currentPos) {
-        mapRef.current.setCenter(newTarget);
-        mapRef.current.setZoom(16);
-      } else if (siguiendoRef.current) {
-        mapRef.current.panTo(newTarget);
-      }
+      mapRef.current.panTo(newTarget);
+      mapRef.current.setZoom(17);
     }
 
-    startPosRef.current = currentPos || newTarget;
+    const currentPos = markerRef.current.getPosition();
+    startPosRef.current = currentPos
+      ? { lat: currentPos.lat(), lng: currentPos.lng() }
+      : newTarget;
     targetPosRef.current = newTarget;
 
-    // Cancelar animación anterior si todavía corría
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -98,9 +72,7 @@ function MapaGPS({ position, siguiendo = true, atenuado = false, onMapLoad, onAr
 
     function animate(now) {
       const elapsed = now - startTimeRef.current;
-      const t = Math.min(elapsed / ANIMATION_DURATION, 1); // 0 → 1
-
-      // Easing suave: ease-out cúbico
+      const t = Math.min(elapsed / ANIMATION_DURATION, 1);
       const eased = 1 - Math.pow(1 - t, 3);
 
       const interpolated = {
@@ -123,91 +95,90 @@ function MapaGPS({ position, siguiendo = true, atenuado = false, onMapLoad, onAr
   }, [position]);
 
   useEffect(() => {
-    if (markerRef.current) markerRef.current.setOpacity(atenuado ? 0.35 : 1);
-  }, [atenuado]);
-
-  // Al volver a "seguir", el mapa salta a la unidad sin esperar al siguiente fix.
-  useEffect(() => {
-    const pos = markerRef.current?.getPosition();
-    if (siguiendo && pos && mapRef.current) mapRef.current.panTo(pos);
-  }, [siguiendo]);
-
-  useEffect(() => () => {
-    if (markerRef.current) markerRef.current.setMap(null);
+    return () => {
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
+      }
+    };
   }, []);
 
-  // Callback cuando el mapa carga: creamos el marcador manualmente
-  // para tener referencia directa y poder usar setPosition()
   const handleMapLoad = (map) => {
     mapRef.current = map;
 
-    markerRef.current = crearMarcadorHtml(window.google, {
-      mapa: map,
-      posicion: null,
-      html: HTML_UNIDAD,
-      ancho: 48,
-      alto: 48,
-      zIndex: 10,
-    });
-
-    // Si la posición llegó antes de que cargara el mapa, se coloca ya.
-    if (positionRef.current) {
-      const inicial = { lat: Number(positionRef.current.latitud), lng: Number(positionRef.current.longitud) };
-      markerRef.current.setPosition(inicial);
-      map.setCenter(inicial);
-      map.setZoom(16);
-      setPath([inicial]);
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
     }
 
-    map.addListener("dragstart", () => onArrastreRef.current?.());
+    const posInicial = (position && position.latitud && position.longitud)
+      ? { lat: Number(position.latitud), lng: Number(position.longitud) }
+      : centroDefault;
+
+    const marker = new window.google.maps.Marker({
+      map,
+      position: posInicial,
+      icon: {
+        url: carIcon,
+        scaledSize: new window.google.maps.Size(50, 50),
+        anchor: new window.google.maps.Point(25, 25),
+      },
+    });
+
+    markerRef.current = marker;
+
+    if (position && position.latitud && position.longitud) {
+      map.panTo(posInicial);
+      map.setZoom(17);
+    }
 
     if (onMapLoad) {
       onMapLoad(map, window.google);
     }
   };
 
-  if (!esClaveValida || loadError) {
-    return (
-      <div className="mapa-aviso">
-        <div className="mapa-aviso-tarjeta">
-          <span className="material-symbols-outlined mapa-aviso-icono">map</span>
-          <h3>Falta la API Key de Google Maps</h3>
-          <p>
-            Para ver el mapa en vivo, reproducir el historial y calcular rutas, agrega una clave válida en <code>FrontEnd/.env</code>:
-          </p>
-          <pre>VITE_GOOGLE_MAPS_API_KEY=AIzaSy...</pre>
-          <p className="mapa-aviso-nota">
-            Actívala en Google Cloud Console con <i>Maps JavaScript API</i>, <i>Directions API</i>, <i>Places API</i> y <i>Geocoding API</i>.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.setTitle(
+        connected
+          ? "Vehículo en vivo"
+          : `Última posición vista (${position?.registradoEn ? new Date(position.registradoEn).toLocaleString("es-CO") : "Desconectado"})`
+      );
+    }
+  }, [connected, position]);
 
-  if (!isLoaded) return <div className="loading-screen">Cargando mapa…</div>;
+  if (!isLoaded) return <div className="loading-screen">Cargando mapa...</div>;
 
   return (
-    <GoogleMap
-      mapContainerStyle={{ width: "100%", height: "100%" }}
-      mapContainerClassName="map-container"
-      center={centroDefault}
-      zoom={15}
-      onLoad={handleMapLoad}
-      options={OPCIONES_MAPA}
-    >
-      {path.length > 1 && (
-        <>
+    <div style={{ width: "100%", height: "100%" }}>
+      <GoogleMap
+        mapContainerStyle={{ width: "100%", height: "100vh" }}
+        mapContainerClassName="map-container"
+        center={centroDefault}
+        zoom={15}
+        onLoad={handleMapLoad}
+        options={{
+          styles: darkMapStyle,
+          disableDefaultUI: true,
+          zoomControl: true,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+          gestureHandling: "greedy",
+          clickableIcons: false,
+        }}
+      >
+        {path.length > 1 && (
           <Polyline
             path={path}
-            options={{ strokeColor: "#b2cea8", strokeOpacity: atenuado ? 0.04 : 0.14, strokeWeight: 12 }}
+            options={{
+              strokeColor: "#22c55e",
+              strokeOpacity: 1,
+              strokeWeight: 4,
+            }}
           />
-          <Polyline
-            path={path}
-            options={{ strokeColor: "#b2cea8", strokeOpacity: atenuado ? 0.2 : 0.95, strokeWeight: 4 }}
-          />
-        </>
-      )}
-    </GoogleMap>
+        )}
+      </GoogleMap>
+    </div>
   );
 }
 
