@@ -1,11 +1,12 @@
 .hero {
     position: relative;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 120px 80px;
+    padding: clamp(7rem, 14vw, 7.5rem) var(--pad-seccion-x);
     background-image:
         linear-gradient(to bottom,
             rgba(0, 0, 0, 0.2),
@@ -13,6 +14,17 @@
         url("https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=2070&q=80");
     background-size: cover;
     background-position: center;
+}
+
+/* En móvil pedimos una imagen mucho más liviana */
+@media (max-width: 768px) {
+    .hero {
+        background-image:
+            linear-gradient(to bottom,
+                rgba(0, 0, 0, 0.2),
+                rgba(13, 15, 13, 0.95)),
+            url("https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=900&q=70");
+    }
 }
 
 .superposicion-hero {
@@ -27,15 +39,15 @@
     width: 100%;
     max-width: 1400px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(2.5rem, 6vw, 5rem);
     align-items: center;
 }
 
 .contenido-hero {
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: clamp(1.25rem, 3vw, 2rem);
 }
 
 .insignia-hero {
@@ -48,9 +60,9 @@
     background: rgba(53, 77, 47, 0.35);
     border: 1px solid rgba(178, 206, 168, 0.15);
     color: #a5c19b;
-    font-size: 11px;
+    font-size: clamp(9px, 1.6vw, 11px);
     font-weight: bold;
-    letter-spacing: 3px;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
 }
 
@@ -59,10 +71,11 @@
     height: 8px;
     border-radius: 50%;
     background: #b2cea8;
-    animation: pulso 1.5s infinite;
+    flex-shrink: 0;
+    animation: pulso-hero 1.5s infinite;
 }
 
-@keyframes pulso {
+@keyframes pulso-hero {
     0% {
         transform: scale(1);
         opacity: 1;
@@ -76,10 +89,10 @@
 
 .titulo-hero {
     margin: 0;
-    font-size: 88px;
-    line-height: 0.9;
+    font-size: clamp(2.75rem, 8vw, 5.5rem);
+    line-height: 0.95;
     font-weight: 800;
-    letter-spacing: -4px;
+    letter-spacing: -0.04em;
 }
 
 .titulo-hero span {
@@ -90,17 +103,19 @@
 .descripcion-hero {
     max-width: 500px;
     color: #a7ada5;
-    font-size: 18px;
+    font-size: clamp(0.95rem, 2vw, 1.125rem);
     line-height: 1.8;
 }
 
 .botones-hero {
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
 }
 
 .boton-primario,
 .boton-secundario {
+    min-height: var(--tactil-min);
     padding: 18px 34px;
     border-radius: 10px;
     font-weight: bold;
@@ -112,10 +127,13 @@
 
 .boton-primario {
     border: none;
-    background: linear-gradient(to bottom right,
-            #b2cea8,
-            #354d2f);
+    background: linear-gradient(to bottom right, #b2cea8, #354d2f);
     color: #2e4629;
+}
+
+.boton-primario a {
+    color: inherit;
+    text-decoration: none;
 }
 
 .boton-secundario {
@@ -133,26 +151,201 @@
     background: rgba(255, 255, 255, 0.04);
 }
 
+/* ============================================================
+   Tarjeta de telemetría (columna derecha)
+   Estas clases se usaban en Hero.jsx pero no existían en CSS:
+   salían como texto plano en todas las resoluciones.
+   ============================================================ */
+
+.envoltorio-tarjeta-hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.resplandor-hero {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(120%, 520px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle,
+            rgba(178, 206, 168, 0.18),
+            transparent 65%);
+    filter: blur(60px);
+    pointer-events: none;
+}
+
+.tarjeta-hero {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border-radius: 24px;
+    background: rgba(28, 33, 29, 0.55);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(178, 206, 168, 0.12);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+
+.parte-superior-tarjeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: #f2f5f0;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+.id-tarjeta {
+    color: rgba(178, 206, 168, 0.7);
+    font-family: monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+}
+
+.mapa-tarjeta {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+    overflow: hidden;
+    background:
+        linear-gradient(rgba(178, 206, 168, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(178, 206, 168, 0.07) 1px, transparent 1px),
+        #12160f;
+    background-size: 28px 28px, 28px 28px, auto;
+}
+
+.superposicion-mapa {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 50% 50%,
+            rgba(178, 206, 168, 0.18),
+            transparent 60%);
+}
+
+.punto-mapa {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border-radius: 50%;
+    background: #b2cea8;
+    box-shadow: 0 0 18px rgba(178, 206, 168, 0.9);
+}
+
+.punto-mapa::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1px solid rgba(178, 206, 168, 0.5);
+    animation: pulso-hero 2s infinite;
+}
+
+.estadisticas-tarjeta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.caja-estadistica {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.caja-estadistica small {
+    display: block;
+    margin-bottom: 6px;
+    color: #9ea59e;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+.caja-estadistica h3 {
+    margin: 0;
+    color: #f2f5f0;
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.caja-estadistica h3 span {
+    color: #b2cea8;
+    font-size: 0.6em;
+    font-weight: 500;
+}
+
+.coordenadas {
+    position: relative;
+    z-index: 1;
+    color: rgba(178, 206, 168, 0.45);
+    font-family: monospace;
+    font-size: 11px;
+    line-height: 1.9;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+/* ── Breakpoints ──────────────────────────────────────────── */
+
 @media (max-width: 1100px) {
     .contenedor-hero {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .titulo-hero {
-        font-size: 64px;
+    /* El texto primero, la tarjeta debajo */
+    .contenido-hero {
+        order: 1;
+    }
+
+    .envoltorio-tarjeta-hero {
+        order: 2;
+    }
+
+    .descripcion-hero {
+        max-width: 640px;
     }
 }
 
 @media (max-width: 768px) {
-    .hero {
-        padding: 120px 24px;
-    }
-
-    .titulo-hero {
-        font-size: 48px;
-    }
-
     .botones-hero {
         flex-direction: column;
+        align-items: stretch;
+    }
+
+    .boton-primario,
+    .boton-secundario {
+        text-align: center;
+        padding: 16px 24px;
+    }
+}
+
+@media (max-width: 400px) {
+    .estadisticas-tarjeta {
+        grid-template-columns: 1fr;
     }
 }

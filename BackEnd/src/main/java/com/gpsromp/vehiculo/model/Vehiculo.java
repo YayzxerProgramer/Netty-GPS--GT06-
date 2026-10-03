@@ -21,7 +21,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Vehiculo implements Serializable {
 
     @Id
@@ -38,12 +37,21 @@ public class Vehiculo implements Serializable {
     @NonNull
     private String modelo;
 
+    /** MOTO o CARRO. Lo valida CrearVehiculoRequest con @Pattern. */
     @NonNull
     private String tipo;
 
     @Builder.Default
     private Boolean activo = true;
 
+    /**
+     * Propietario. Es un UUID plano, no una asociación @ManyToOne, así que no hay
+     * clave foránea que garantice que el usuario existe: esa comprobación la hace
+     * VehiculoService al asignar.
+     *
+     * El nombre del campo se conserva en snake_case porque la clave JSON
+     * id_usuario es la que ya envía y lee PanelVehiculo.jsx.
+     */
     @Column(name = "usuario_id")
     private UUID id_usuario;
 
@@ -53,10 +61,4 @@ public class Vehiculo implements Serializable {
 
     @UpdateTimestamp
     private LocalDateTime actualizadoEn;
-
-    public enum tipo {
-        MOTO,
-        CARRO
-    }
-
 }

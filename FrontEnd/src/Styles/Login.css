@@ -1,23 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap');
+/* ============================================================
+   Login.css — Área de Clientes
+   ------------------------------------------------------------
+   Este archivo ya NO declara `body`, `*` ni `h1,h2,h3`: eran
+   globales y pisaban la tipografía de toda la landing (metían
+   Syne donde debía ir Space Grotesk). Ahora hereda las fuentes
+   del proyecto desde App.css, y el @import de Syne/DM Sans
+   desaparece — una familia menos que descargar.
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    background: #0d0f0d;
-    font-family: 'DM Sans', sans-serif;
-    color: #e1e7df;
-}
-
-h1,
-h2,
-h3 {
-    font-family: 'Syne', sans-serif;
-}
+   Las clases del pie van acotadas bajo `.barra-pie-sesion`
+   porque `.marca-pie` y `.derechos-pie` también existen en
+   PerfilUsuario.css y Footer.css.
+   ============================================================ */
 
 @keyframes fadeUp {
     from {
@@ -41,6 +34,13 @@ h3 {
     }
 }
 
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Cabecera ─────────────────────────────────────────────── */
 
 .barra-encabezado-sesion {
     position: fixed;
@@ -51,7 +51,8 @@ h3 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 32px 80px;
+    gap: 16px;
+    padding: clamp(18px, 3vw, 32px) var(--pad-seccion-x);
     background: linear-gradient(to bottom, rgba(13, 15, 13, 0.72), transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -65,27 +66,30 @@ h3 {
 
 .icono-marca {
     color: #b2cea8;
-    font-size: 28px;
+    font-size: clamp(22px, 3vw, 28px);
 }
 
 .texto-marca {
     color: #f3fff0;
-    font-size: 28px;
+    font-size: clamp(20px, 3vw, 28px);
     font-weight: 800;
     letter-spacing: -1px;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .enlace-inicio {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-height: var(--tactil-min);
     color: #9ea59e;
     text-decoration: none;
-    font-size: 12px;
+    font-size: clamp(10px, 1.6vw, 12px);
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    white-space: nowrap;
     transition: color 0.3s ease;
 }
 
@@ -103,10 +107,13 @@ h3 {
     transform: translateX(-4px);
 }
 
+/* ── Sección ──────────────────────────────────────────────── */
+
 .pagina-sesion {
     position: relative;
     min-height: 100vh;
-    padding: 120px 80px;
+    min-height: 100dvh;
+    padding: clamp(7rem, 14vw, 7.5rem) var(--pad-seccion-x) clamp(3rem, 8vw, 5rem);
     background:
         linear-gradient(to bottom, rgba(13, 15, 13, 0.85), rgba(13, 15, 13, 0.96)),
         url("https://lh3.googleusercontent.com/aida-public/AB6AXuBMRU8spNig0981bN6h0-XqC4Gt3otGulgXPwGchmWobzekM-PCG34C8jJh086bFGccIeE13TPx34z8ScvNZDFlHbljUkY8bi_12DB5LZNWrj2x5c-XPTFxuVG0B1j2Pn4aKs_A-jqvn1Gvv5cgURMdaI0o5KKqQ0P5FwgWzWn8fVvPZcOe9ehZE_EIQv2-B2Kk2ha9UNTW8fnioBX3ANLDYvbLC_wZq9R78iCwzhEn600SSK_OzsHYSmADtfujm3X9k8VyVuOWzqw");
@@ -117,8 +124,8 @@ h3 {
 
 .circulo-fondo {
     position: absolute;
-    width: 420px;
-    height: 420px;
+    width: clamp(220px, 55vw, 420px);
+    height: clamp(220px, 55vw, 420px);
     border-radius: 50%;
     filter: blur(120px);
     pointer-events: none;
@@ -136,19 +143,22 @@ h3 {
     background: rgba(53, 77, 47, 0.24);
 }
 
+/* `1fr 480px` desbordaba entre 1100 y 1300px */
 .contenedor-sesion {
     position: relative;
     z-index: 5;
     max-width: 1400px;
-    margin: auto;
+    margin: 40px auto 0;
     display: grid;
-    grid-template-columns: 1fr 480px;
-    gap: 120px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
+    gap: clamp(3rem, 8vw, 7.5rem);
     align-items: center;
-    margin-top: 40px;
 }
 
+/* ── Columna informativa ──────────────────────────────────── */
+
 .info-sesion {
+    min-width: 0;
     animation: fadeUp 0.6s ease both;
 }
 
@@ -161,27 +171,32 @@ h3 {
     color: #b2cea8;
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
 }
 
 .info-sesion h1 {
     margin: 0 0 30px 0;
     color: #f2f5f0;
-    font-size: clamp(42px, 5.5vw, 74px);
+    font-size: clamp(38px, 5.5vw, 74px);
     font-weight: 800;
     line-height: 1.05;
-    letter-spacing: -3px;
+    letter-spacing: -0.04em;
 }
 
-.info-sesion h1 span {
+/* Reserva el ancho de la palabra más larga ("Coordenada") para
+   que el titular no salte mientras se escribe la animación */
+.info-sesion__animado {
+    display: inline-block;
+    min-width: 10ch;
+    text-align: left;
     color: #b2cea8;
 }
 
 .info-sesion__descripcion {
     max-width: 560px;
     color: #9ea59e;
-    font-size: 20px;
+    font-size: clamp(1rem, 2vw, 1.25rem);
     line-height: 1.9;
     margin: 0;
 }
@@ -189,8 +204,8 @@ h3 {
 .estadisticas-sesion {
     display: flex;
     align-items: center;
-    gap: 34px;
-    margin-top: 50px;
+    gap: clamp(1.25rem, 3vw, 2.125rem);
+    margin-top: clamp(2rem, 5vw, 3.125rem);
 }
 
 .estadisticas-sesion__divisor {
@@ -203,21 +218,24 @@ h3 {
 .caja-estadistica h3 {
     margin: 0 0 6px 0;
     color: #b2cea8;
-    font-size: 42px;
+    font-size: clamp(28px, 5vw, 42px);
     font-weight: 800;
+    line-height: 1;
 }
 
 .caja-estadistica span {
     color: #8f968f;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
 }
 
+/* ── Tarjeta ──────────────────────────────────────────────── */
+
 .tarjeta-sesion {
     position: relative;
-    padding: 50px;
+    padding: clamp(1.75rem, 4vw, 3.125rem);
     border-radius: 28px;
     background: rgba(28, 33, 29, 0.72);
     backdrop-filter: blur(24px);
@@ -229,38 +247,40 @@ h3 {
 
 .ancla-hud {
     position: absolute;
-    top: 24px;
-    right: 28px;
-    color: rgba(255, 255, 255, 0.35);
+    top: 20px;
+    right: 24px;
+    color: rgba(255, 255, 255, 0.3);
+    font-family: monospace;
     font-size: 10px;
-    letter-spacing: 1px;
+    letter-spacing: 0.08em;
     animation: fadeIn 1.2s 0.5s ease both;
 }
 
 .encabezado-tarjeta {
     display: flex;
-    align-items: center;
     flex-direction: column;
-    justify-content: space-between;
-    margin-bottom: 0.90rem;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 1.75rem;
 }
 
 .encabezado-tarjeta h2 {
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
     color: #f2f5f0;
-    font-size: 36px;
+    font-size: clamp(26px, 5vw, 36px);
     font-weight: 800;
-    letter-spacing: -1px;
+    letter-spacing: -0.02em;
 }
 
 .encabezado-tarjeta p {
     margin: 0;
     color: #98a098;
-    font-size: 15px;
+    font-size: clamp(13px, 2vw, 15px);
+    line-height: 1.6;
 }
 
 .pie-tarjeta {
-    margin-top: 50px;
+    margin-top: clamp(2rem, 5vw, 3.125rem);
     padding-top: 30px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     text-align: center;
@@ -278,57 +298,238 @@ h3 {
     font-weight: 700;
 }
 
-.formulario-sesion-wrapper {
+.pie-tarjeta a:hover {
+    text-decoration: underline;
+}
+
+/* ── Selector de modo ─────────────────────────────────────── */
+
+/* Antes era un bloque inline de tema CLARO (#F1F5F9 / #FFFFFF)
+   dentro de una tarjeta de vidrio oscura. */
+.selector-modo {
     display: flex;
-    flex-direction: column;
-    gap: 0;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 26px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.botones-sociales {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 0;
-}
-
-.boton-social {
+.selector-modo__opcion {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 14px 18px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
-    color: #c8d4c6;
-    font-size: 13px;
-    font-weight: 700;
+    gap: 8px;
+    min-height: var(--tactil-min);
+    padding: 10px 12px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #8f968f;
     font-family: inherit;
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
     cursor: pointer;
-    transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease, color 0.25s ease;
-    white-space: nowrap;
+    transition: background 0.25s ease, color 0.25s ease;
 }
 
-.boton-social__icono {
-    width: 18px;
-    height: 18px;
+.selector-modo__opcion:hover {
+    color: #c8d4c6;
+}
+
+.selector-modo__opcion--activa {
+    background: rgba(178, 206, 168, 0.12);
+    color: #b2cea8;
+    box-shadow: inset 0 0 0 1px rgba(178, 206, 168, 0.25);
+}
+
+.selector-modo__icono {
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
 }
 
-.boton-social--google:hover {
-    background: rgba(66, 133, 244, 0.1);
-    border-color: rgba(66, 133, 244, 0.3);
-    color: #dce8ff;
-    transform: translateY(-2px);
+/* ── Formulario ───────────────────────────────────────────── */
+
+.formulario-sesion {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
 }
 
-.boton-social--github:hover {
-    background: rgba(178, 206, 168, 0.08);
-    border-color: rgba(178, 206, 168, 0.3);
-    color: #dffbde;
-    transform: translateY(-2px);
+.grupo-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
+
+.grupo-campo__fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.grupo-campo__etiqueta {
+    color: #8f968f;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.grupo-campo__boton-ayuda {
+    padding: 0;
+    border: none;
+    background: none;
+    color: #b2cea8;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.25s ease;
+}
+
+.grupo-campo__boton-ayuda:hover {
+    color: #dffbde;
+    text-decoration: underline;
+}
+
+.caja-entrada {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.caja-entrada__icono {
+    position: absolute;
+    left: 18px;
+    display: flex;
+    width: 18px;
+    height: 18px;
+    color: #7f867f;
+    pointer-events: none;
+    transition: color 0.25s ease;
+}
+
+.caja-entrada__input {
+    width: 100%;
+    padding: 17px 18px 17px 52px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #212722;
+    color: #f2f5f0;
+    /* 16px exactos: por debajo, iOS Safari hace zoom al enfocar */
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.caja-entrada__input:focus {
+    border-color: #b2cea8;
+    box-shadow: 0 0 0 3px rgba(178, 206, 168, 0.12);
+}
+
+.caja-entrada__input:focus + .caja-entrada__icono,
+.caja-entrada:focus-within .caja-entrada__icono {
+    color: #b2cea8;
+}
+
+.caja-entrada__input::placeholder {
+    color: rgba(255, 255, 255, 0.22);
+}
+
+/* El borde de error va en el INPUT. Antes se aplicaba al
+   contenedor, que no tiene borde propio, y salían dos anillos
+   concéntricos (el rojo de fuera y el gris del input dentro). */
+.caja-entrada__input--error,
+.caja-entrada__input--error:focus {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.14);
+}
+
+.alerta-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 77, 77, 0.1);
+    border: 1px solid rgba(255, 77, 77, 0.28);
+    color: #ffb3b3;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.alerta-error__icono {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: #ff6b6b;
+}
+
+/* ── Botón principal ──────────────────────────────────────── */
+
+.boton-sesion {
+    width: 100%;
+    min-height: var(--tactil-min);
+    margin-top: 6px;
+    padding: 17px;
+    border: none;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(to bottom right, #b2cea8, #354d2f);
+    color: #24331f;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.boton-sesion__flecha {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.boton-sesion:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+
+.boton-sesion:hover:not(:disabled) .boton-sesion__flecha {
+    transform: translateX(6px);
+}
+
+.boton-sesion:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.boton-sesion__spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(36, 51, 31, 0.3);
+    border-top-color: #24331f;
+    animation: girar 0.7s linear infinite;
+}
+
+/* ── OAuth ────────────────────────────────────────────────── */
 
 .separador-oauth {
     display: flex;
@@ -343,161 +544,72 @@ h3 {
 }
 
 .separador-oauth__texto {
-    color: #606860;
+    color: #7b837b;
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 2.5px;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
-.formulario-sesion {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-}
-
-.grupo-campo {
-    display: flex;
-    flex-direction: column;
+.botones-sociales {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
 
-.grupo-campo__etiqueta {
-    color: #8f968f;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-.grupo-campo__fila {
+.boton-social {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-}
-
-.grupo-campo__enlace {
-    color: #b2cea8;
-    text-decoration: none;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.caja-entrada {
-    position: relative;
-}
-
-.caja-entrada__icono {
-    position: absolute;
-    top: 50%;
-    left: 18px;
-    transform: translateY(-50%);
-    color: #7f867f;
-    font-size: 18px;
-    pointer-events: none;
-    user-select: none;
-}
-
-.caja-entrada__input {
-    width: 100%;
-    padding: 18px 18px 18px 52px;
+    justify-content: center;
+    gap: 10px;
+    min-height: var(--tactil-min);
+    padding: 14px 18px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: #212722;
-    color: #f2f5f0;
-    font-size: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #c8d4c6;
+    font-size: 13px;
+    font-weight: 700;
     font-family: inherit;
-    outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    box-sizing: border-box;
-}
-
-.caja-entrada__input:focus {
-    border-color: #b2cea8;
-    box-shadow: 0 0 0 3px rgba(178, 206, 168, 0.12);
-}
-
-.caja-entrada__input::placeholder {
-    color: rgba(255, 255, 255, 0.22);
-}
-
-.caja-recordar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.caja-recordar__checkbox {
-    width: 16px;
-    height: 16px;
+    letter-spacing: 0.03em;
     cursor: pointer;
-    accent-color: #b2cea8;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease, color 0.25s ease;
+    white-space: nowrap;
+}
+
+.boton-social:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.boton-social__icono {
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
 }
 
-.caja-recordar__etiqueta {
-    color: #98a098;
-    font-size: 13px;
-    cursor: pointer;
-}
-
-.input-error {
-    border: 2px solid #ff4d4d !important;
-    box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
-    color: #ff4d4d;
-    border-radius: 14px;
-}
-
-.mensaje-error {
-    color: #ff4d4d;
-    font-size: 14px;
-    margin-top: 10px;
-    text-align: center;
-}
-
-.boton-sesion {
-    width: 100%;
-    margin-top: 10px;
-    padding: 18px;
-    border: none;
-    border-radius: 16px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(to bottom right, #b2cea8, #354d2f);
-    color: #24331f;
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-family: inherit;
-    transition: transform 0.3s ease, filter 0.3s ease;
-}
-
-.boton-sesion__flecha {
-    display: inline-block;
-    transition: transform 0.3s ease;
-}
-
-.boton-sesion:hover {
+.boton-social--google:hover:not(:disabled) {
+    background: rgba(66, 133, 244, 0.1);
+    border-color: rgba(66, 133, 244, 0.3);
+    color: #dce8ff;
     transform: translateY(-2px);
-    filter: brightness(1.05);
 }
 
-.boton-sesion:hover .boton-sesion__flecha {
-    transform: translateX(6px);
+.boton-social--github:hover:not(:disabled) {
+    background: rgba(178, 206, 168, 0.08);
+    border-color: rgba(178, 206, 168, 0.3);
+    color: #dffbde;
+    transform: translateY(-2px);
 }
+
+/* ── Enlaces inferiores ───────────────────────────────────── */
 
 .enlaces-inferiores {
     position: relative;
     z-index: 5;
-    margin-top: 60px;
+    margin-top: clamp(2.5rem, 6vw, 3.75rem);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -513,11 +625,14 @@ h3 {
 }
 
 .enlaces-inferiores__item {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tactil-min);
     color: rgba(255, 255, 255, 0.38);
     text-decoration: none;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     transition: color 0.3s ease;
 }
@@ -532,50 +647,56 @@ h3 {
     user-select: none;
 }
 
+/* ── Pie ──────────────────────────────────────────────────── */
+
 .barra-pie-sesion {
     position: relative;
     width: 100%;
-    padding: 50px 80px;
+    padding: clamp(2.5rem, 6vw, 3.125rem) var(--pad-seccion-x);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 40px;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
     flex-wrap: wrap;
     background: #0b0d0b;
     border-top: 1px solid rgba(178, 206, 168, 0.06);
-    box-sizing: border-box;
 }
 
-.marca-pie {
+/* Acotadas: `.marca-pie` también existe en PerfilUsuario.css y
+   `.derechos-pie` en Footer.css, con valores distintos. */
+.barra-pie-sesion .marca-pie {
     color: #f3fff0;
-    font-size: 24px;
+    font-size: clamp(20px, 3vw, 24px);
     font-weight: 800;
     letter-spacing: -1px;
     text-transform: uppercase;
 }
 
-.derechos-pie {
+.barra-pie-sesion .derechos-pie {
     margin: 0;
     color: rgba(255, 255, 255, 0.35);
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
 }
 
 .navegacion-pie {
     display: flex;
     align-items: center;
-    gap: 28px;
+    gap: clamp(1rem, 3vw, 1.75rem);
     flex-wrap: wrap;
 }
 
 .navegacion-pie a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tactil-min);
     color: rgba(255, 255, 255, 0.35);
     text-decoration: none;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     transition: color 0.3s ease;
 }
@@ -584,13 +705,42 @@ h3 {
     color: #dffbde;
 }
 
+/* ── Breakpoints ──────────────────────────────────────────── */
+
 @media (max-width: 1100px) {
     .contenedor-sesion {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3rem;
+        max-width: 520px;
+    }
+
+    /* La tarjeta primero: el usuario vino a entrar.
+       Antes `.info-sesion` hacía display:none y se perdía
+       entero el mensaje de marca en tablet y móvil. */
+    .tarjeta-sesion {
+        order: 1;
     }
 
     .info-sesion {
+        order: 2;
+        text-align: center;
+    }
+
+    .info-sesion__descripcion {
         display: none;
+    }
+
+    .info-sesion h1 {
+        font-size: clamp(28px, 7vw, 40px);
+        margin-bottom: 20px;
+    }
+
+    .info-sesion__animado {
+        text-align: center;
+    }
+
+    .estadisticas-sesion {
+        justify-content: center;
     }
 }
 
@@ -599,51 +749,22 @@ h3 {
         flex-direction: column;
         text-align: center;
     }
-}
-
-@media (max-width: 768px) {
-    .barra-encabezado-sesion {
-        padding: 24px;
-    }
-
-    .texto-marca {
-        font-size: 22px;
-    }
-
-    .enlace-inicio {
-        font-size: 10px;
-        letter-spacing: 2px;
-    }
-
-    .pagina-sesion {
-        padding: 120px 24px;
-    }
-
-    .tarjeta-sesion {
-        padding: 38px 28px;
-    }
-
-    .barra-pie-sesion {
-        padding: 42px 24px;
-    }
 
     .navegacion-pie {
         justify-content: center;
     }
-
-    .botones-sociales {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-
-    .boton-social {
-        padding: 13px 12px;
-        font-size: 12px;
-    }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
+    .ancla-hud {
+        display: none;
+    }
+
     .botones-sociales {
         grid-template-columns: 1fr;
+    }
+
+    .selector-modo {
+        flex-direction: column;
     }
 }

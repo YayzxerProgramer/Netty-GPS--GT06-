@@ -1,5 +1,5 @@
 .seccion-equipo {
-    padding: 180px 80px;
+    padding: var(--pad-seccion-y) var(--pad-seccion-x);
     background: #0d0f0d;
 }
 
@@ -11,19 +11,47 @@
 .encabezado-equipo {
     display: flex;
     justify-content: space-between;
-    gap: 60px;
-    margin-bottom: 100px;
+    align-items: flex-end;
+    gap: clamp(1.5rem, 4vw, 3.75rem);
+    margin-bottom: clamp(3rem, 7vw, 6.25rem);
+}
+
+/* Faltaban en el CSS: se usan en Equipo.jsx */
+.encabezado-equipo-izquierda {
+    min-width: 0;
+    flex: 1 1 380px;
+}
+
+.encabezado-equipo-derecha {
+    flex: 0 1 420px;
+    min-width: 0;
+}
+
+.encabezado-equipo h2 {
+    margin: 0;
+    color: #f2f5f0;
+    font-size: clamp(2rem, 5.2vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.encabezado-equipo-derecha p {
+    margin: 0;
+    color: #9aa19a;
+    font-size: clamp(0.95rem, 2vw, 1.0625rem);
+    line-height: 1.9;
 }
 
 .cuadricula-equipo {
     display: grid;
-    grid-template-columns: repeat(4,1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 2px;
 }
 
 .tarjeta-miembro {
     position: relative;
-    aspect-ratio: 3/4;
+    aspect-ratio: 3 / 4;
     overflow: hidden;
 }
 
@@ -46,10 +74,10 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 40px;
+    padding: clamp(1.25rem, 3vw, 2.5rem);
     background:
         linear-gradient(to top,
-            rgba(0,0,0,0.88),
+            rgba(0, 0, 0, 0.88),
             transparent 60%);
     opacity: 0;
     transition: 0.5s ease;
@@ -61,5 +89,49 @@
 
 .superposicion-miembro h3 {
     margin: 0 0 10px 0;
-    font-size: 28px;
+    color: #f5fff1;
+    font-size: clamp(1.1rem, 2.4vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.superposicion-miembro span {
+    color: #b2cea8;
+    font-size: clamp(10px, 1.6vw, 12px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+@media (max-width: 1024px) {
+    .cuadricula-equipo {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* En pantalla táctil no hay hover: los nombres deben verse siempre */
+    .superposicion-miembro {
+        opacity: 1;
+    }
+
+    .tarjeta-miembro img {
+        filter: grayscale(40%);
+    }
+}
+
+@media (max-width: 860px) {
+    .encabezado-equipo {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 460px) {
+    .cuadricula-equipo {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .tarjeta-miembro {
+        aspect-ratio: 4 / 3;
+    }
 }

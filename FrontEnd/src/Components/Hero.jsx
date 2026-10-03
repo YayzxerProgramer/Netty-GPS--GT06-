@@ -21,20 +21,20 @@ function Hero() {
                     </h1>
 
                     <p className="descripcion-hero">
-                        High-end instrumentation for global navigation.
-                        Track every coordinate with surgical accuracy
-                        using our industrial-grade GPS ecosystem.
+                        Instrumentación de alta gama para navegación global.
+                        Rastree cada coordenada con precisión quirúrgica
+                        utilizando nuestro ecosistema GPS de grado industrial.
                     </p>
 
                     <div className="botones-hero">
 
                         <button className="boton-primario">
-                            Empieza Ahora
+                            <a href="#pricing">Empieza Ahora</a>
                         </button>
 
-                        <button className="boton-secundario">
+                        {/* <button className="boton-secundario">
                             Ver Demo
-                        </button>
+                        </button>  */}
 
                     </div>
 

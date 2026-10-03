@@ -1,8 +1,8 @@
+/* App.css — estilos compartidos de la landing pública */
+
 body {
-    margin: 0;
     background: #0d0f0d;
-    font-family: 'Manrope', sans-serif;
-    font-family: Arial, sans-serif;
+    font-family: 'Manrope', Arial, sans-serif;
     color: #e1e7df;
 }
 
@@ -10,4 +10,16 @@ h1,
 h2,
 h3 {
     font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Etiqueta superior de sección, compartida por
+   Nosotros, Producto, Pricing y Equipo */
+.etiqueta-seccion {
+    display: inline-block;
+    margin-bottom: 28px;
+    color: #b2cea8;
+    font-size: clamp(0.625rem, 1.4vw, 0.75rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
 }

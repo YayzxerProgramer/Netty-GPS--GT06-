@@ -1,0 +1,107 @@
+name: CI
+
+# Antes no había ningún workflow: nada compilaba, testeaba ni linteaba de forma
+# automática, así que un fallo solo se descubría al ejecutar a mano.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: BackEnd
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Compilar
+        working-directory: BackEnd
+        run: ./mvnw -B compile
+
+      # Las variables no importan aquí: solo se comprueba que el código y los
+      # tests unitarios funcionen. Los tests que necesiten bases de datos deben
+      # usar Testcontainers, no la infraestructura local.
+      - name: Tests
+        working-directory: BackEnd
+        run: ./mvnw -B test
+
+  servidor-tcp:
+    name: Servidor TCP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Compilar
+        working-directory: Servidor-TCP/servidor-tpc
+        run: ./mvnw -B compile
+
+      # Cubren la decodificación GT06: encuadre, fragmentación TCP y CRC.
+      - name: Tests
+        working-directory: Servidor-TCP/servidor-tpc
+        run: ./mvnw -B test
+
+  frontend:
+    name: FrontEnd
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: FrontEnd/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: FrontEnd
+        run: npm ci
+
+      - name: Lint
+        working-directory: FrontEnd
+        run: npm run lint
+
+      - name: Build
+        working-directory: FrontEnd
+        run: npm run build
+
+  secretos:
+    name: Sin secretos versionados
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Red de seguridad: el repositorio llegó a tener el client secret de
+      # GitHub, el secreto del JWT y la contraseña de Postgres en un
+      # application.properties versionado.
+      - name: Comprobar que no hay archivos .env versionados
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$'; then
+            echo "::error::Hay un archivo .env versionado. Los secretos no deben commitearse."
+            exit 1
+          fi
+          echo "OK: ningún .env versionado"
+
+      - name: Comprobar que los secretos no tienen valor por defecto
+        run: |
+          if grep -nE '\$\{(JWT_SECRET|GITHUB_CLIENT_SECRET|POSTGRES_PASSWORD|REDIS_PASSWORD|GPS_INGESTA_API_KEY):[^}]' \
+               BackEnd/src/main/resources/application.properties; then
+            echo "::error::Un secreto tiene valor por defecto. Debe fallar el arranque si falta, no arrancar inseguro."
+            exit 1
+          fi
+          echo "OK: ningún secreto con valor por defecto"

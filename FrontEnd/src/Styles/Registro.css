@@ -736,3 +736,40 @@
     filter: grayscale(40%);
     box-shadow: none;
 }
+
+/* ============================================================
+    Ajustes responsive — Fase 3
+   ============================================================ */
+
+/* Faltaba en el CSS: se usa en Registro.jsx:37 */
+.texto-caracteristica {
+    min-width: 0;
+    color: #a7ada5;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.texto-caracteristica strong,
+.texto-caracteristica b {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: #e1e7df;
+    font-weight: 700;
+}
+
+/* Por debajo de 16px, iOS Safari hace zoom al enfocar el campo */
+.pagina-registro input,
+.pagina-registro select,
+.pagina-registro textarea,
+input.formulario__campo,
+input.campo-registro {
+    font-size: 16px;
+}
+
+@media (max-width: 400px) {
+    /* La tarjeta respira en pantallas de 320–400px */
+    .tarjeta-registro,
+    .panel-registro {
+        padding: 1.25rem !important;
+    }
+}

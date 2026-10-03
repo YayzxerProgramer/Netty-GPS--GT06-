@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { guardarSesion, rutaInicial } from "../Service/sesion";
+import { API_URL } from "../Service/api";
 
 export default function AuthCallback() {
     const navigate = useNavigate();
@@ -14,7 +16,7 @@ export default function AuthCallback() {
         }
 
         // Manda el code al backend para intercambiarlo por el access_token
-        fetch("http://localhost:8081/usuario/github/callback", {
+        fetch(`${API_URL}/usuario/github/callback`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code }),
@@ -22,9 +24,8 @@ export default function AuthCallback() {
             .then((res) => res.json())
             .then((data) => {
                 if (data.token) {
-                    localStorage.setItem("token", data.token);
-                    localStorage.setItem("usuario", data.usuario);
-                    navigate("/panel-control");
+                    guardarSesion(data);
+                    navigate(rutaInicial());
                 } else {
                     navigate("/login");
                 }
