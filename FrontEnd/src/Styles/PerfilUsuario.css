@@ -4,12 +4,16 @@
    ============================================ */
 
 /* ── Variables ── */
+/* Superficies en verde profundo, a juego con la aurora y con /admin. Los
+   tokens de contenedor también los usa PanelVehiculo, que vive dentro. */
 .pagina-perfil {
-    --color-superficie: #0d0f0d;
-    --color-superficie-contenedor: #171b17;
-    --color-superficie-baja: #111411;
-    --color-superficie-alta: #1c211d;
-    --color-superficie-maxima: #212722;
+    --color-superficie: #061410;
+    --color-superficie-contenedor: #0c1d16;
+    --color-superficie-baja: #0a1a14;
+    --color-superficie-alta: #10241c;
+    --color-superficie-maxima: #132a21;
+    --color-contenedor-alto: #10241c;
+    --color-contenedor-mayor: #132a21;
     --color-primario: #b2cea8;
     --color-primario-tenue: #a5c19b;
     --color-primario-contenedor: #354d2f;
@@ -24,7 +28,7 @@
     --curva-expo: cubic-bezier(0.19, 1, 0.22, 1);
 
     min-height: 100vh;
-    background-color: var(--color-superficie);
+    background-color: #061410;
     font-family: var(--fuente-cuerpo);
     color: var(--color-en-superficie);
     display: flex;
@@ -68,21 +72,6 @@
     }
 }
 
-@keyframes flotar-brillo {
-
-    0%,
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-
-    40% {
-        transform: translate(22px, -16px) scale(1.03);
-    }
-
-    70% {
-        transform: translate(-14px, 22px) scale(0.97);
-    }
-}
 
 @keyframes pulsar-punto {
 
@@ -146,41 +135,6 @@
     }
 }
 
-/* ── Fondo atmosférico ── */
-.fondo-atmosferico {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-.brillo-superior {
-    position: absolute;
-    top: -20%;
-    left: -10%;
-    width: 60%;
-    height: 60%;
-    border-radius: 50%;
-    background: rgba(53, 77, 47, 0.1);
-    filter: blur(120px);
-    transition: transform 0.9s ease;
-    animation: flotar-brillo 16s ease-in-out infinite;
-}
-
-.brillo-inferior {
-    position: absolute;
-    bottom: 10%;
-    right: -10%;
-    width: 50%;
-    height: 50%;
-    border-radius: 50%;
-    background: rgba(33, 39, 34, 0.2);
-    filter: blur(100px);
-    transition: transform 0.9s ease;
-    animation: flotar-brillo 20s ease-in-out infinite reverse;
-}
-
 .boton-clientes {
     background: rgba(53, 77, 47, 0.3);
     color: var(--color-primario);
@@ -217,8 +171,10 @@
     left: 0;
     height: calc(100vh - 72px);
     z-index: 40;
-    background: var(--color-superficie-baja);
-    border-right: 1px solid rgba(67, 73, 68, 0.1);
+    background: rgba(5, 16, 12, 0.62);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-right: 1px solid rgba(178, 206, 168, 0.12);
     display: flex;
     flex-direction: column;
     padding: 2rem 0;
@@ -410,11 +366,12 @@
 }
 
 /* ── Panel vidrio (reutilizable) ── */
+/* Mismo vidrio que las tarjetas de /admin, sobre la aurora compartida. */
 .panel-vidrio {
-    background: rgba(28, 33, 29, 0.45);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(178, 206, 168, 0.06);
+    background: rgba(10, 26, 20, 0.58);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(178, 206, 168, 0.12);
     border-radius: 0.75rem;
     box-shadow: 0 0 40px -10px rgba(178, 206, 168, 0.12);
 }
@@ -741,8 +698,10 @@
 .pie-pagina {
     width: 100%;
     padding: 1.5rem 3rem;
-    border-top: 1px solid rgba(67, 73, 68, 0.1);
-    background: var(--color-superficie);
+    border-top: 1px solid rgba(178, 206, 168, 0.12);
+    background: rgba(4, 13, 10, 0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     display: flex;
     flex-direction: column;
     align-items: center;

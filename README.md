@@ -62,16 +62,17 @@ Levanta PostgreSQL (**5435**, no 5432), MongoDB (27017) y Redis (6379), los tres
 
 > El puerto de PostgreSQL es 5435 porque en Windows el servicio nativo ocupa el 5432 y gana las conexiones a `localhost` por delante del proxy de Docker.
 
-### 3. Migración de base de datos
+### 3. Esquema de base de datos (automático)
 
-Obligatoria la primera vez. `ddl-auto=update` **no altera columnas existentes**, así que las restricciones UNIQUE hay que aplicarlas a mano:
+No hay que ejecutar nada a mano. `ddl-auto=update` crea tablas y columnas pero **no altera las que ya existen**, así que al arrancar el backend `NormalizadorEsquema` alinea una base antigua con las entidades:
 
-```bash
-docker exec -i rompgps-postgres psql -U rompgps -d rompgps_users \
-  < BackEnd/src/main/resources/db/migracion-01-seguridad.sql
-```
+- convierte roles heredados (`USUARIO`, `CLIENTE`, `ROLE_ADMIN`…) a `ADMIN` / `USER` / `VIEWER`; lo desconocido pasa a `USER`, nunca a más privilegios;
+- permite `vehiculos.imei` vacío (vehículos sin equipo) y marca como obligatorios `usuario`, `correo`, `rol` y `activo`;
+- añade `UNIQUE` a `usuario`, `correo`, `placa` e `imei`, y los índices del panel.
 
-Es idempotente. Antes de ejecutarla sobre datos existentes, revisa los duplicados con las consultas comentadas en la cabecera del `.sql`.
+Es idempotente, nunca borra datos y cada paso tiene un `lock_timeout` de 5 s. Si un paso no puede aplicarse (por ejemplo, hay correos repetidos) lo explica en el log con la consulta para encontrarlos y la aplicación arranca igual; se reintenta en el siguiente arranque. Se desactiva con `DB_NORMALIZAR_ESQUEMA=false`.
+
+Aunque la base no esté normalizada, un rol desconocido no rompe nada: `RolConverter` lo lee como `USER`.
 
 ### 4. Arrancar los servicios
 

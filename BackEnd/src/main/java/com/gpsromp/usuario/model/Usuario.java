@@ -40,7 +40,8 @@ public class Usuario implements Serializable {
 
     private String telefono;
 
-    @Enumerated(EnumType.STRING)
+    // Convertidor en lugar de @Enumerated(STRING): tolera roles heredados.
+    @Convert(converter = RolConverter.class)
     @Column(nullable = false, length = 20)
     private Rol rol = Rol.USER;
 

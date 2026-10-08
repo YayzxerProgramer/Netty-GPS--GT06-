@@ -1,100 +1,252 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { obtenerUsuario, cerrarSesion } from "../Service/sesion";
-import { get, patch } from "../Service/api";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Client } from "@stomp/stompjs";
+import { obtenerUsuario, obtenerToken, cerrarSesion } from "../Service/sesion";
+import { get, patch, urlWebSocket } from "../Service/api";
+import FondoAurora from "./FondoAurora";
+import MapaFlota from "./Admin/MapaFlota";
+import AdminClientes from "./Admin/AdminClientes";
+import AdminUnidades from "./Admin/AdminUnidades";
+import AdminAnalitica from "./Admin/AdminAnalitica";
+import AdminCuenta from "./Admin/AdminCuenta";
+import { FormVehiculo } from "./Admin/AdminFormularios";
+import { InsigniaEstado, Modal, ProveedorAvisos, Segmentos } from "./Admin/AdminUI";
+import { useAvisar } from "./Admin/avisos";
+import {
+  ESTADOS, aPosicion, cargarPosiciones, cargarPropietarios, estadoDe, fecha,
+  haceCuanto, iniciales, nombrePropietario, numero, query,
+} from "./Admin/adminUtils";
 
-import "../Styles/Dashboard.css";
+import "../Styles/DashBoard.css";
 
-const NavIcon = ({ type }) => {
-  const icons = {
-    dashboard: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>,
-    fleet: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" /></svg>,
-    clients: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
-    gps: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" /></svg>,
-    analytics: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>,
-    user: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
-    logout: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
-    bell: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
-    settings: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M2 12h2M20 12h2" /></svg>,
-    help: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
-    search: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>,
-    filter: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>,
-    plus: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
-    arrow: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>,
-    download: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>,
-    upload: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>,
-    chart: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>,
-    link: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>,
-    box: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /></svg>,
-    warn: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
-    signal: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M10.54 17.09l1.46 1.46 1.46-1.46A5 5 0 0 0 10.54 17.09z" /></svg>,
-    analytics2: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" /><path d="M13 13l6 6" /></svg>,
-  };
-  return icons[type] || null;
+const NAV = [
+  { id: "dashboard", label: "Resumen", icon: "dashboard" },
+  { id: "fleet", label: "Monitor de flota", icon: "radar" },
+  { id: "clients", label: "Clientes", icon: "group" },
+  { id: "gps", label: "Unidades GPS", icon: "satellite_alt" },
+  { id: "analytics", label: "Analítica", icon: "monitoring" },
+];
+
+const SECCIONES = new Set([...NAV.map((n) => n.id), "cuenta"]);
+
+const PLACEHOLDER = {
+  dashboard: "Buscar placa, modelo o IMEI…",
+  fleet: "Filtrar unidades del monitor…",
+  clients: "Buscar nombre, usuario o correo…",
+  gps: "Buscar placa, modelo o IMEI…",
 };
 
+/** Unidades que sigue el monitor: las más recientes del inventario. */
+const TAMANO_FLOTA = 50;
+
+const FILTRO_MONITOR = [
+  { valor: "", etiqueta: "Todas" },
+  { valor: "marcha", etiqueta: "En marcha" },
+  { valor: "detenido", etiqueta: "Detenidas" },
+  { valor: "sin", etiqueta: "Sin datos" },
+];
+
 export default function Dashboard() {
-  const [activeNav, setActiveNav] = useState("dashboard");
+  return (
+    <ProveedorAvisos>
+      <PanelAdmin />
+    </ProveedorAvisos>
+  );
+}
+
+function PanelAdmin() {
   const navigate = useNavigate();
+  const avisar = useAvisar();
   const usuario = obtenerUsuario() || "ADMIN";
 
-  // Datos reales del panel. Antes todo el contenido era literal del maquetado:
-  // TOTAL CLIENTS 412, GPS INVENTORY 8,924 y dos filas de dispositivos falsos.
-  const [resumen, setResumen] = useState(null);
-  const [usuarios, setUsuarios] = useState([]);
-  const [vehiculos, setVehiculos] = useState([]);
+  // La sección vive en la URL: atrás/adelante y recargar mantienen el sitio.
+  const [params, setParams] = useSearchParams();
+  const seccion = SECCIONES.has(params.get("s")) ? params.get("s") : "dashboard";
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const [panel, setPanel] = useState(null); // "avisos" | "ayuda"
+  const [registrando, setRegistrando] = useState(false);
+  const [pendiente, setPendiente] = useState(null);
+
+  const [resumen, setResumen] = useState(null);
+  const [vehiculos, setVehiculos] = useState([]);
+  const [propietarios, setPropietarios] = useState({});
+  const [posiciones, setPosiciones] = useState({});
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [actualizado, setActualizado] = useState("ahora");
+  const [seleccion, setSeleccion] = useState(null);
+  const [filtroMonitor, setFiltroMonitor] = useState("");
+  const [ahora, setAhora] = useState(() => Date.now());
 
+  const buscadorRef = useRef(null);
+  const tablaRef = useRef(null);
+
+  const ir = (id, extra = null) => {
+    setParams(id === "dashboard" ? {} : { s: id });
+    setMenuAbierto(false);
+    setPanel(null);
+    setBusqueda("");
+    setPendiente(extra);
+  };
+
+  // El buscador solo filtra la flota en Resumen y Monitor; Clientes y Unidades
+  // lo leen por su cuenta.
+  const filtroFlota = seccion === "dashboard" || seccion === "fleet" ? busqueda : "";
+
+  /**
+   * Cada petición falla por separado. Antes iban en un único Promise.all: un
+   * 500 en cualquiera dejaba todo el panel a cero.
+   */
   const cargar = useCallback(async (texto = "") => {
     setCargando(true);
     setError(null);
-    try {
-      const filtro = texto ? `&busqueda=${encodeURIComponent(texto)}` : "";
-      const [datosResumen, pagUsuarios, pagVehiculos] = await Promise.all([
-        get("/admin/resumen"),
-        get(`/admin/usuarios?tamano=10${filtro}`),
-        get(`/admin/vehiculos?tamano=10${filtro}`),
+    const [rResumen, rVehiculos] = await Promise.allSettled([
+      get("/admin/resumen"),
+      get(`/admin/vehiculos${query({ busqueda: texto, tamano: TAMANO_FLOTA })}`),
+    ]);
+    const fallos = [];
+    if (rResumen.status === "fulfilled") setResumen(rResumen.value);
+    else fallos.push(`Resumen: ${rResumen.reason.message}`);
+
+    if (rVehiculos.status === "fulfilled") {
+      const lista = rVehiculos.value.contenido;
+      setVehiculos(lista);
+      const [duennos, pos] = await Promise.all([
+        cargarPropietarios(lista.map((v) => v.id_usuario)),
+        cargarPosiciones(lista),
       ]);
-      setResumen(datosResumen);
-      setUsuarios(pagUsuarios.contenido);
-      setVehiculos(pagVehiculos.contenido);
-    } catch (e) {
-      setError(e.message || "No se pudieron cargar los datos");
-    } finally {
-      setCargando(false);
+      setPropietarios(duennos);
+      setPosiciones(pos);
+    } else {
+      fallos.push(`Vehículos: ${rVehiculos.reason.message}`);
     }
+
+    setError(fallos.length ? fallos.join(" · ") : null);
+    setActualizado(new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false }));
+    setCargando(false);
   }, []);
 
-  // Carga inicial y buscador, en un solo efecto.
-  //
-  // La espera de 400 ms evita una petición por cada tecla pulsada, y al montar
-  // el componente dispara igualmente la primera carga con la búsqueda vacía:
-  // por eso no hace falta un segundo useEffect que llame a cargar() al inicio.
+  // Carga inicial y buscador en un solo efecto: la espera de 400 ms evita una
+  // petición por tecla y al montar dispara igualmente la primera carga.
   useEffect(() => {
-    const id = setTimeout(() => cargar(busqueda), 400);
+    const id = setTimeout(() => cargar(filtroFlota), 400);
     return () => clearTimeout(id);
-  }, [busqueda, cargar]);
+  }, [filtroFlota, cargar]);
+
+  // Reloj para los "hace X s" y para que una unidad deje de figurar en marcha
+  // cuando deja de reportar.
+  useEffect(() => {
+    const id = setInterval(() => setAhora(Date.now()), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  // "/" enfoca el buscador, como en la mayoría de paneles.
+  useEffect(() => {
+    const alPulsar = (e) => {
+      const escribiendo = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
+      if (e.key === "/" && !escribiendo && buscadorRef.current) {
+        e.preventDefault();
+        buscadorRef.current.focus();
+      }
+      if (e.key === "Escape") setPanel((p) => (p === "avisos" ? null : p));
+    };
+    window.addEventListener("keydown", alPulsar);
+    return () => window.removeEventListener("keydown", alPulsar);
+  }, []);
+
+  // Posiciones en vivo. Un solo cliente STOMP para toda la flota visible; el
+  // backend deja a un ADMIN suscribirse a cualquier IMEI.
+  const imeis = useMemo(
+    () => vehiculos.filter((v) => v.imei).map((v) => v.imei).sort().join(","),
+    [vehiculos]);
+
+  useEffect(() => {
+    const token = obtenerToken();
+    if (!imeis || !token) return;
+
+    const client = new Client({
+      brokerURL: urlWebSocket(),
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      reconnectDelay: 5000,
+      onConnect: () => {
+        imeis.split(",").forEach((imei) => {
+          client.subscribe(`/socket/gps/${imei}`, (mensaje) => {
+            try {
+              const pos = aPosicion(JSON.parse(mensaje.body));
+              if (pos) setPosiciones((prev) => ({ ...prev, [imei]: pos }));
+            } catch {
+              // Trama ilegible: se ignora y se espera la siguiente.
+            }
+          });
+        });
+      },
+    });
+    client.activate();
+    return () => {
+      client.deactivate();
+    };
+  }, [imeis]);
+
+  const flota = useMemo(() => vehiculos.map((v) => {
+    const duenno = propietarios[v.id_usuario];
+    const pos = v.imei ? posiciones[v.imei] || null : null;
+    return {
+      ...v,
+      pos,
+      duenno,
+      propietario: nombrePropietario(v.id_usuario, duenno),
+      estado: estadoDe(v, pos, ahora),
+    };
+  }), [vehiculos, propietarios, posiciones, ahora]);
+
+  const conteo = useMemo(() => {
+    const c = { marcha: 0, detenido: 0, sin: 0, nogps: 0, off: 0 };
+    flota.forEach((v) => { c[v.estado] += 1; });
+    return c;
+  }, [flota]);
+
+  const elegir = useCallback((id) => {
+    setSeleccion((actual) => (id === null || actual === id ? null : id));
+  }, []);
+
+  /** "Ubicar" desde Unidades: si la unidad no está en el monitor, se añade. */
+  const ubicar = async (id) => {
+    ir("fleet");
+    if (!vehiculos.some((v) => v.id === id)) {
+      try {
+        const v = await get(`/admin/vehiculos/${id}`);
+        const [duennos, pos] = await Promise.all([cargarPropietarios([v.id_usuario]), cargarPosiciones([v])]);
+        setVehiculos((prev) => [v, ...prev]);
+        setPropietarios((prev) => ({ ...prev, ...duennos }));
+        setPosiciones((prev) => ({ ...prev, ...pos }));
+      } catch (e) {
+        avisar(e.message, "error");
+        return;
+      }
+    }
+    setSeleccion(id);
+  };
 
   const manejarCerrarSesion = () => {
     cerrarSesion();
     navigate("/login", { replace: true });
   };
 
-  const alternarEstadoVehiculo = async (id) => {
+  const alternarEstadoVehiculo = async (v) => {
     try {
-      await patch(`/admin/vehiculos/${id}/estado`);
-      cargar(busqueda);
+      await patch(`/admin/vehiculos/${v.id}/estado`);
+      avisar(v.activo ? `${v.placa} desactivado` : `${v.placa} activado`);
+      cargar(filtroFlota);
     } catch (e) {
-      setError(e.message);
+      avisar(e.message, "error");
     }
   };
 
   const exportarCsv = () => {
-    const cabecera = "imei,placa,modelo,tipo,activo,creadoEn";
-    const filas = vehiculos.map((v) =>
-      [v.imei || "", v.placa, v.modelo, v.tipo, v.activo, v.creadoEn].join(","));
+    const cabecera = "imei,placa,modelo,tipo,activo,propietario,creadoEn";
+    const filas = flota.map((v) =>
+      [v.imei || "", v.placa, v.modelo, v.tipo, v.activo, `"${v.propietario}"`, v.creadoEn].join(","));
     const csv = [cabecera, ...filas].join("\n");
 
     const enlace = document.createElement("a");
@@ -104,319 +256,441 @@ export default function Dashboard() {
     URL.revokeObjectURL(enlace.href);
   };
 
-  const numero = (valor) => (valor ?? 0).toLocaleString("es-CO");
+  const total = resumen?.totalVehiculos ?? 0;
+  const conImei = resumen?.vehiculosConImei ?? 0;
+  const cobertura = total ? Math.round((conImei / total) * 100) : 0;
+  const pctActivos = resumen?.totalUsuarios
+    ? Math.round((resumen.usuariosActivos / resumen.totalUsuarios) * 100)
+    : 0;
+  const sinDuenno = resumen?.vehiculosSinDuenno ?? 0;
+  const sinGps = Math.max(0, total - conImei);
+  const usuariosInactivos = resumen ? resumen.totalUsuarios - resumen.usuariosActivos : 0;
 
+  const alertas = [
+    error && { icono: "error", tono: "peligro", texto: "Algunos datos no se pudieron cargar", detalle: error, accion: () => cargar(filtroFlota), boton: "Reintentar" },
+    sinDuenno > 0 && { icono: "link_off", texto: `${numero(sinDuenno)} vehículos sin propietario`, detalle: "Vincúlalos a un cliente", accion: () => ir("gps"), boton: "Revisar" },
+    sinGps > 0 && { icono: "satellite_alt", tono: "ambar", texto: `${numero(sinGps)} vehículos sin equipo GPS`, detalle: "No pueden reportar posición", accion: () => ir("gps"), boton: "Revisar" },
+    conteo.sin > 0 && { icono: "signal_disconnected", texto: `${numero(conteo.sin)} unidades sin reportar`, detalle: "En el monitor de flota", accion: () => ir("fleet"), boton: "Ver" },
+    usuariosInactivos > 0 && { icono: "person_off", texto: `${numero(usuariosInactivos)} cuentas inactivas`, detalle: "Sin acceso al sistema", accion: () => ir("clients"), boton: "Ver" },
+  ].filter(Boolean);
+
+  const gestion = [
+    { icon: "group", titulo: "Registro de clientes", desc: "Altas, roles y acceso de usuarios", accion: () => ir("clients", { alta: true }) },
+    { icon: "inventory_2", titulo: "Inventario de equipos", desc: "Equipos GT06 y vehículos", accion: () => ir("gps") },
+    { icon: "link", titulo: "Vincular vehículo y usuario", desc: "Asignar equipos a propietarios", accion: () => ir("gps", { dialogo: { tipo: "vincular" } }) },
+  ];
+
+  const tituloSeccion = seccion === "cuenta" ? "Mi cuenta" : NAV.find((n) => n.id === seccion)?.label;
+  const conBuscador = Boolean(PLACEHOLDER[seccion]);
+  const limpiarPendiente = useCallback(() => setPendiente(null), []);
+  const monitorizadas = flota.filter((v) => !filtroMonitor || v.estado === filtroMonitor);
 
   return (
-    <>
-      <div className="app">
-        <div className="topbar">
-          <span className="logo">ROMP GPS</span>
-          <div className="search">
-            <NavIcon type="search" />
-            {/* Antes era un <span> con texto muerto: no buscaba nada. */}
-            <input
-              className="search-input"
-              type="search"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar usuario, placa o IMEI..."
-              style={{ background: "transparent", border: "none", outline: "none", color: "inherit", width: "100%" }}
-            />
-          </div>
-          <div className="topbar-right">
-            <button className="icon-btn"><NavIcon type="bell" /></button>
-            <button className="icon-btn"><NavIcon type="settings" /></button>
-            <button className="icon-btn"><NavIcon type="help" /></button>
-            <div className="user-info">
-              <div className="user-text">
-                <div className="user-name">{usuario.toUpperCase()}</div>
-                <div className="user-status">SESIÓN ACTIVA</div>
-              </div>
-              <div className="avatar">{usuario.charAt(0).toUpperCase()}</div>
-            </div>
-          </div>
+    <div className="adm">
+      <FondoAurora />
+      {menuAbierto && <div className="adm-velo" onClick={() => setMenuAbierto(false)} />}
+
+      <aside className={`adm-lateral ${menuAbierto ? "abierto" : ""}`}>
+        <button className="adm-marca" onClick={() => ir("dashboard")}>
+          <span className="adm-marca-icono"><span className="material-symbols-outlined">explore</span></span>ROMP GPS
+        </button>
+        <div className="adm-lateral-titulo">Administración</div>
+        <nav className="adm-nav">
+          {NAV.map((n) => (
+            <button
+              key={n.id}
+              className={`adm-nav-item ${seccion === n.id ? "activo" : ""}`}
+              aria-current={seccion === n.id ? "page" : undefined}
+              onClick={() => ir(n.id)}
+            >
+              <span className="material-symbols-outlined">{n.icon}</span>{n.label}
+              {n.id === "fleet" && conteo.marcha > 0 && <span className="adm-nav-contador">{conteo.marcha}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className="adm-lateral-pie">
+          <button className="adm-btn-registrar" onClick={() => { setRegistrando(true); setMenuAbierto(false); }}>
+            <span className="material-symbols-outlined">add</span>Registrar equipo
+          </button>
+          <button className={`adm-lateral-link ${seccion === "cuenta" ? "activo" : ""}`} onClick={() => ir("cuenta")}>
+            <span className="material-symbols-outlined">person</span>Mi perfil
+          </button>
+          <button className="adm-lateral-link adm-lateral-link--salir" onClick={manejarCerrarSesion}>
+            <span className="material-symbols-outlined">logout</span>Cerrar sesión
+          </button>
         </div>
+      </aside>
 
-        <div className="layout">
-          <div className="sidebar">
-            <div className="sidebar-user">
-              <div className="sidebar-user-icon">
-                <NavIcon type="user" />
-                <div>
-                  <div className="sidebar-user-name">System </div>
-                  <div className="sidebar-user-role">Precision Fleet Control</div>
-                </div>
-              </div>
+      <div className="adm-cuerpo">
+        <header className="adm-cabecera">
+          <button className="adm-icono-btn adm-menu-btn" aria-label="Abrir menú" onClick={() => setMenuAbierto(true)}>
+            <span className="material-symbols-outlined">menu</span>
+          </button>
+          {conBuscador ? (
+            <label className="adm-buscador">
+              <span className="material-symbols-outlined">search</span>
+              <input
+                ref={buscadorRef}
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder={PLACEHOLDER[seccion]}
+                aria-label={PLACEHOLDER[seccion]}
+              />
+              <kbd className="adm-tecla">/</kbd>
+            </label>
+          ) : (
+            <div className="adm-miga">
+              <span>Administración</span>
+              <span className="material-symbols-outlined">chevron_right</span>
+              <b>{tituloSeccion}</b>
             </div>
-            <nav className="nav">
-              {[
-                { id: "dashboard", label: "Dashboard", icon: "dashboard" },
-                { id: "fleet", label: "Fleet Monitor", icon: "fleet" },
-                { id: "clients", label: "Client Registry", icon: "clients" },
-                { id: "gps", label: "GPS Units", icon: "gps" },
-                { id: "analytics", label: "Analytics", icon: "analytics" },
-              ].map(item => (
-                <div key={item.id} className={`nav-item ${activeNav === item.id ? "active" : ""}`} onClick={() => setActiveNav(item.id)}>
-                  <NavIcon type={item.icon} />
-                  <span>{item.label}</span>
-                </div>
-              ))}
-            </nav>
-            <div className="sidebar-bottom">
-              <button className="register-btn">
-                <NavIcon type="plus" />
-                Register New Device
+          )}
+          <div className="adm-cabecera-der">
+            <div className="adm-desplegable">
+              <button
+                className={`adm-icono-btn ${panel === "avisos" ? "activo" : ""}`}
+                title="Notificaciones"
+                aria-expanded={panel === "avisos"}
+                onClick={() => setPanel((p) => (p === "avisos" ? null : "avisos"))}
+              >
+                <span className="material-symbols-outlined">notifications</span>
+                {alertas.length > 0 && <span className="adm-icono-punto">{alertas.length}</span>}
               </button>
-              <div className="nav-item" style={{ padding: "10px 0", cursor: "pointer" }} onClick={() => navigate("/configuracion")}><NavIcon type="user" /><span>Mi perfil</span></div>
-              <div className="nav-item" style={{ padding: "10px 0", cursor: "pointer" }} onClick={manejarCerrarSesion}><NavIcon type="logout" /><span>Cerrar sesión</span></div>
-            </div>
-          </div>
-
-          {/* MAIN */}
-          <main className="main">
-            {/* HEADER */}
-            <div className="page-header">
-              <div className="status-bar">
-                <div className="live-badge"><div className="live-dot" />SYSTEM LIVE</div>
-                <span className="uptime">UPTIME: 99.98%</span>
-              </div>
-              <div className="header-row">
-                <div>
-                  <h1 className="page-title">Centro de mando</h1>
-                  <p className="page-desc">Administracion de usuarios, vehiculos y dispositivos GPS.</p>
-                </div>
-                <div className="header-meta">
-                  <div className="meta-item">
-                    <label>VEHICULOS ACTIVOS</label>
-                    <span>{numero(resumen?.vehiculosActivos)}</span>
-                  </div>
-                  <div className="meta-item">
-                    <label>ACTUALIZAR</label>
-                    <span
-                      onClick={() => cargar(busqueda)}
-                      style={{ cursor: "pointer", textDecoration: "underline" }}
-                    >
-                      Recargar
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {error && (
-              <div style={{
-                background: "rgba(220,38,38,0.15)", border: "1px solid rgba(220,38,38,0.4)",
-                color: "#fca5a5", padding: "12px 16px", borderRadius: 8, marginBottom: 16,
-              }}>
-                {error}
-              </div>
-            )}
-
-            {/* STATS */}
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-label">USUARIOS</div>
-                <div className="stat-icon"><NavIcon type="clients" /></div>
-                <div className="stat-value">{numero(resumen?.totalUsuarios)}</div>
-                <div className="stat-sub">
-                  <span className="stat-change">{numero(resumen?.usuariosActivos)} activos</span>
-                </div>
-                <div className="progress-bar" style={{ marginTop: 8 }}>
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: resumen?.totalUsuarios
-                        ? `${Math.round((resumen.usuariosActivos / resumen.totalUsuarios) * 100)}%`
-                        : "0%",
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">VEHICULOS</div>
-                <div className="stat-icon"><NavIcon type="box" /></div>
-                <div className="stat-value">{numero(resumen?.totalVehiculos)}</div>
-                <div className="stat-sub">
-                  <span className="in-stock">{numero(resumen?.vehiculosSinDuenno)}</span>&nbsp; sin asignar
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">CON GPS</div>
-                <div className="stat-icon"><NavIcon type="signal" /></div>
-                <div className="stat-value">
-                  {resumen?.totalVehiculos
-                    ? Math.round((resumen.vehiculosConImei / resumen.totalVehiculos) * 100)
-                    : 0}
-                  <span style={{ fontSize: 18 }}>%</span>
-                </div>
-                <div className="signal-dots">
-                  {[0, 1, 2, 3, 4].map((i) => {
-                    const proporcion = resumen?.totalVehiculos
-                      ? resumen.vehiculosConImei / resumen.totalVehiculos
-                      : 0;
-                    return <div key={i} className={`signal-dot ${i < Math.round(proporcion * 5) ? "on" : "off"}`} />;
-                  })}
-                  <span className="latency" style={{ marginLeft: 6 }}>
-                    {numero(resumen?.vehiculosConImei)} equipos
-                  </span>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">ADMINISTRADORES</div>
-                <div className="stat-icon"><NavIcon type="warn" /></div>
-                <div className="alert-value">
-                  {String(resumen?.administradores ?? 0).padStart(2, "0")}
-                </div>
-                <div className="alert-sub">Con acceso al panel</div>
-              </div>
-            </div>
-
-            {/* BOTTOM GRID */}
-            <div className="bottom-grid">
-              {/* MANAGEMENT */}
-              <div className="management-section">
-                <div className="section-header">
-                  <span>MANAGEMENT</span>
-                  <NavIcon type="filter" />
-                </div>
-                {[
-                  { icon: "clients", title: "Client Registry", desc: "Update entity billing & access levels" },
-                  { icon: "box", title: "GPS Unit Inventory", desc: "Manage hardware stock and status" },
-                  { icon: "link", title: "Vehicle-User Linking", desc: "Mapping hardware to active personnel" },
-                ].map((item, i) => (
-                  <div key={i} className="mgmt-card">
-                    <div className="mgmt-icon"><NavIcon type={item.icon} /></div>
-                    <div className="mgmt-text">
-                      <div className="mgmt-title">{item.title}</div>
-                      <div className="mgmt-desc">{item.desc}</div>
+              {panel === "avisos" && (
+                <>
+                  <div className="adm-desplegable-velo" onClick={() => setPanel(null)} />
+                  <div className="adm-avisos-panel" role="dialog" aria-label="Notificaciones">
+                    <div className="adm-avisos-cab">
+                      <b>Notificaciones</b>
+                      <span>{alertas.length ? `${alertas.length} ${alertas.length === 1 ? "pendiente" : "pendientes"}` : "Todo en orden"}</span>
                     </div>
-                    <div className="mgmt-arrow"><NavIcon type="arrow" /></div>
+                    {alertas.length === 0 && (
+                      <div className="adm-avisos-vacio">
+                        <span className="material-symbols-outlined">task_alt</span>
+                        No hay nada que requiera tu atención.
+                      </div>
+                    )}
+                    {alertas.map((a) => (
+                      <div key={a.texto} className={`adm-alerta ${a.tono ? `adm-alerta--${a.tono}` : ""}`}>
+                        <span className="adm-alerta-icono"><span className="material-symbols-outlined">{a.icono}</span></span>
+                        <span className="adm-celda-doble">
+                          <b>{a.texto}</b>
+                          <span>{a.detalle}</span>
+                        </span>
+                        <button className="adm-btn-fila" onClick={() => { setPanel(null); a.accion(); }}>{a.boton}</button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                <div className="fleet-report">
-                  <div className="fleet-report-title">Fleet Integrity Report</div>
-                  <div className="fleet-report-desc">A weekly overview of signal stability across all regions is ready for review.</div>
-                  <button className="download-btn"><NavIcon type="download" /> DOWNLOAD PDF</button>
-                  <div className="report-icon">
-                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
+            </div>
+            <button className={`adm-icono-btn adm-ocultar-movil ${seccion === "cuenta" ? "activo" : ""}`} title="Configuración de la cuenta" onClick={() => ir("cuenta")}>
+              <span className="material-symbols-outlined">settings</span>
+            </button>
+            <button className="adm-icono-btn adm-ocultar-movil" title="Ayuda" onClick={() => setPanel("ayuda")}>
+              <span className="material-symbols-outlined">help</span>
+            </button>
+            <div className="adm-separador" />
+            <button className="adm-sesion-btn" onClick={() => ir("cuenta")} title="Mi cuenta">
+              <span className="adm-sesion">
+                <span className="adm-sesion-nombre">{usuario.toUpperCase()}</span>
+                <span className="adm-sesion-estado">ADMINISTRADOR</span>
+              </span>
+              <span className="adm-avatar">{usuario.charAt(0).toUpperCase()}</span>
+            </button>
+          </div>
+        </header>
 
-              {/* TELEMETRY */}
-              <div className="telemetry-panel">
-                <div className="telemetry-header">
-                  <div className="telemetry-title">
-                    <NavIcon type="analytics" />
-                    TELEMETRIC INTELLIGENCE DASHBOARD
+        <main className="adm-principal">
+          <div className="adm-contenido" key={seccion}>
+            {seccion === "dashboard" && (
+              <>
+                <div className="adm-encabezado">
+                  <div>
+                    <div className="adm-encabezado-meta">
+                      <span className="adm-en-vivo"><span className="adm-en-vivo-punto" />SISTEMA EN VIVO</span>
+                      <span className="adm-encabezado-nota">{numero(total)} vehículos bajo gestión</span>
+                    </div>
+                    <h1 className="adm-titulo">Centro de <em>mando</em></h1>
+                    <p className="adm-subtitulo">Administración de usuarios, vehículos y dispositivos GPS.</p>
                   </div>
-                  <div className="telemetry-dots">
-                    <div className="t-dot t-dot-1" />
-                    <div className="t-dot t-dot-2" />
-                    <div className="t-dot t-dot-3" />
-                  </div>
+                  <button className="adm-btn-secundario" onClick={() => cargar(filtroFlota)} disabled={cargando}>
+                    <span className={`material-symbols-outlined ${cargando ? "adm-girando" : ""}`}>refresh</span>
+                    {cargando ? "Cargando…" : `Recargar · ${actualizado}`}
+                  </button>
                 </div>
-                <div className="telemetry-stats">
-                  <div className="tstat">
-                    <div className="tstat-label">SIGNAL HEATMAP</div>
-                    <div className="signal-bars">
-                      {[14, 22, 18, 28, 20].map((h, i) => (
-                        <div key={i} className="sbar" style={{ height: `${h}px` }} />
+
+                {error && (
+                  <div className="adm-error" role="alert">
+                    <span className="material-symbols-outlined">error</span>{error}
+                    <button className="adm-enlace adm-error-accion" onClick={() => cargar(filtroFlota)}>REINTENTAR</button>
+                  </div>
+                )}
+
+                <div className="adm-stats">
+                  <button className="adm-stat" onClick={() => ir("clients")}>
+                    <div className="adm-stat-cab"><span>USUARIOS</span><span className="material-symbols-outlined">group</span></div>
+                    <div className="adm-stat-valor">{numero(resumen?.totalUsuarios)}</div>
+                    <div className="adm-stat-sub"><b>{numero(resumen?.usuariosActivos)} activos</b> · {pctActivos}%</div>
+                    <div className="adm-progreso"><div style={{ width: `${pctActivos}%` }} /></div>
+                  </button>
+                  <button className="adm-stat" onClick={() => ir("gps")}>
+                    <div className="adm-stat-cab"><span>VEHÍCULOS</span><span className="material-symbols-outlined">two_wheeler</span></div>
+                    <div className="adm-stat-valor">{numero(total)}</div>
+                    <div className="adm-stat-sub"><b>{numero(sinDuenno)}</b> sin asignar</div>
+                  </button>
+                  <button className="adm-stat" onClick={() => ir("analytics")}>
+                    <div className="adm-stat-cab"><span>CON GPS</span><span className="material-symbols-outlined">satellite_alt</span></div>
+                    <div className="adm-stat-valor">{cobertura}<small>%</small></div>
+                    <div className="adm-senal">
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <span key={i} className={i < Math.round((cobertura / 100) * 5) ? "on" : ""} />
+                      ))}
+                      <span className="adm-senal-texto">{numero(conImei)} equipos</span>
+                    </div>
+                  </button>
+                  <button className="adm-stat" onClick={() => ir("clients")}>
+                    <div className="adm-stat-cab"><span>ADMINISTRADORES</span><span className="material-symbols-outlined">shield_person</span></div>
+                    <div className="adm-stat-valor">{String(resumen?.administradores ?? 0).padStart(2, "0")}</div>
+                    <div className="adm-stat-sub">Con acceso al panel</div>
+                  </button>
+                </div>
+
+                <div className="adm-fila">
+                  <MapaFlota flota={flota} conteo={conteo} seleccion={seleccion} onElegir={elegir} ahora={ahora} />
+
+                  <div className="adm-columna">
+                    <div className="adm-tarjeta">
+                      <div className="adm-etiqueta">ESTADO DE LA FLOTA</div>
+                      <div className="adm-flota">
+                        <div><b>{numero(conImei)}</b><span>Equipos instalados</span></div>
+                        <div><b>{cobertura}<small>%</small></b><span>Cobertura</span></div>
+                        <div><b>{numero(sinDuenno)}</b><span>Sin asignar</span></div>
+                      </div>
+                      <div className="adm-flota-pie">
+                        <span>GT06 · puerto 9000 TCP</span><span>/socket/gps/{"{imei}"}</span>
+                      </div>
+                    </div>
+
+                    <div className="adm-tarjeta adm-gestion">
+                      <div className="adm-etiqueta">GESTIÓN</div>
+                      {gestion.map((m) => (
+                        <button key={m.titulo} className="adm-gestion-item" onClick={m.accion}>
+                          <span className="adm-gestion-icono"><span className="material-symbols-outlined">{m.icon}</span></span>
+                          <span className="adm-gestion-texto">
+                            <b>{m.titulo}</b>
+                            <span>{m.desc}</span>
+                          </span>
+                          <span className="material-symbols-outlined adm-gestion-flecha">chevron_right</span>
+                        </button>
                       ))}
                     </div>
-                  </div>
-                  <div className="tstat">
-                    <div className="tstat-label">BATTERY HEALTH</div>
-                    <div><span className="tstat-value">88.4%</span> <span className="tstat-unit">Avg</span></div>
-                  </div>
-                  <div className="tstat">
-                    <div className="tstat-label">MOVEMENT VELOCITY</div>
-                    <div><span className="tstat-value">42</span> <span className="tstat-unit">km/h</span></div>
-                  </div>
-                </div>
-                <div className="telemetry-center">
-                  <div className="analytics-icon-wrap">
-                    <NavIcon type="analytics2" />
-                  </div>
-                  <div className="analytics-title">Interactive Fleet Analytics</div>
-                  <div className="analytics-desc">Connect your live telemetry feed to visualize real-time asset movement, fuel efficiency, and route optimization across global jurisdictions.</div>
-                  <button className="init-btn">Initialize Power BI Integration</button>
-                </div>
-                <div className="telemetry-footer">
-                  <div className="telemetry-coord"><label>LAT ALIGNMENT</label><span>34.8522° N</span></div>
-                  <div className="telemetry-coord"><label>LONG ALIGNMENT</label><span>118.2437° W</span></div>
-                </div>
-              </div>
-            </div>
 
-            {/* DEPLOYMENTS */}
-            <div className="deployments">
-              <div className="deployments-header">
-                <div>
-                  <div className="deployments-title">Vehiculos registrados</div>
-                  <div className="deployments-sub">Ultimos vehiculos dados de alta en el sistema.</div>
-                </div>
-                {/* Antes no tenia onClick: el boton no hacia nada. */}
-                <button className="export-btn" onClick={exportarCsv}>
-                  <NavIcon type="upload" /> Exportar CSV
-                </button>
-              </div>
-              <div className="table-header">
-                <span>PLACA / IMEI</span>
-                <span>PROPIETARIO</span>
-                <span>MODELO</span>
-                <span>ESTADO</span>
-                <span>ALTA</span>
-                <span>ACCIONES</span>
-              </div>
-              {cargando && <div className="table-row"><div>Cargando...</div></div>}
-
-              {!cargando && vehiculos.length === 0 && (
-                <div className="table-row">
-                  <div>{busqueda ? "Sin resultados para la busqueda" : "Todavia no hay vehiculos registrados"}</div>
-                </div>
-              )}
-
-              {vehiculos.map((v) => {
-                const duenno = usuarios.find((u) => u.id === v.id_usuario);
-                const nombre = duenno ? `${duenno.nombre} ${duenno.apellido || ""}`.trim() : "Sin asignar";
-                return (
-                  <div key={v.id} className="table-row">
-                    <div>
-                      <div className="device-id">{v.placa}</div>
-                      <div className="device-type">{v.imei || "SIN GPS"}</div>
-                    </div>
-                    <div className="client-cell">
-                      <div className="client-avatar">{nombre.slice(0, 2).toUpperCase()}</div>
-                      <span className="client-name">{nombre}</span>
-                    </div>
-                    <div className="region">{v.modelo} - {v.tipo}</div>
-                    <div className="status-badge">
-                      <div className={`status-dot ${v.activo ? "operational" : ""}`} />
-                      <span className="status-op">{v.activo ? "ACTIVO" : "INACTIVO"}</span>
-                    </div>
-                    <div className="sync-time">
-                      {v.creadoEn ? new Date(v.creadoEn).toLocaleString("es-CO") : "-"}
-                    </div>
-                    <div className="row-actions">
-                      <button
-                        onClick={() => alternarEstadoVehiculo(v.id)}
-                        style={{ background: "none", border: "none", color: "inherit", cursor: "pointer" }}
-                        title={v.activo ? "Desactivar" : "Activar"}
-                      >
-                        {v.activo ? "Desactivar" : "Activar"}
+                    <div className="adm-tarjeta adm-inventario">
+                      <div className="adm-inventario-titulo">Inventario sin asignar</div>
+                      <p>Hay {numero(sinDuenno)} vehículos sin propietario y {numero(sinGps)} sin equipo GPS.</p>
+                      <button className="adm-enlace" onClick={() => ir("gps")}>
+                        REVISAR INVENTARIO<span className="material-symbols-outlined">chevron_right</span>
                       </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
 
-            <div className="page-footer">© 2024 ROMP GPS TELEMETRY SYSTEMS</div>
-          </main>
-        </div>
+                <div className="adm-tabla-tarjeta" ref={tablaRef}>
+                  <div className="adm-tabla-cab">
+                    <div>
+                      <div className="adm-tabla-titulo">Vehículos registrados</div>
+                      <div className="adm-tabla-sub">Últimos vehículos dados de alta. Pulsa una fila para ubicarla en el mapa.</div>
+                    </div>
+                    <div className="adm-encabezado-acciones">
+                      <button className="adm-btn-secundario" onClick={exportarCsv} disabled={vehiculos.length === 0}>
+                        <span className="material-symbols-outlined">download</span>Exportar CSV
+                      </button>
+                      <button className="adm-btn-secundario" onClick={() => ir("gps")}>
+                        Ver inventario<span className="material-symbols-outlined">arrow_forward</span>
+                      </button>
+                    </div>
+                  </div>
+                  <TablaFlota
+                    flota={flota.slice(0, 12)}
+                    cargando={cargando}
+                    busqueda={busqueda}
+                    seleccion={seleccion}
+                    onElegir={elegir}
+                    onAlternar={alternarEstadoVehiculo}
+                  />
+                </div>
+              </>
+            )}
+
+            {seccion === "fleet" && (
+              <>
+                <div className="adm-encabezado">
+                  <div>
+                    <div className="adm-encabezado-meta">
+                      <span className="adm-en-vivo"><span className="adm-en-vivo-punto" />EN VIVO</span>
+                      <span className="adm-encabezado-nota">{flota.length} unidades monitorizadas</span>
+                    </div>
+                    <h1 className="adm-titulo">Monitor de <em>flota</em></h1>
+                    <p className="adm-subtitulo">Posición en tiempo real de las unidades más recientes.</p>
+                  </div>
+                  <button className="adm-btn-secundario" onClick={() => cargar(filtroFlota)} disabled={cargando}>
+                    <span className={`material-symbols-outlined ${cargando ? "adm-girando" : ""}`}>refresh</span>
+                    {cargando ? "Cargando…" : `Recargar · ${actualizado}`}
+                  </button>
+                </div>
+                <div className="adm-monitor">
+                  <MapaFlota flota={flota} conteo={conteo} seleccion={seleccion} onElegir={elegir} ahora={ahora} grande />
+                  <div className="adm-tarjeta adm-monitor-lista">
+                    <Segmentos opciones={FILTRO_MONITOR} valor={filtroMonitor} onCambiar={setFiltroMonitor} pequeno />
+                    <div className="adm-monitor-scroll">
+                      {monitorizadas.length === 0 && (
+                        <div className="adm-tabla-vacia">{cargando ? "Cargando…" : "Ninguna unidad en este estado"}</div>
+                      )}
+                      {monitorizadas.map((v) => (
+                        <button
+                          key={v.id}
+                          className={`adm-unidad ${seleccion === v.id ? "seleccionada" : ""}`}
+                          onClick={() => elegir(v.id)}
+                          disabled={!v.pos}
+                          title={v.pos ? "Ubicar en el mapa" : "Esta unidad aún no ha reportado posición"}
+                        >
+                          <span className={`adm-unidad-punto adm-unidad-punto--${v.estado}`} />
+                          <span className="adm-celda-doble">
+                            <b>{v.placa}</b>
+                            <span>{v.propietario}</span>
+                          </span>
+                          <span className="adm-unidad-der">
+                            <span className={`adm-tono--${v.estado}`}>{ESTADOS[v.estado]}</span>
+                            <span>{v.pos ? `${v.pos.vel} km/h · ${haceCuanto(v.pos.fecha, ahora)}` : "—"}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {seccion === "clients" && (
+              <AdminClientes
+                busqueda={busqueda}
+                abrirAlta={Boolean(pendiente?.alta)}
+                onAltaAbierta={limpiarPendiente}
+                onCambio={() => cargar(filtroFlota)}
+              />
+            )}
+
+            {seccion === "gps" && (
+              <AdminUnidades
+                busqueda={busqueda}
+                dialogoInicial={pendiente?.dialogo || null}
+                onDialogoAbierto={limpiarPendiente}
+                onCambio={() => cargar(filtroFlota)}
+                onUbicar={ubicar}
+              />
+            )}
+
+            {seccion === "analytics" && (
+              <AdminAnalitica resumen={resumen} conteoEstados={conteo} totalMonitorizadas={flota.length} />
+            )}
+
+            {seccion === "cuenta" && <AdminCuenta />}
+
+            <div className="adm-pie">© {new Date().getFullYear()} ROMP GPS TELEMETRY SYSTEMS</div>
+          </div>
+        </main>
       </div>
-    </>
+
+      {registrando && (
+        <FormVehiculo
+          onCerrar={() => setRegistrando(false)}
+          onGuardado={(_, mensaje) => { avisar(mensaje); cargar(filtroFlota); }}
+        />
+      )}
+
+      {panel === "ayuda" && <Ayuda onCerrar={() => setPanel(null)} />}
+    </div>
+  );
+}
+
+function TablaFlota({ flota, cargando, busqueda, seleccion, onElegir, onAlternar }) {
+  return (
+    <div className="adm-tabla-scroll">
+      <div className="adm-tabla">
+        <div className="adm-tabla-fila adm-tabla-fila--cab">
+          <span>PLACA / IMEI</span><span>PROPIETARIO</span><span>MODELO</span><span>ESTADO</span><span>ALTA</span><span className="der">ACCIONES</span>
+        </div>
+
+        {cargando && flota.length === 0 && <div className="adm-tabla-vacia">Cargando…</div>}
+
+        {!cargando && flota.length === 0 && (
+          <div className="adm-tabla-vacia">
+            {busqueda ? "Sin resultados para la búsqueda" : "Todavía no hay vehículos registrados"}
+          </div>
+        )}
+
+        {flota.map((v) => (
+          <div
+            key={v.id}
+            className={`adm-tabla-fila ${seleccion === v.id ? "seleccionada" : ""}`}
+            onClick={() => onElegir(v.id)}
+          >
+            <div>
+              <div className="adm-placa">{v.placa}</div>
+              <div className={`adm-imei ${v.imei ? "" : "adm-tono--nogps"}`}>{v.imei || "SIN GPS"}</div>
+            </div>
+            <div className="adm-propietario">
+              <span className="adm-iniciales">{v.duenno ? iniciales(v.propietario) : "—"}</span>
+              <span className={`adm-propietario-nombre ${v.duenno ? "" : "adm-tenue"}`}>{v.propietario}</span>
+            </div>
+            <div className="adm-modelo">{v.modelo} · {v.tipo}</div>
+            <div><InsigniaEstado estado={v.estado} texto={ESTADOS[v.estado]} /></div>
+            <div className="adm-alta">{fecha(v.creadoEn)}</div>
+            <div className="der">
+              <button
+                className="adm-btn-fila"
+                onClick={(e) => { e.stopPropagation(); onAlternar(v); }}
+              >
+                {v.activo ? "Desactivar" : "Activar"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Ayuda({ onCerrar }) {
+  const secciones = [
+    ["dashboard", "Resumen", "Cifras clave, mapa en vivo y accesos rápidos de gestión."],
+    ["radar", "Monitor de flota", "Mapa a pantalla completa con la lista de unidades y su estado."],
+    ["group", "Clientes", "Crear usuarios, cambiar su rol, restablecer contraseñas y desactivar cuentas."],
+    ["satellite_alt", "Unidades GPS", "Registrar equipos GT06, editarlos y vincularlos a un propietario."],
+    ["monitoring", "Analítica", "Cobertura GPS, distribución de roles y estado de las unidades."],
+  ];
+  return (
+    <Modal titulo="Ayuda del panel" subtitulo="Qué hay en cada sección" icono="help" onCerrar={onCerrar} ancho={560}>
+      <div className="adm-ayuda">
+        {secciones.map(([icono, titulo, texto]) => (
+          <div key={titulo} className="adm-ayuda-item">
+            <span className="adm-gestion-icono"><span className="material-symbols-outlined">{icono}</span></span>
+            <span className="adm-gestion-texto"><b>{titulo}</b><span>{texto}</span></span>
+          </div>
+        ))}
+      </div>
+      <div className="adm-etiqueta adm-ficha-separador">ESTADOS DE UNA UNIDAD</div>
+      <div className="adm-ayuda-estados">
+        <InsigniaEstado estado="marcha" texto={ESTADOS.marcha} /> <span>Velocidad &gt; 0 y reportó hace menos de 5 min.</span>
+        <InsigniaEstado estado="detenido" texto={ESTADOS.detenido} /> <span>Reporta, pero está quieta.</span>
+        <InsigniaEstado estado="sin" texto={ESTADOS.sin} /> <span>Tiene equipo pero nunca ha enviado posición.</span>
+        <InsigniaEstado estado="nogps" texto={ESTADOS.nogps} /> <span>No tiene IMEI asignado.</span>
+        <InsigniaEstado estado="off" texto={ESTADOS.off} /> <span>Rastreo desactivado por un administrador.</span>
+      </div>
+      <div className="adm-etiqueta adm-ficha-separador">ATAJOS</div>
+      <p className="adm-modal-texto"><kbd className="adm-tecla">/</kbd> enfoca el buscador · <kbd className="adm-tecla">Esc</kbd> cierra ventanas.</p>
+    </Modal>
   );
 }

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import "../Styles/CambiarContrasena.css";
+import FondoAurora from "./FondoAurora";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../Service/api";
 
@@ -126,8 +127,6 @@ export default function ConfiguracionSeguridad() {
     });
     const navigate = useNavigate();
     const [contrasena, setContrasena] = useState("");
-    const orbePrimarioRef = useRef(null);
-    const orbeSecundarioRef = useRef(null);
     const usuario = localStorage.getItem("usuario");
     const [usuarioData, setUsuarioData] = useState(null);
     const [modalExito, setModalExito] = useState(false);
@@ -143,19 +142,6 @@ export default function ConfiguracionSeguridad() {
             .then((res) => res.json())
             .then((data) => setUsuarioData(data))
             .catch((error) => console.error("Error al obtener la contraseña:", error));
-    }, []);
-
-    useEffect(() => {
-        const manejarMouse = (e) => {
-            const x = e.clientX / window.innerWidth;
-            const y = e.clientY / window.innerHeight;
-            if (orbePrimarioRef.current)
-                orbePrimarioRef.current.style.transform = `translate(${x * 20}px, ${y * 20}px)`;
-            if (orbeSecundarioRef.current)
-                orbeSecundarioRef.current.style.transform = `translate(${x * 40}px, ${y * 40}px)`;
-        };
-        document.addEventListener("mousemove", manejarMouse);
-        return () => document.removeEventListener("mousemove", manejarMouse);
     }, []);
 
     async function actualizarContrasena(claveActual, nuevaClave) {
@@ -228,11 +214,8 @@ export default function ConfiguracionSeguridad() {
 
     return (
         <>
-            {/* ── Fondo Atmosférico ── */}
-            <div className="fondo-decorativo" aria-hidden="true">
-                <div className="fondo-decorativo__orbe-primario" ref={orbePrimarioRef} />
-                <div className="fondo-decorativo__orbe-secundario" ref={orbeSecundarioRef} />
-            </div>
+            {/* Mismo fondo que /admin y /configuracion */}
+            <FondoAurora />
 
             {/* ── Página principal ── */}
             <main className="pagina-seguridad">

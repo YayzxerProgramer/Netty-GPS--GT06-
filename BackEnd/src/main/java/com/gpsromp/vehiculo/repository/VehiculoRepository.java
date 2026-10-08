@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -49,6 +50,15 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, UUID> {
 
     @Query("SELECT COUNT(v) FROM Vehiculo v WHERE v.id_usuario = :idUsuario")
     long countByUsuarioId(@Param("idUsuario") UUID idUsuario);
+
+    /**
+     * Devuelve al inventario (sin propietario) los vehículos de un usuario.
+     * id_usuario es un UUID plano sin clave foránea: si no se hace esto antes de
+     * borrar al usuario, sus vehículos quedan apuntando a alguien que no existe.
+     */
+    @Modifying
+    @Query("UPDATE Vehiculo v SET v.id_usuario = NULL WHERE v.id_usuario = :idUsuario")
+    int desasignarDeUsuario(@Param("idUsuario") UUID idUsuario);
 
     @Query("SELECT COUNT(v) FROM Vehiculo v WHERE v.activo = true")
     long contarActivos();

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "../Styles/PerfilUsuario.css";
 import PanelVehiculo from "../Components/PanelVehiculo";
+import FondoAurora from "./FondoAurora";
 import { useNavigate } from "react-router-dom";
-import { cerrarSesion } from "../Service/sesion";
+import { cerrarSesion, esAdmin } from "../Service/sesion";
 import { API_URL } from "../Service/api";
 
 const ENLACES_NAV = [
@@ -14,30 +15,8 @@ const ENLACES_PIE_NAV = [
     { icono: "logout", etiqueta: "Cerrar Sesión", onClick: () => { cerrarSesion(); window.location.href = "/login"; } },
 ];
 
-function FondoAtmosferico() {
-    const brilloRef1 = useRef(null);
-    const brilloRef2 = useRef(null);
-
-    useEffect(() => {
-        const moverBrillo = (e) => {
-            const x = e.clientX / window.innerWidth;
-            const y = e.clientY / window.innerHeight;
-            if (brilloRef1.current) brilloRef1.current.style.transform = `translate(${x * 18}px, ${y * 18}px)`;
-            if (brilloRef2.current) brilloRef2.current.style.transform = `translate(${x * -15}px, ${y * -15}px)`;
-        };
-        window.addEventListener("mousemove", moverBrillo);
-        return () => window.removeEventListener("mousemove", moverBrillo);
-    }, []);
-
-    return (
-        <div className="fondo-atmosferico" aria-hidden="true">
-            <div className="brillo-superior" ref={brilloRef1} />
-            <div className="brillo-inferior" ref={brilloRef2} />
-        </div>
-    );
-}
-
 function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
+    const navigate = useNavigate();
     return (
         <>
             <aside className="navegacion-lateral">
@@ -66,6 +45,13 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                 </nav>
 
                 <div className="pie-nav-lateral">
+                    {/* Un administrador que llega aquí puede volver a su panel. */}
+                    {esAdmin() && (
+                        <a href="/admin" className="enlace-lateral" onClick={(e) => { e.preventDefault(); navigate("/admin"); }}>
+                            <span className="material-symbols-outlined">shield_person</span>
+                            Panel de administración
+                        </a>
+                    )}
                     {ENLACES_PIE_NAV.map(({ icono, etiqueta, onClick }) => (
                         <a key={etiqueta} href="#" className="enlace-lateral" onClick={onClick}>
                             <span className="material-symbols-outlined">{icono}</span>
@@ -313,7 +299,7 @@ export default function PerfilUsuario() {
             <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
             <div className="pagina-perfil">
-                <FondoAtmosferico />
+                <FondoAurora />
 
                 <div className="cuerpo-pagina">
                     <NavegacionLateral enlaceActivo={enlaceActivo} setEnlaceActivo={setEnlaceActivo} />

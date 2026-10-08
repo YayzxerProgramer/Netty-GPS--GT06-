@@ -86,41 +86,9 @@ input {
     user-select: none;
 }
 
-.fondo-decorativo {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-.fondo-decorativo__orbe-primario {
-    position: absolute;
-    top: -20%;
-    left: -10%;
-    width: 60%;
-    height: 60%;
-    border-radius: 50%;
-    background: rgba(53, 77, 47, 0.2);
-    filter: blur(120px);
-    will-change: transform;
-    transition: transform 0.1s linear;
-}
-
-.fondo-decorativo__orbe-secundario {
-    position: absolute;
-    top: 40%;
-    right: -10%;
-    width: 50%;
-    height: 50%;
-    border-radius: 50%;
-    background: rgba(33, 39, 34, 0.3);
-    filter: blur(100px);
-    will-change: transform;
-    transition: transform 0.1s linear;
-}
-
 .pagina-seguridad {
+    /* Campos en verde profundo, a juego con la aurora y con /admin. */
+    --color-contenedor-mayor: #132a21;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -154,11 +122,12 @@ input {
     color: var(--color-primario);
 }
 
+/* Mismo vidrio que las tarjetas de /admin, sobre la aurora compartida. */
 .tarjeta-seguridad {
-    background: rgba(28, 33, 29, 0.4);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(178, 206, 168, 0.05);
+    background: rgba(10, 26, 20, 0.58);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(178, 206, 168, 0.12);
     box-shadow: 0 0 40px -10px rgba(178, 206, 168, 0.15);
     border-radius: var(--radio-xl);
     padding: 2.5rem;

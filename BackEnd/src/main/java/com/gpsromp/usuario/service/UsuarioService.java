@@ -19,6 +19,7 @@ import com.gpsromp.usuario.dto.RegistroRequest;
 import com.gpsromp.usuario.model.Rol;
 import com.gpsromp.usuario.model.Usuario;
 import com.gpsromp.usuario.repository.UsuarioRepository;
+import com.gpsromp.vehiculo.repository.VehiculoRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final VehiculoRepository vehiculoRepository;
     private final PasswordEncoder passwordEncoder;
     private final ServicioTokens servicioTokens;
 
@@ -250,6 +252,8 @@ public class UsuarioService {
         }
 
         servicioTokens.revocarTodas(usuario.getUsuario());
+        // Sus vehículos vuelven al inventario en vez de quedar huérfanos.
+        vehiculoRepository.desasignarDeUsuario(id);
         usuarioRepository.delete(usuario);
     }
 

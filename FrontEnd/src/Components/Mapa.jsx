@@ -42,7 +42,10 @@ function MapaGPS({ position, connected, onMapLoad }) {
   const targetPosRef = useRef(null);
   const startTimeRef = useRef(null);
 
+<<<<<<< HEAD
   // Cuando llega una nueva posición, se actualiza suavemente sin lag
+=======
+>>>>>>> 82acd9fcd2b1512b61c56df180171d6807df8259
   useEffect(() => {
     if (!position || !markerRef.current) return;
 
@@ -171,7 +174,7 @@ function MapaGPS({ position, connected, onMapLoad }) {
           styles: darkMapStyle,
           disableDefaultUI: true,
           zoomControl: true,
-          streetViewControl: false,
+          streetViewControl: false, 
           mapTypeControl: false,
           fullscreenControl: false,
           gestureHandling: "greedy",
