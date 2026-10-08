@@ -4,13 +4,8 @@ import carIcon from "../assets/motorcycle.svg";
 import "../Styles/MapaGPS.css";
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-<<<<<<< HEAD
-
-const ANIMATION_DURATION = 20000;
-=======
 const ANIMATION_DURATION = 1000;
 const GOOGLE_MAP_LIBRARIES = ["places"];
->>>>>>> 3dd933e571d9e38a3fab9649a24d5c84185406d2
 
 const centroDefault = { lat: 10.425, lng: -75.5402 };
 
@@ -41,10 +36,6 @@ function MapaGPS({ position, connected, onMapLoad }) {
 
   const [path, setPath] = useState([]);
   const mapRef = useRef(null);
-<<<<<<< HEAD
-
-=======
->>>>>>> 3dd933e571d9e38a3fab9649a24d5c84185406d2
   const markerRef = useRef(null);
   const animationRef = useRef(null);
   const startPosRef = useRef(null);
@@ -61,10 +52,6 @@ function MapaGPS({ position, connected, onMapLoad }) {
 
     setPath((prev) => [...prev, newTarget]);
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 3dd933e571d9e38a3fab9649a24d5c84185406d2
     if (mapRef.current) {
       mapRef.current.panTo(newTarget);
       mapRef.current.setZoom(17);
@@ -85,10 +72,6 @@ function MapaGPS({ position, connected, onMapLoad }) {
     function animate(now) {
       const elapsed = now - startTimeRef.current;
       const t = Math.min(elapsed / ANIMATION_DURATION, 1);
-<<<<<<< HEAD
-
-=======
->>>>>>> 3dd933e571d9e38a3fab9649a24d5c84185406d2
       const eased = 1 - Math.pow(1 - t, 3);
 
       const interpolated = {
@@ -110,8 +93,6 @@ function MapaGPS({ position, connected, onMapLoad }) {
     };
   }, [position]);
 
-<<<<<<< HEAD
-=======
   useEffect(() => {
     return () => {
       if (markerRef.current) {
@@ -121,7 +102,6 @@ function MapaGPS({ position, connected, onMapLoad }) {
     };
   }, []);
 
->>>>>>> 3dd933e571d9e38a3fab9649a24d5c84185406d2
   const handleMapLoad = (map) => {
     mapRef.current = map;
 
