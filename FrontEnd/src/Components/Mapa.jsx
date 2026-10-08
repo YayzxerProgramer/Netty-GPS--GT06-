@@ -42,7 +42,7 @@ function MapaGPS({ position, connected, onMapLoad }) {
   const targetPosRef = useRef(null);
   const startTimeRef = useRef(null);
 
-  // Cuando llega una nueva posición, arrancamos la animación
+  // Cuando llega una nueva posición, se actualiza suavemente sin lag
   useEffect(() => {
     if (!position || !markerRef.current) return;
 
@@ -51,11 +51,20 @@ function MapaGPS({ position, connected, onMapLoad }) {
       lng: Number(position.longitud),
     };
 
-    setPath((prev) => [...prev, newTarget]);
+    if (isNaN(newTarget.lat) || isNaN(newTarget.lng)) return;
+
+    setPath((prev) => {
+      if (prev.length > 0) {
+        const last = prev[prev.length - 1];
+        if (Math.abs(last.lat - newTarget.lat) < 0.00001 && Math.abs(last.lng - newTarget.lng) < 0.00001) {
+          return prev;
+        }
+      }
+      return [...prev.slice(-100), newTarget];
+    });
 
     if (mapRef.current) {
       mapRef.current.panTo(newTarget);
-      mapRef.current.setZoom(17);
     }
 
     const currentPos = markerRef.current.getPosition();
@@ -80,7 +89,9 @@ function MapaGPS({ position, connected, onMapLoad }) {
         lng: lerp(startPosRef.current.lng, targetPosRef.current.lng, eased),
       };
 
-      markerRef.current.setPosition(interpolated);
+      if (markerRef.current) {
+        markerRef.current.setPosition(interpolated);
+      }
 
       if (t < 1) {
         animationRef.current = requestAnimationFrame(animate);

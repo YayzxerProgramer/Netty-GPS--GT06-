@@ -97,27 +97,91 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
         return () => clearInterval(id);
     }, []);
 
-    // Sugerencias de lugares mientras se escribe
+    // Sugerencias de lugares en tiempo real (Rápido + Ordenado por cercanía a la moto)
     useEffect(() => {
         const texto = consulta.trim();
-        if (!texto || !servicioRef.current) return;
+        if (!texto) {
+            setPredicciones([]);
+            return;
+        }
 
-        const id = setTimeout(() => {
-            if (!sesionRef.current) sesionRef.current = new google.maps.places.AutocompleteSessionToken();
-            servicioRef.current.getPlacePredictions(
-                {
-                    input: texto,
-                    componentRestrictions: { country: "co" },
-                    sessionToken: sesionRef.current,
-                    ...(vehiculo && { origin: vehiculo, locationBias: { center: vehiculo, radius: 30000 } }),
-                },
-                (resultado, estado) => {
-                    setPredicciones(estado === google.maps.places.PlacesServiceStatus.OK ? resultado : []);
-                },
-            );
-        }, 250);
-        return () => clearTimeout(id);
-        // La posición solo sesga los resultados; no hace falta repetir la búsqueda en cada fix.
+        let activo = true;
+        const id = setTimeout(async () => {
+            let resFinal = [];
+
+            // 1. Intentar con Google Places AutocompleteService
+            if (servicioRef.current && google && google.maps) {
+                try {
+                    if (!sesionRef.current && google.maps.places && google.maps.places.AutocompleteSessionToken) {
+                        sesionRef.current = new google.maps.places.AutocompleteSessionToken();
+                    }
+
+                    const boundsVal = (vehiculo && google.maps.LatLngBounds)
+                        ? new google.maps.LatLngBounds(
+                            { lat: vehiculo.lat - 0.2, lng: vehiculo.lng - 0.2 },
+                            { lat: vehiculo.lat + 0.2, lng: vehiculo.lng + 0.2 }
+                        )
+                        : null;
+
+                    servicioRef.current.getPlacePredictions(
+                        {
+                            input: texto,
+                            componentRestrictions: { country: "co" },
+                            ...(sesionRef.current && { sessionToken: sesionRef.current }),
+                            ...(vehiculo && { origin: new google.maps.LatLng(vehiculo.lat, vehiculo.lng) }),
+                            ...(boundsVal && { locationBias: boundsVal, locationRestriction: boundsVal })
+                        },
+                        (resultado, estado) => {
+                            if (activo && estado === google.maps.places.PlacesServiceStatus.OK && resultado && resultado.length) {
+                                resFinal = resultado;
+                                setPredicciones(resultado);
+                            }
+                        }
+                    );
+                } catch (e) {
+                    console.warn("Google Places Autocomplete error:", e);
+                }
+            }
+
+            // 2. Consulta ultra-rápida paralela a Photon API (CORS habilitado, sin billing, acotado a la moto)
+            try {
+                const latParam = vehiculo ? `&lat=${vehiculo.lat}&lon=${vehiculo.lng}` : "";
+                const photonRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(texto)}${latParam}&limit=8`);
+                const photonData = await photonRes.json();
+
+                if (activo && photonData && Array.isArray(photonData.features) && photonData.features.length) {
+                    const mappedPhoton = photonData.features.map((feat) => {
+                        const [itemLng, itemLat] = feat.geometry.coordinates;
+                        const props = feat.properties;
+                        const mainName = props.name || props.street || props.city || texto;
+                        const subName = [props.street, props.district, props.city, props.state].filter(Boolean).join(", ");
+                        const distKm = vehiculo ? distancia(vehiculo, { lat: itemLat, lng: itemLng }) / 1000 : 9999;
+                        return {
+                            place_id: null,
+                            nombre: mainName,
+                            sub: subName || "Colombia",
+                            lat: itemLat,
+                            lng: itemLng,
+                            distanciaKm: distKm
+                        };
+                    });
+
+                    // Ordenar por cercanía a la ubicación de la moto
+                    mappedPhoton.sort((a, b) => a.distanciaKm - b.distanciaKm);
+
+                    if (!resFinal.length) {
+                        setPredicciones(mappedPhoton);
+                    }
+                }
+            } catch (errPhoton) {
+                console.warn("Error en autocompletado Photon:", errPhoton);
+            }
+        }, 200);
+
+        return () => {
+            activo = false;
+            clearTimeout(id);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [consulta, google]);
 
@@ -219,9 +283,11 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
         const peticion = ++peticionRef.current;
         setCalculando(true);
 
-        const destinoArg = lugar.placeId
-            ? { placeId: lugar.placeId }
-            : (lugar.nombre || lugar.sub || lugar);
+        const destinoArg = (lugar.lat != null && lugar.lng != null)
+            ? new google.maps.LatLng(Number(lugar.lat), Number(lugar.lng))
+            : lugar.placeId
+                ? { placeId: lugar.placeId }
+                : lugar.nombre;
 
         const ds = new google.maps.DirectionsService();
 
@@ -236,6 +302,103 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
                 req.drivingOptions = { departureTime: new Date(), trafficModel: "bestguess" };
             }
             return ds.route(req);
+        };
+
+        const fallbackOSRM = async () => {
+            try {
+                let destLat = lugar.lat;
+                let destLng = lugar.lng;
+
+                if (!destLat || !destLng) {
+                    if (google && google.maps && google.maps.Geocoder) {
+                        try {
+                            const geocoder = new google.maps.Geocoder();
+                            const subLimpia = (lugar.sub && !lugar.sub.includes("Búsqueda") && !lugar.sub.includes("Calcular") && !lugar.sub.includes("Presiona")) ? `, ${lugar.sub}` : "";
+                            const textoBusqueda = lugar.nombre + subLimpia;
+                            
+                            const gRes = await geocoder.geocode({
+                                address: textoBusqueda,
+                                location: new google.maps.LatLng(vehiculo.lat, vehiculo.lng),
+                                bounds: new google.maps.LatLngBounds(
+                                    { lat: vehiculo.lat - 0.2, lng: vehiculo.lng - 0.2 },
+                                    { lat: vehiculo.lat + 0.2, lng: vehiculo.lng + 0.2 }
+                                )
+                            });
+                            if (gRes.results && gRes.results[0]) {
+                                const loc = gRes.results[0].geometry.location;
+                                destLat = loc.lat();
+                                destLng = loc.lng();
+                            }
+                        } catch (gErr) {
+                            console.warn("Geocoder falló:", gErr);
+                        }
+                    }
+                }
+
+                if (!destLat || !destLng) {
+                    try {
+                        const latParam = vehiculo ? `&lat=${vehiculo.lat}&lon=${vehiculo.lng}` : "";
+                        const photonRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(lugar.nombre)}${latParam}&limit=3`);
+                        const photonData = await photonRes.json();
+                        if (photonData && Array.isArray(photonData.features) && photonData.features.length) {
+                            const [fLng, fLat] = photonData.features[0].geometry.coordinates;
+                            destLat = fLat;
+                            destLng = fLng;
+                        }
+                    } catch (pErr) {
+                        console.warn("Photon fallback geocode error:", pErr);
+                    }
+                }
+
+                if (!destLat || !destLng) {
+                    throw new Error("No se obtuvieron coordenadas del destino");
+                }
+
+                const url = `https://router.project-osrm.org/route/v1/driving/${vehiculo.lng},${vehiculo.lat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
+                const osrmRes = await fetch(url);
+                const osrmData = await osrmRes.json();
+
+                if (!osrmData.routes || !osrmData.routes.length) {
+                    throw new Error("Sin rutas disponibles en OSRM");
+                }
+
+                const r0 = osrmData.routes[0];
+                const puntos = r0.geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
+
+                const steps = r0.legs[0].steps.map((st) => ({
+                    instructions: st.name ? `Conducir por ${st.name}` : "Sigue la vía principal",
+                    distance: { value: st.distance, text: formatearDistancia(st.distance) },
+                    duration: { value: st.duration },
+                    maneuver: st.maneuver ? st.maneuver.type : "straight",
+                    path: st.geometry ? st.geometry.coordinates.map(([lng, lat]) => ({ lat, lng })) : [],
+                    end_location: st.geometry && st.geometry.coordinates.length ? { lat: st.geometry.coordinates[st.geometry.coordinates.length - 1][1], lng: st.geometry.coordinates[st.geometry.coordinates.length - 1][0] } : { lat: destLat, lng: destLng }
+                }));
+
+                const leg = {
+                    distance: { value: r0.distance, text: formatearDistancia(r0.distance) },
+                    duration: { value: r0.duration },
+                    duration_in_traffic: { value: r0.duration },
+                    end_location: { lat: destLat, lng: destLng },
+                    steps: steps
+                };
+
+                if (peticion === peticionRef.current) {
+                    setRutas([{
+                        leg,
+                        puntos,
+                        metros: r0.distance,
+                        segundos: r0.duration,
+                        via: "Ruta calculada (Vía Libre)",
+                        nivel: 0
+                    }]);
+                    setError(null);
+                }
+            } catch (fallbackErr) {
+                console.error("Error en OSRM fallback:", fallbackErr);
+                if (peticion === peticionRef.current) {
+                    setError("No se pudo obtener la ruta. Puedes usar la navegación externa en Google Maps.");
+                }
+            }
         };
 
         intentarRuta(true)
@@ -259,10 +422,8 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
                 setRutas(lista);
             })
             .catch((err) => {
-                console.error("Error al calcular ruta:", err);
-                if (peticion === peticionRef.current) {
-                    setError("No se pudo calcular la ruta hasta ese destino.");
-                }
+                console.warn("DirectionsService falló, ejecutando fallback de navegación...", err);
+                return fallbackOSRM();
             })
             .finally(() => peticion === peticionRef.current && setCalculando(false));
     };
@@ -370,12 +531,26 @@ export default function RecomendadorRutas({ mapa, google, position, velocidad, c
 
     // ── Vista: búsqueda y elección de ruta ───────────────────
     const lugaresListados = consulta.trim()
-        ? predicciones.map((p) => ({
-            placeId: p.place_id,
-            nombre: p.structured_formatting.main_text,
-            sub: p.structured_formatting.secondary_text || "",
-            distancia: p.distance_meters,
-        }))
+        ? predicciones.map((p) => {
+            if (p.structured_formatting) {
+                return {
+                    placeId: p.place_id,
+                    nombre: p.structured_formatting.main_text,
+                    sub: p.structured_formatting.secondary_text || "",
+                    distancia: p.distance_meters,
+                    lat: p.lat || null,
+                    lng: p.lng || null,
+                };
+            }
+            return {
+                placeId: p.place_id || null,
+                nombre: p.nombre || p.main_text || p.display_name?.split(",")[0] || "Lugar",
+                sub: p.sub || p.secondary_text || p.display_name?.split(",").slice(1, 3).join(",").trim() || "",
+                distancia: p.distancia || null,
+                lat: p.lat ? parseFloat(p.lat) : null,
+                lng: p.lng || p.lon ? parseFloat(p.lng || p.lon) : null,
+            };
+        })
         : recientes;
 
     return (
