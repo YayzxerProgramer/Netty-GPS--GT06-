@@ -11,7 +11,9 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 150px 
+    /* Era 150px fijos: en columna (móvil) eran 150px verticales
+       entre cada bloque. */
+    gap: clamp(1.5rem, 6vw, 6rem);
 }
 
 .logo-pie {
@@ -24,14 +26,15 @@
 .enlaces-pie {
     display: flex;
     flex-wrap: wrap;
-    gap: clamp(1rem, 3vw, 2.125rem);
+    gap: clamp(0.5rem, 3vw, 2.125rem) clamp(1rem, 3vw, 2.125rem);
 }
 
+/* Opacidad 0.38 daba 3,5:1 a 11px (WCAG AA pide 4,5:1) */
 .enlaces-pie a {
     display: inline-flex;
     align-items: center;
     min-height: var(--tactil-min);
-    color: rgba(255, 255, 255, 0.38);
+    color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
     font-size: 11px;
     letter-spacing: 0.25em;
@@ -44,7 +47,7 @@
 }
 
 .derechos-pie {
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.55);
     font-size: 11px;
     letter-spacing: 0.05em;
 }
@@ -53,6 +56,7 @@
     .contenedor-pie {
         flex-direction: column;
         align-items: center;
+        gap: 1.25rem;
         text-align: center;
     }
 

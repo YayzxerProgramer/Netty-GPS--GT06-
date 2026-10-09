@@ -272,8 +272,8 @@
 
 .boton-precio.primario {
     border: none;
-    background: linear-gradient(to bottom right, #b2cea8, #354d2f);
-    color: #1d2819;
+    background: linear-gradient(to bottom right, #c4dcba, #8fb085);
+    color: #1d2b19;
 }
 
 .boton-precio.primario:hover {

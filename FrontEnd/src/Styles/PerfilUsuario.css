@@ -7,13 +7,13 @@
 /* Superficies en verde profundo, a juego con la aurora y con /admin. Los
    tokens de contenedor también los usa PanelVehiculo, que vive dentro. */
 .pagina-perfil {
-    --color-superficie: #061410;
-    --color-superficie-contenedor: #0c1d16;
-    --color-superficie-baja: #0a1a14;
-    --color-superficie-alta: #10241c;
-    --color-superficie-maxima: #132a21;
-    --color-contenedor-alto: #10241c;
-    --color-contenedor-mayor: #132a21;
+    --color-superficie: var(--romp-fondo);
+    --color-superficie-contenedor: var(--romp-superficie);
+    --color-superficie-baja: var(--romp-fondo-2);
+    --color-superficie-alta: var(--romp-superficie-alta);
+    --color-superficie-maxima: var(--romp-campo);
+    --color-contenedor-alto: var(--romp-superficie-alta);
+    --color-contenedor-mayor: var(--romp-campo);
     --color-primario: #b2cea8;
     --color-primario-tenue: #a5c19b;
     --color-primario-contenedor: #354d2f;
@@ -28,7 +28,7 @@
     --curva-expo: cubic-bezier(0.19, 1, 0.22, 1);
 
     min-height: 100vh;
-    background-color: #061410;
+    background-color: var(--romp-fondo);
     font-family: var(--fuente-cuerpo);
     color: var(--color-en-superficie);
     display: flex;
@@ -171,7 +171,7 @@
     left: 0;
     height: calc(100vh - 72px);
     z-index: 40;
-    background: rgba(5, 16, 12, 0.62);
+    background: var(--romp-vidrio-lateral);
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     border-right: 1px solid rgba(178, 206, 168, 0.12);
@@ -667,8 +667,8 @@
     padding: 0.875rem 2rem;
     border-radius: 0.5rem;
     border: none;
-    background: linear-gradient(135deg, var(--color-primario), var(--color-primario-contenedor));
-    color: var(--color-en-primario);
+    background: var(--romp-boton-grad);
+    color: var(--romp-sobre-boton);
     font-family: var(--fuente-titular);
     font-size: 0.65rem;
     font-weight: 700;
@@ -840,8 +840,8 @@
     padding: 10px 18px;
     border-radius: 10px;
     border: none;
-    background: linear-gradient(135deg, #b2cea8, #354d2f);
-    color: #111411;
+    background: var(--romp-boton-grad);
+    color: var(--romp-sobre-boton);
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.2s ease, filter 0.25s ease;
@@ -850,4 +850,137 @@
 .modal-btn-guardar:hover {
     filter: brightness(1.1);
     transform: translateY(-1px);
+}
+
+/* ============================================================
+   Drawer móvil y ajustes — revisión de vistas con sesión
+   ============================================================ */
+
+/* La barra se cortaba 72px antes del final: reservaba sitio
+   para una cabecera que esta vista no tiene. */
+.navegacion-lateral {
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+}
+
+.cuerpo-pagina {
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* El correo se salía 32px de la tarjeta y no tenía separación
+   respecto a su etiqueta. */
+.fila-dato {
+    gap: 1rem;
+}
+
+.valor-dato {
+    min-width: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+/* No tenía ningún estilo: la inicial salía a 14px pegada arriba
+   de un círculo de 128px. */
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2a4a2e, #132a21);
+    color: var(--color-primario, #b2cea8);
+    font-family: var(--fuente-titular, 'Space Grotesk', sans-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    user-select: none;
+}
+
+.boton-menu-perfil {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 60;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 0.6rem;
+    background: rgba(5, 16, 12, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(178, 206, 168, 0.2);
+    color: #b2cea8;
+    cursor: pointer;
+}
+
+.velo-perfil {
+    position: fixed;
+    inset: 0;
+    z-index: 54;
+    background: rgba(0, 0, 0, 0.65);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+@media (max-width: 1023px) {
+
+    .boton-menu-perfil {
+        display: flex;
+    }
+
+    /* La barra de 256px ocupaba el 68% de un móvil y dejaba 119px
+       al contenido. Ahora es un panel que se desliza. */
+    .navegacion-lateral {
+        width: min(16rem, 82vw);
+        z-index: 55;
+        transform: translateX(-100%);
+        transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+        /* La animación de entrada usa transform y chocaba con el drawer */
+        animation: none;
+    }
+
+    .navegacion-lateral--abierta {
+        transform: translateX(0);
+    }
+
+    .velo-perfil--visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Vale para las dos pestañas: Perfil y Vehículos comparten
+       la clase .contenido-principal */
+    .pagina-perfil .contenido-principal {
+        margin-left: 0;
+        padding: 4.5rem 1.25rem 2rem;
+    }
+
+    .pagina-perfil .contenido-principal__envoltorio {
+        padding: 0;
+    }
+
+    .encabezado-telemetria-usuario {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .cuadricula-campos {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+    }
+
+    .campo-perfil {
+        /* 16px: por debajo, iOS hace zoom al enfocar el campo */
+        font-size: 16px;
+    }
 }

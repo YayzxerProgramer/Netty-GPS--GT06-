@@ -758,12 +758,39 @@
 }
 
 /* Por debajo de 16px, iOS Safari hace zoom al enfocar el campo */
-.pagina-registro input,
-.pagina-registro select,
-.pagina-registro textarea,
-input.formulario__campo,
-input.campo-registro {
+.pagina-romp input,
+.pagina-romp select,
+.pagina-romp textarea {
     font-size: 16px;
+}
+
+.enlace-volver-registro {
+    position: absolute;
+    top: 1rem;
+    left: clamp(1rem, 4vw, 2.5rem);
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tactil-min);
+    color: #9ea59e;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+}
+
+.enlace-volver-registro:hover {
+    color: #dffbde;
+}
+
+/* En móvil la tarjeta empezaba pegada al borde superior */
+@media (max-width: 1023px) {
+    .pagina-romp {
+        padding-top: 4.5rem;
+    }
 }
 
 @media (max-width: 400px) {

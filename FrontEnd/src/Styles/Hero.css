@@ -126,9 +126,13 @@
 }
 
 .boton-primario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
-    background: linear-gradient(to bottom right, #b2cea8, #354d2f);
-    color: #2e4629;
+    background: linear-gradient(to bottom right, #c4dcba, #8fb085);
+    color: #1d2b19;
+    text-decoration: none;
 }
 
 .boton-primario a {
@@ -268,14 +272,14 @@
     gap: 12px;
 }
 
-.caja-estadistica {
+.caja-estadistica-hero {
     padding: 14px 16px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.caja-estadistica small {
+.caja-estadistica-hero small {
     display: block;
     margin-bottom: 6px;
     color: #9ea59e;
@@ -285,15 +289,16 @@
     letter-spacing: 0.2em;
 }
 
-.caja-estadistica h3 {
+.caja-estadistica-hero h3 {
     margin: 0;
     color: #f2f5f0;
     font-size: clamp(1.25rem, 3vw, 1.6rem);
     font-weight: 800;
     line-height: 1;
+    white-space: nowrap;
 }
 
-.caja-estadistica h3 span {
+.caja-estadistica-hero h3 span {
     color: #b2cea8;
     font-size: 0.6em;
     font-weight: 500;
@@ -302,7 +307,7 @@
 .coordenadas {
     position: relative;
     z-index: 1;
-    color: rgba(178, 206, 168, 0.45);
+    color: rgba(178, 206, 168, 0.7);
     font-family: monospace;
     font-size: 11px;
     line-height: 1.9;

@@ -1,11 +1,12 @@
 /* ============================================================
    Aurora.css — Fondo compartido de las vistas internas
    ------------------------------------------------------------
-   Lo usan /admin, /configuracion y /cambiar-contrasena para que
-   al saltar de una a otra el fondo sea siempre el mismo. Los
-   tonos salen de la salvia de la marca (#b2cea8) llevados a
-   esmeralda, teal y lima para que el fondo tenga vida sin
-   chocar con los acentos.
+   Lo usan /admin, /configuracion y /cambiar-contrasena.
+   Antes era un degradado esmeralda con manchas esmeralda,
+   turquesa y lima al 40–55%: al entrar desde el panel o el
+   login la app cambiaba de identidad. Ahora usa el mismo
+   lenguaje que el login: negro neutro y dos resplandores
+   salvia y musgo muy tenues.
    ============================================================ */
 
 .romp-aurora {
@@ -15,54 +16,54 @@
     overflow: hidden;
     pointer-events: none;
     background:
-        radial-gradient(120% 70% at 50% -10%, rgba(178, 206, 168, .12), transparent 60%),
-        linear-gradient(155deg, #08201a 0%, #061410 42%, #0b1d12 100%);
+        radial-gradient(120% 70% at 50% -10%, rgba(178, 206, 168, .06), transparent 60%),
+        var(--romp-fondo, #0d0f0d);
 }
 
 .romp-aurora__mancha {
     position: absolute;
     border-radius: 50%;
-    filter: blur(90px);
+    filter: blur(110px);
     will-change: transform;
 }
 
-/* Esmeralda: arriba a la izquierda */
+/* Salvia: arriba a la izquierda, como .circulo-fondo-1 del login */
 .romp-aurora__mancha--1 {
     top: -18%;
     left: -12%;
-    width: 58vw;
-    height: 58vw;
-    background: radial-gradient(circle, rgba(31, 190, 128, .55), rgba(31, 190, 128, 0) 68%);
+    width: 46vw;
+    height: 46vw;
+    background: radial-gradient(circle, rgba(178, 206, 168, .12), rgba(178, 206, 168, 0) 68%);
     animation: romp-aurora-a 26s ease-in-out infinite alternate;
 }
 
-/* Teal: a la derecha */
+/* Musgo: abajo a la derecha, como .circulo-fondo-2 del login */
 .romp-aurora__mancha--2 {
-    top: 18%;
-    right: -18%;
-    width: 52vw;
-    height: 52vw;
-    background: radial-gradient(circle, rgba(20, 150, 140, .5), rgba(20, 150, 140, 0) 68%);
+    bottom: -20%;
+    right: -14%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, rgba(53, 77, 47, .24), rgba(53, 77, 47, 0) 68%);
     animation: romp-aurora-b 32s ease-in-out infinite alternate;
 }
 
-/* Lima: abajo, el toque llamativo */
+/* Musgo suave: da profundidad abajo a la izquierda */
 .romp-aurora__mancha--3 {
     bottom: -30%;
-    left: 22%;
-    width: 50vw;
-    height: 50vw;
-    background: radial-gradient(circle, rgba(160, 214, 80, .42), rgba(160, 214, 80, 0) 66%);
+    left: 18%;
+    width: 40vw;
+    height: 40vw;
+    background: radial-gradient(circle, rgba(53, 77, 47, .16), rgba(53, 77, 47, 0) 66%);
     animation: romp-aurora-c 28s ease-in-out infinite alternate;
 }
 
-/* Salvia de la marca: une las tres */
+/* Salvia mínima en el centro: une las otras */
 .romp-aurora__mancha--4 {
     top: 30%;
     left: 30%;
-    width: 34vw;
-    height: 34vw;
-    background: radial-gradient(circle, rgba(178, 206, 168, .26), rgba(178, 206, 168, 0) 70%);
+    width: 30vw;
+    height: 30vw;
+    background: radial-gradient(circle, rgba(178, 206, 168, .06), rgba(178, 206, 168, 0) 70%);
     animation: romp-aurora-a 38s ease-in-out infinite alternate-reverse;
 }
 
@@ -71,18 +72,18 @@
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(178, 206, 168, .05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(178, 206, 168, .05) 1px, transparent 1px);
+        linear-gradient(rgba(178, 206, 168, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(178, 206, 168, .04) 1px, transparent 1px);
     background-size: 56px 56px;
     -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 85%);
     mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 85%);
 }
 
-/* Viñeta: oscurece los bordes para que el contenido destaque */
+/* Viñeta neutra (antes verdosa): oscurece los bordes */
 .romp-aurora__vineta {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse 120% 90% at 50% 45%, transparent 45%, rgba(3, 9, 6, .7) 100%);
+    background: radial-gradient(ellipse 120% 90% at 50% 45%, transparent 45%, rgba(5, 6, 5, .7) 100%);
 }
 
 @keyframes romp-aurora-a {
