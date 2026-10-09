@@ -124,6 +124,13 @@
         flex-direction: column;
         align-items: flex-start;
     }
+
+    /* En columna, flex-basis mide ALTURA: 380px y 420px se volvían
+       hueco vacío. Se anula para que midan lo que mide su texto. */
+    .encabezado-equipo-izquierda,
+    .encabezado-equipo-derecha {
+        flex: none;
+    }
 }
 
 @media (max-width: 460px) {

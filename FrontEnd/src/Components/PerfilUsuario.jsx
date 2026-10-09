@@ -8,7 +8,7 @@ import { API_URL } from "../Service/api";
 
 const ENLACES_NAV = [
     { icono: "person", etiqueta: "Perfil" },
-    { icono: "directions_car", etiqueta: "Vehiculos" },
+    { icono: "directions_car", etiqueta: "Vehículos" },
 ];
 
 const ENLACES_PIE_NAV = [
@@ -17,9 +17,55 @@ const ENLACES_PIE_NAV = [
 
 function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
     const navigate = useNavigate();
+    const [abierta, setAbierta] = useState(false);
+
+    // Escape cierra el menú y el fondo no se desplaza mientras está abierto
+    useEffect(() => {
+        if (!abierta) return;
+
+        const alPulsarTecla = (e) => {
+            if (e.key === "Escape") setAbierta(false);
+        };
+
+        document.body.classList.add("sin-scroll");
+        window.addEventListener("keydown", alPulsarTecla);
+
+        return () => {
+            document.body.classList.remove("sin-scroll");
+            window.removeEventListener("keydown", alPulsarTecla);
+        };
+    }, [abierta]);
+
+    const seleccionar = (etiqueta) => {
+        setEnlaceActivo(etiqueta);
+        setAbierta(false);
+    };
+
     return (
         <>
-            <aside className="navegacion-lateral">
+            <button
+                type="button"
+                className="boton-menu-perfil"
+                aria-label={abierta ? "Cerrar menú" : "Abrir menú"}
+                aria-expanded={abierta}
+                aria-controls="navegacion-lateral-perfil"
+                onClick={() => setAbierta((v) => !v)}
+            >
+                <span className="material-symbols-outlined">
+                    {abierta ? "close" : "menu"}
+                </span>
+            </button>
+
+            <div
+                className={`velo-perfil ${abierta ? "velo-perfil--visible" : ""}`}
+                onClick={() => setAbierta(false)}
+                aria-hidden="true"
+            />
+
+            <aside
+                id="navegacion-lateral-perfil"
+                className={`navegacion-lateral ${abierta ? "navegacion-lateral--abierta" : ""}`}
+            >
                 <div className="bloque-usuario">
                     <div className="contenedor-avatar-mini">
                         <span className="material-symbols-outlined">person</span>
@@ -36,7 +82,7 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                             key={etiqueta}
                             href="#"
                             className={`enlace-lateral ${enlaceActivo === etiqueta ? "enlace-lateral--activo" : ""}`}
-                            onClick={(e) => { e.preventDefault(); setEnlaceActivo(etiqueta); }}
+                            onClick={(e) => { e.preventDefault(); seleccionar(etiqueta); }}
                         >
                             <span className="material-symbols-outlined">{icono}</span>
                             {etiqueta}
@@ -59,7 +105,7 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                         </a>
                     ))}
                 </div>
-            </aside >
+            </aside>
         </>
     );
 }
@@ -209,12 +255,12 @@ function ContenidoPrincipal(props) {
             <div className="contenedor-interior">
                 <div className="encabezado-telemetria-usuario">
                     <div className="bloque-titulo">
-                        <span className="etiqueta-sistema">SYSTEM // USER_PROFILE_CONFIG</span>
+                        <span className="etiqueta-sistema">Sistema // Configuración de perfil</span>
                         <h1 className="titulo-pagina">Configuración de Perfil</h1>
                     </div>
                     <div className="bloque-fecha">
-                        <p className="etiqueta-fecha">STATUS</p>
-                        <p className="valor-fecha">ONLINE</p>
+                        <p className="etiqueta-fecha">Estado</p>
+                        <p className="valor-fecha">En linea</p>
                     </div>
                 </div>
                 <div className="cuadricula-contenido">

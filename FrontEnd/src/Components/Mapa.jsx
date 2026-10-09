@@ -43,6 +43,7 @@ function MapaGPS({ position, connected, onMapLoad }) {
   const startTimeRef = useRef(null);
 
   // Cuando llega una nueva posición, se actualiza suavemente sin lag
+  
   useEffect(() => {
     if (!position || !markerRef.current) return;
 

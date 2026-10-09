@@ -647,8 +647,8 @@ input {
 
 .formulario__boton-confirmar {
     flex: 1;
-    background: linear-gradient(135deg, var(--color-primario), var(--color-contenedor-primario));
-    color: var(--color-sobre-primario);
+    background: var(--romp-boton-grad);
+    color: var(--romp-sobre-boton);
     font-family: var(--fuente-titular);
     font-weight: 700;
     text-transform: uppercase;
@@ -800,4 +800,38 @@ input {
         appearance: none;
         cursor: pointer;
     }
+}
+
+/* Estado vacío: antes era una línea suelta alineada bajo la
+   columna "Tipo" de una tabla sin filas. */
+.lista-vehiculos__vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1.5rem;
+    border: 1px dashed rgba(178, 206, 168, 0.18);
+    border-radius: 0.75rem;
+    text-align: center;
+    color: #a7ada5;
+}
+
+.lista-vehiculos__vacio .material-symbols-outlined {
+    font-size: 2.5rem;
+    color: #b2cea8;
+    opacity: 0.6;
+}
+
+.lista-vehiculos__vacio p {
+    color: #e1e7df;
+    font-weight: 600;
+}
+
+.lista-vehiculos__vacio small {
+    font-size: 0.8rem;
+}
+
+/* Sin filas, la cabecera de columnas no tiene nada que encabezar */
+.lista-vehiculos-configuracion:has(.lista-vehiculos__vacio) .lista-vehiculos__cabecera {
+    display: none;
 }

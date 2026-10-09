@@ -94,6 +94,30 @@ h1, h2, h3, h4, p, li, span, label {
 
     --alto-navbar: 5.5rem;
     --tactil-min: 44px;
+
+    /* ── Paleta ROMP ─────────────────────────────────────────
+    Una sola fuente de color para toda la app. Los valores
+    salen de la landing, el login y el registro; las vistas
+       internas apuntan aquí en lugar de definir los suyos. */
+    --romp-fondo: #0d0f0d;
+    --romp-fondo-2: #111411;
+    --romp-superficie: #171b17;
+    --romp-superficie-alta: #1c211d;
+    --romp-campo: #212722;
+    --romp-vidrio: rgba(28, 33, 29, 0.72);
+    --romp-vidrio-lateral: rgba(17, 20, 17, 0.82);
+    --romp-borde: rgba(255, 255, 255, 0.06);
+
+    --romp-acento: #b2cea8;
+    --romp-texto: #f2f5f0;
+    --romp-texto-2: #a7ada5;
+    --romp-texto-3: #8f968f;
+
+    /* Botón principal. Contraste del texto ≥ 6,2:1 en todo el
+       degradado (el antiguo #b2cea8 → #354d2f bajaba a 1,4:1). */
+    --romp-boton-grad: linear-gradient(to bottom right, #c4dcba, #8fb085);
+    --romp-sobre-boton: #1d2b19;
+    --romp-brillo-boton: 0 10px 30px rgba(178, 206, 168, 0.2);
 }
 
 /* ── Anclas de la landing ─────────────────────────────────── */

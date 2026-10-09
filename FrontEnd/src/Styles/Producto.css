@@ -36,6 +36,7 @@
     transition:
         transform 0.8s ease,
         filter 0.8s ease;
+    object-position: top;    
 }
 
 .caja-imagen-producto:hover img {
@@ -165,18 +166,21 @@
 }
 
 @media (max-width: 768px) {
-    /* Ya no sobresale del contenedor: se ancla dentro de la imagen */
+    /* Superpuesta al borde inferior de la imagen. Antes estaba a
+    16px del borde y dejaba una franja de imagen asomando debajo
+       que parecía un elemento roto. */
     .metrica-flotante {
         top: auto;
         left: 16px;
-        bottom: 16px;
         right: 16px;
+        bottom: -28px;
         width: auto;
         border-radius: 16px;
     }
 
     .envoltorio-imagen-producto {
         margin-top: 0;
+        margin-bottom: 28px;
     }
 
     .boton-especificaciones {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "../Styles/Registro.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import { guardarSesion, rutaInicial } from "../Service/sesion";
 import { API_URL } from "../Service/api";
@@ -386,6 +386,9 @@ function Registro() {
             <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
             <div className="pagina-romp">
+                <Link to="/" className="enlace-volver-registro">
+                    <span aria-hidden="true">←</span> Volver al inicio
+                </Link>
                 <FondoAtmosferico />
                 <main className="contenedor-principal-registro">
                     <ColumnaEditorial />

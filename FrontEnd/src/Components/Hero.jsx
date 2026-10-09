@@ -12,12 +12,12 @@ function Hero() {
 
                     <div className="insignia-hero">
                         <span className="pulso"></span>
-                        Precision Redefined
+                        Precisión redefinida
                     </div>
 
                     <h1 className="titulo-hero">
                         EL CAMINO <br />
-                        <span>DE LA PRECISION.</span>
+                        <span>DE LA PRECISIÓN.</span>
                     </h1>
 
                     <p className="descripcion-hero">
@@ -27,15 +27,9 @@ function Hero() {
                     </p>
 
                     <div className="botones-hero">
-
-                        <button className="boton-primario">
-                            <a href="#pricing">Empieza Ahora</a>
-                        </button>
-
-                        {/* <button className="boton-secundario">
-                            Ver Demo
-                        </button>  */}
-
+                        <a href="#pricing" className="boton-primario">
+                            Empieza Ahora
+                        </a>
                     </div>
 
                 </div>
@@ -47,7 +41,7 @@ function Hero() {
                     <div className="tarjeta-hero">
 
                         <div className="parte-superior-tarjeta">
-                            <span>Live Telemetry</span>
+                            <span>Telemetría en vivo</span>
                             <span className="id-tarjeta">ID: ROMP_4492_X</span>
                         </div>
 
@@ -57,25 +51,25 @@ function Hero() {
                         </div>
 
                         <div className="estadisticas-tarjeta">
-
-                            <div className="caja-estadistica">
-                                <small>Velocity</small>
+                            <div className="caja-estadistica-hero">
+                                <small>Velocidad</small>
                                 <h3>84.2 <span>km/h</span></h3>
                             </div>
 
-                            <div className="caja-estadistica">
-                                <small>Signal</small>
+                            <div className="caja-estadistica-hero">
+                                <small>Señal</small>
                                 <h3>99.8 <span>%</span></h3>
                             </div>
-
                         </div>
 
                     </div>
 
+                    {/* Cartagena, igual que el centro por defecto del mapa.
+                        Antes eran las coordenadas de Berlín. */}
                     <div className="coordenadas">
-                        Lat: 52.5200° N <br />
-                        Long: 13.4050° E <br />
-                        Alt: 34.2m
+                        Lat: 10.4236° N <br />
+                        Long: 75.5478° O <br />
+                        Alt: 2.0m
                     </div>
 
                 </div>
@@ -83,7 +77,7 @@ function Hero() {
             </div>
 
         </section>
-    )
+    );
 }
 
-export default Hero
+export default Hero;

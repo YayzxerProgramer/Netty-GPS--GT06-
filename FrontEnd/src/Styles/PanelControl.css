@@ -10,7 +10,7 @@
     --pc-acento: #b2cea8;
     --pc-acento-2: #a5c19b;
     --pc-acento-oscuro: #86a37c;
-    --pc-sobre-acento: #1f2e1b;
+    --pc-sobre-acento: var(--romp-sobre-boton);
     --pc-texto: #f2f5f0;
     --pc-texto-suave: #dbe6d6;
     --pc-texto-2: #a7ada5;
@@ -624,7 +624,7 @@
 }
 
 .pc-boton-seguir.activo {
-    background: linear-gradient(135deg, var(--pc-acento), var(--pc-acento-oscuro));
+    background: var(--romp-boton-grad);
     color: var(--pc-sobre-acento) !important;
 }
 
@@ -884,7 +884,7 @@
 
 .pc-boton-redondo.primario {
     border: none;
-    background: linear-gradient(135deg, var(--pc-acento), var(--pc-acento-oscuro));
+    background: var(--romp-boton-grad);
     color: var(--pc-sobre-acento) !important;
 }
 
@@ -1099,7 +1099,7 @@
     gap: 8px;
     border-radius: 12px;
     border: none;
-    background: linear-gradient(135deg, var(--pc-acento), var(--pc-acento-oscuro));
+    background: var(--romp-boton-grad);
     color: var(--pc-sobre-acento) !important;
     font-size: 13px !important;
     font-weight: 800 !important;
@@ -1200,7 +1200,7 @@
     align-items: center;
     gap: 16px;
     padding: 16px 20px;
-    background: linear-gradient(135deg, var(--pc-acento), #9dbb92);
+    background: var(--romp-boton-grad);
     color: var(--pc-sobre-acento);
 }
 
@@ -1675,7 +1675,7 @@
 
 .pc-boton-confirmar {
     border: none;
-    background: linear-gradient(135deg, var(--pc-acento), var(--pc-acento-oscuro));
+    background: var(--romp-boton-grad);
     color: var(--pc-sobre-acento) !important;
     font-weight: 800 !important;
     letter-spacing: .06em;
@@ -1769,5 +1769,64 @@
 
     .pc-nav-instruccion {
         font-size: 13px;
+    }
+}
+
+/* ============================================================
+   Ajustes visuales — revisión de vistas con sesión
+   ============================================================ */
+
+/* Legibilidad: había etiquetas de 9 y 10px */
+.pc-usuario small,
+.pc-sobretitulo,
+.pc-rotulo,
+.pc-metrica-etiqueta,
+.pc-metrica-valor small,
+.pc-imei,
+.pc-unidad-otra-estado span,
+.pc-unidad-otra-estado small,
+.pc-cifra small,
+.pc-leyenda,
+.pc-telemetria-cabeza span,
+.pc-telemetria-cabeza small,
+.pc-coordenadas small,
+.pc-campo span {
+    font-size: 11px;
+}
+
+@media (max-width: 759px) {
+    /* La hoja inferior tapaba la mitad del logo de Google, que sus
+       condiciones de uso obligan a dejar visible. Se sube 24px y se
+       reduce lo mismo su altura máxima, así su borde superior no se
+       mueve y el resto del diseño queda igual. */
+    .pc-lateral {
+        bottom: 36px;
+        max-height: calc(55vh - 24px);
+        max-height: calc(55dvh - 24px);
+    }
+
+    /* En móvil también se oculta el icono de ajustes de la cabecera,
+       así que este era el único camino a Configuración. */
+    .pc-lateral-pie {
+        display: flex;
+    }
+}
+
+@media (max-width: 420px) {
+    /* La cabecera no cabía: la píldora de marca necesitaba 253px y
+    tenía 227, así que "SIN CONEXIÓN" quedaba tapado, y "Salir"
+       se salía por el borde derecho. */
+    .pc-boton-salir__texto {
+        display: none;
+    }
+
+    .pc-boton-salir {
+        width: 40px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .pc-en-vivo {
+        letter-spacing: 0.1em;
     }
 }
