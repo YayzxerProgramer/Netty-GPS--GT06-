@@ -451,8 +451,27 @@
     box-shadow: 0 4px 16px rgba(178, 206, 168, 0.25);
 }
 
+.boton-camara:disabled {
+    cursor: wait;
+    opacity: 0.8;
+}
+
 .boton-camara .material-symbols-outlined {
     font-size: 0.9rem;
+}
+
+@keyframes girar-icono-camara {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.icono-giratorio {
+    display: inline-block;
+    animation: girar-icono-camara 1s linear infinite;
 }
 
 /* Nombre y rol */

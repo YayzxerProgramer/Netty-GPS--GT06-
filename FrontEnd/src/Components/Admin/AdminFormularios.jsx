@@ -3,7 +3,11 @@ import { patch, post, put } from "../../Service/api";
 import { Campo, Modal, Segmentos, SelectorUsuario } from "./AdminUI";
 import { ROLES, errorDeFormulario, nombreCompleto, olvidarPropietario } from "./adminUtils";
 
-const OPCIONES_ROL = Object.entries(ROLES).map(([valor, etiqueta]) => ({ valor, etiqueta }));
+const OPCIONES_ROL = [
+  { valor: "ADMINISTRADOR", etiqueta: "Administrador" },
+  { valor: "USUARIO", etiqueta: "Cliente" },
+  { valor: "VIEWER", etiqueta: "Solo lectura" },
+];
 
 function Pie({ onCerrar, enviando, texto, formulario }) {
   return (
@@ -31,7 +35,7 @@ export function FormUsuario({ usuario, onCerrar, onGuardado }) {
     usuario: usuario?.usuario || "",
     correo: usuario?.correo || "",
     telefono: usuario?.telefono || "",
-    rol: usuario?.rol || "USER",
+    rol: usuario?.rol || "USUARIO",
     contrasena: "",
     activo: usuario?.activo ?? true,
   });

@@ -75,7 +75,7 @@ public class AdminController {
         return ResponseEntity.ok(new ResumenAdminResponse(
                 usuarioService.contarTodos(),
                 usuarioService.contarActivos(),
-                usuarioService.contarPorRol(Rol.ADMIN),
+                usuarioService.contarPorRol(Rol.ADMINISTRADOR),
                 vehiculoService.contarTodos(),
                 vehiculoService.contarActivos(),
                 vehiculoService.contarConImei(),

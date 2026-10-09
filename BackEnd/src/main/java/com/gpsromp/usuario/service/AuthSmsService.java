@@ -88,7 +88,7 @@ public class AuthSmsService {
             usuario.setCorreo(emailGen);
             usuario.setTelefono(telefonoLimpio);
             usuario.setContrasena(passwordEncoder.encode(UUID.randomUUID().toString()));
-            usuario.setRol(Rol.USER);
+            usuario.setRol(Rol.USUARIO);
             usuario.setActivo(true);
 
             usuario = usuarioRepository.save(usuario);

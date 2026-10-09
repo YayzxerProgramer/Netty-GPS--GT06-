@@ -12,7 +12,9 @@ export const ESTADOS = {
 };
 
 export const ROLES = {
+  ADMINISTRADOR: "Administrador",
   ADMIN: "Administrador",
+  USUARIO: "Cliente",
   USER: "Cliente",
   VIEWER: "Solo lectura",
 };

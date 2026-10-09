@@ -8,8 +8,8 @@ import { ROLES, contar, fecha, iniciales, nombreCompleto, olvidarPropietario, qu
 
 const FILTRO_ROL = [
   { valor: "", etiqueta: "Todos" },
-  { valor: "ADMIN", etiqueta: "Admin" },
-  { valor: "USER", etiqueta: "Clientes" },
+  { valor: "ADMINISTRADOR", etiqueta: "Admin" },
+  { valor: "USUARIO", etiqueta: "Clientes" },
   { valor: "VIEWER", etiqueta: "Lectura" },
 ];
 
@@ -131,7 +131,7 @@ export default function AdminClientes({ busqueda, abrirAlta, onAltaAbierta, onCa
               return (
                 <div key={u.id} className="adm-tabla-fila" onClick={() => setDialogo({ tipo: "ficha", usuario: u })}>
                   <div className="adm-propietario">
-                    <span className={`adm-iniciales ${u.rol === "ADMIN" ? "adm-iniciales--admin" : ""}`}>{iniciales(nombreCompleto(u))}</span>
+                    <span className={`adm-iniciales ${u.rol === "ADMINISTRADOR" || u.rol === "ADMIN" ? "adm-iniciales--admin" : ""}`}>{iniciales(nombreCompleto(u))}</span>
                     <span className="adm-celda-doble">
                       <b>{nombreCompleto(u)}{soyYo && <span className="adm-tu">TÚ</span>}</b>
                       <span>@{u.usuario}</span>

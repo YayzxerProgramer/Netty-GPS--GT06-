@@ -224,7 +224,7 @@ function FormularioRegistro() {
         if (!validar()) return;
 
         setCargando(true);
-        const payload = { nombre, apellido, usuario, correo, telefono, contrasena, rol: "USER", activo: true };
+        const payload = { nombre, apellido, usuario, correo, telefono, contrasena, rol: "USUARIO", activo: true };
 
         try {
             const res = await fetch(`${API_URL}/usuario`, {

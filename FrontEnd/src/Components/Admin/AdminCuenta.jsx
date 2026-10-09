@@ -91,7 +91,7 @@ export default function AdminCuenta() {
           <div className="adm-identidad-avatar">{perfil ? iniciales(nombreCompleto(perfil)) : "…"}</div>
           <div className="adm-identidad-nombre">{perfil ? nombreCompleto(perfil) : "Cargando…"}</div>
           <div className="adm-identidad-usuario">@{perfil?.usuario}</div>
-          <span className="adm-rol adm-rol--ADMIN">{ROLES[perfil?.rol] || perfil?.rol || "—"}</span>
+          <span className={`adm-rol adm-rol--${perfil?.rol || "ADMINISTRADOR"}`}>{ROLES[perfil?.rol] || perfil?.rol || "—"}</span>
           <div className="adm-identidad-datos">
             <div><span>Estado</span><b>{perfil?.activo ? "Activa" : "—"}</b></div>
             <div><span>Miembro desde</span><b>{fecha(perfil?.creadoEn)}</b></div>

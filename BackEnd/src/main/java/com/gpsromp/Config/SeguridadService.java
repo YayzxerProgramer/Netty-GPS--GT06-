@@ -89,6 +89,7 @@ public class SeguridadService {
             return false;
         }
         return auth.getAuthorities().stream()
-                .anyMatch(a -> ("ROLE_" + Rol.ADMIN.name()).equals(a.getAuthority()));
+                .anyMatch(a -> ("ROLE_" + Rol.ADMINISTRADOR.name()).equals(a.getAuthority())
+                        || "ROLE_ADMIN".equals(a.getAuthority()));
     }
 }

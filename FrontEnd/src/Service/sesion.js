@@ -18,7 +18,7 @@ const CLAVE_ROL = "rol";
 export function guardarSesion({ token, refreshToken, usuario, rol }) {
     localStorage.setItem(CLAVE_TOKEN, token);
     localStorage.setItem(CLAVE_USUARIO, usuario);
-    localStorage.setItem(CLAVE_ROL, rol || "USER");
+    localStorage.setItem(CLAVE_ROL, rol || "USUARIO");
 
     if (refreshToken) {
         localStorage.setItem(CLAVE_REFRESCO, refreshToken);
@@ -46,11 +46,12 @@ export function obtenerUsuario() {
 }
 
 export function obtenerRol() {
-    return localStorage.getItem(CLAVE_ROL) || "USER";
+    return localStorage.getItem(CLAVE_ROL) || "USUARIO";
 }
 
 export function esAdmin() {
-    return obtenerRol() === "ADMIN";
+    const rol = obtenerRol();
+    return rol === "ADMINISTRADOR" || rol === "ADMIN";
 }
 
 /** Lee la carga útil del JWT sin verificar la firma (eso es cosa del servidor). */
