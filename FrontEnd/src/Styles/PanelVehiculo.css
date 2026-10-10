@@ -835,3 +835,40 @@ input {
 .lista-vehiculos-configuracion:has(.lista-vehiculos__vacio) .lista-vehiculos__cabecera {
     display: none;
 }
+
+/* .contenido-principal creaba su propia capa (z-index 10) y la ventana
+   (z-index 100) quedaba por debajo del botón de menú (z-index 60). */
+.pagina-perfil .contenido-principal {
+    z-index: auto;
+}
+
+/* La ventana medía 754px: en móviles de 568–740px se salía por arriba,
+   con el botón de cerrar fuera de pantalla, y no se podía desplazar.
+   Ahora el fondo tiene scroll y margin:auto la centra solo cuando cabe. */
+.modal-fondo {
+    align-items: flex-start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.modal-contenido {
+    margin: auto;
+}
+
+.formulario__campo {
+    font-size: 16px;
+}
+
+@media (max-height: 760px) {
+    .modal-contenido { padding: 1.5rem 1.25rem; }
+    .modal-cabecera { margin-bottom: 1.25rem; }
+    .formulario { gap: 1rem; }
+    .formulario__pie { padding-top: 0.75rem; }
+}
+
+/* El texto decorativo fijo pisaba "Cerrar Sesión" de la barra lateral */
+@media (min-width: 1024px) {
+    .pagina-perfil .telemetria-decorativa {
+        left: calc(16rem + 2rem);
+    }
+}

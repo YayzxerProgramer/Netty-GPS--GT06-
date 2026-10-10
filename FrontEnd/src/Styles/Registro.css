@@ -806,3 +806,11 @@
         padding: 1.25rem !important;
     }
 }
+
+/* El bloque decorativo fijo pisaba "Rutas Encriptadas" en portátiles
+   (1024×768, 1280×800, 1366×768). Solo se muestra con alto de sobra. */
+@media (min-width: 1024px) and (max-height: 899px) {
+    .estado-sistema {
+        display: none;
+    }
+}

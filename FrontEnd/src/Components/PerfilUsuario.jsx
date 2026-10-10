@@ -90,7 +90,7 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                     ))}
                 </nav>
 
-                <div className="pie-nav-lateral">
+                                <div className="pie-nav-lateral">
                     {/* Un administrador que llega aquí puede volver a su panel. */}
                     {esAdmin() && (
                         <a href="/admin" className="enlace-lateral" onClick={(e) => { e.preventDefault(); navigate("/admin"); }}>
@@ -98,6 +98,22 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                             Panel de administración
                         </a>
                     )}
+
+                    {/* Vuelta al panel de control, justo encima de Cerrar Sesión.
+                        Es un enlace real (href): también se abre en otra pestaña. */}
+                    <a
+                        href="/panel-control"
+                        className="enlace-lateral"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setAbierta(false);
+                            navigate("/panel-control");
+                        }}
+                    >
+                        <span className="material-symbols-outlined">arrow_back</span>
+                        Volver al panel
+                    </a>
+
                     {ENLACES_PIE_NAV.map(({ icono, etiqueta, onClick }) => (
                         <a key={etiqueta} href="#" className="enlace-lateral" onClick={onClick}>
                             <span className="material-symbols-outlined">{icono}</span>

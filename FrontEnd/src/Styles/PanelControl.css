@@ -1830,3 +1830,22 @@
         letter-spacing: 0.1em;
     }
 }
+
+/* A 320px la cabecera seguía sin caber: la marca necesitaba 242px y
+   tenía 210. Por debajo de 360px queda solo el icono del logo. */
+@media (max-width: 360px) {
+    .pc-logo {
+        font-size: 0;
+        gap: 0;
+    }
+
+    .pc-logo .material-symbols-outlined {
+        font-size: 22px;
+    }
+}
+
+/* Por debajo de 16px, iOS hace zoom al enfocar */
+.pc-buscador input,
+.pc-campo input {
+    font-size: 16px;
+}

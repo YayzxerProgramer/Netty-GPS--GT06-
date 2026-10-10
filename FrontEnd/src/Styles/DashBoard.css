@@ -2922,3 +2922,8 @@ body {
         padding: 0;
     }
 }
+
+/* Buscadores del admin a 13px: iOS hacía zoom al enfocarlos */
+.adm-buscador input {
+    font-size: 16px;
+}

@@ -1003,3 +1003,21 @@
         font-size: 16px;
     }
 }
+
+.campo-perfil {
+    font-size: 16px;
+}
+
+@media (max-width: 1023px) {
+    .navegacion-lateral {
+        /* Deja sitio al botón ✕, que antes tapaba el icono de la marca */
+        padding-top: 4.75rem;
+        /* En un móvil en horizontal el menú no cabe: que se pueda desplazar */
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+}
+
+.navegacion-lateral {
+    overflow-y: auto;
+}
