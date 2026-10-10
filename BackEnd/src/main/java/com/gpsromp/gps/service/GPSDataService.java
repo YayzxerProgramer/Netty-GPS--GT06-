@@ -12,7 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -117,6 +121,46 @@ public class GPSDataService {
         });
 
         return enBd;
+    }
+
+    /**
+     * Consulta en lote la última posición de múltiples dispositivos.
+     * Consulta primero la caché en Redis y recurre a MongoDB para los faltantes.
+     */
+    public Map<String, GPSData> getLastPositions(Collection<String> imeis) {
+        if (imeis == null || imeis.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, GPSData> resultado = new HashMap<>();
+        List<String> pendientes = new ArrayList<>();
+
+        for (String imei : imeis) {
+            if (imei == null || imei.isBlank()) continue;
+            try {
+                Object cacheada = redisTemplate.opsForValue().get(REDIS_PREFIX_GPS + imei);
+                if (cacheada instanceof GPSData posicion) {
+                    resultado.put(imei, posicion);
+                    continue;
+                }
+            } catch (Exception e) {
+                log.warn("Error consultando Redis para {}: {}", imei, e.getMessage());
+            }
+            pendientes.add(imei);
+        }
+
+        for (String imei : pendientes) {
+            repository.findFirstByImeiOrderByRegistradoEnDesc(imei).ifPresent(gps -> {
+                resultado.put(imei, gps);
+                try {
+                    redisTemplate.opsForValue().set(REDIS_PREFIX_GPS + imei, gps);
+                } catch (Exception e) {
+                    log.warn("No se pudo repoblar la caché de {}: {}", imei, e.getMessage());
+                }
+            });
+        }
+
+        return resultado;
     }
 
     /**

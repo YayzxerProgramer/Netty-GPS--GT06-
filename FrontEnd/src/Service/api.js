@@ -26,7 +26,7 @@ import {
  *    así llega un 401 se reintenta una vez tras refrescar.
  */
 
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
+export const API_URL = import.meta.env.VITE_API_URL;
 
 /** Margen para renovar antes de que caduque y evitar 401 por carrera. */
 const MARGEN_RENOVACION_SEGUNDOS = 30;

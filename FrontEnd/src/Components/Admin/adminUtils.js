@@ -1,5 +1,3 @@
-import { get } from "../../Service/api";
-
 /** Una unidad con velocidad que no reporta en este tiempo deja de estar "en marcha". */
 export const MS_EN_MARCHA = 5 * 60 * 1000;
 
@@ -69,39 +67,12 @@ export const contar = (n, singular, plural = `${singular}s`) => `${numero(n)} ${
 export const fecha = (valor) => (valor ? new Date(valor).toLocaleDateString("es-CO") : "—");
 
 /**
- * Propietarios por id, con caché. Antes el panel pedía los 100 primeros
- * usuarios y buscaba ahí al dueño de cada vehículo: con más de 100 usuarios
- * casi todos los vehículos salían "Sin asignar" aunque tuvieran dueño.
+ * La información de propietarios y telemetría GPS ahora se resuelve y enriquece
+ * directamente en el Backend (AdminVehiculoService) en una sola consulta.
+ * Se conserva esta función como no-op para compatibilidad de imports existentes.
  */
-const cacheUsuarios = new Map();
-
-export async function cargarPropietarios(ids) {
-  const pendientes = [...new Set(ids.filter(Boolean))].filter((id) => !cacheUsuarios.has(id));
-  await Promise.allSettled(pendientes.map(async (id) => {
-    cacheUsuarios.set(id, await get(`/admin/usuarios/${id}`));
-  }));
-  const mapa = {};
-  ids.filter(Boolean).forEach((id) => {
-    if (cacheUsuarios.has(id)) mapa[id] = cacheUsuarios.get(id);
-  });
-  return mapa;
-}
-
-export function olvidarPropietario(id) {
-  cacheUsuarios.delete(id);
-}
-
-/** Última posición de cada IMEI. Un 404 = el equipo aún no ha reportado. */
-export async function cargarPosiciones(vehiculos) {
-  const conImei = vehiculos.filter((v) => v.imei);
-  const resultados = await Promise.allSettled(
-    conImei.map((v) => get(`/gps/ultima-posicion/${v.imei}`)));
-  const posiciones = {};
-  resultados.forEach((r, i) => {
-    const pos = r.status === "fulfilled" ? aPosicion(r.value) : null;
-    if (pos) posiciones[conImei[i].imei] = pos;
-  });
-  return posiciones;
+export function olvidarPropietario() {
+  // Sin efecto: la caché en cliente fue eliminada.
 }
 
 /** Mensaje de error del backend, con los errores de validación campo a campo. */

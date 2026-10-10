@@ -13,8 +13,8 @@ import { FormVehiculo } from "./Admin/AdminFormularios";
 import { InsigniaEstado, Modal, ProveedorAvisos, Segmentos } from "./Admin/AdminUI";
 import { useAvisar } from "./Admin/avisos";
 import {
-  ESTADOS, aPosicion, cargarPosiciones, cargarPropietarios, estadoDe, fecha,
-  haceCuanto, iniciales, nombrePropietario, numero, query,
+  ESTADOS, aPosicion, estadoDe, fecha,
+  haceCuanto, iniciales, numero, query,
 } from "./Admin/adminUtils";
 
 import "../Styles/DashBoard.css";
@@ -70,7 +70,6 @@ function PanelAdmin() {
 
   const [resumen, setResumen] = useState(null);
   const [vehiculos, setVehiculos] = useState([]);
-  const [propietarios, setPropietarios] = useState({});
   const [posiciones, setPosiciones] = useState({});
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -112,12 +111,13 @@ function PanelAdmin() {
     if (rVehiculos.status === "fulfilled") {
       const lista = rVehiculos.value.contenido;
       setVehiculos(lista);
-      const [duennos, pos] = await Promise.all([
-        cargarPropietarios(lista.map((v) => v.id_usuario)),
-        cargarPosiciones(lista),
-      ]);
-      setPropietarios(duennos);
-      setPosiciones(pos);
+      const posIniciales = {};
+      lista.forEach((v) => {
+        if (v.imei && v.ultimaPosicion) {
+          posIniciales[v.imei] = v.ultimaPosicion;
+        }
+      });
+      setPosiciones((prev) => ({ ...posIniciales, ...prev }));
     } else {
       fallos.push(`Vehículos: ${rVehiculos.reason.message}`);
     }
@@ -189,16 +189,17 @@ function PanelAdmin() {
   }, [imeis]);
 
   const flota = useMemo(() => vehiculos.map((v) => {
-    const duenno = propietarios[v.id_usuario];
-    const pos = v.imei ? posiciones[v.imei] || null : null;
+    const duenno = v.propietario;
+    const pos = (v.imei && posiciones[v.imei]) || v.ultimaPosicion || null;
+    const estado = (posiciones[v.imei] ? estadoDe(v, pos, ahora) : v.estado) || "sin";
     return {
       ...v,
       pos,
       duenno,
-      propietario: nombrePropietario(v.id_usuario, duenno),
-      estado: estadoDe(v, pos, ahora),
+      propietario: v.nombrePropietario || "Sin asignar",
+      estado,
     };
-  }), [vehiculos, propietarios, posiciones, ahora]);
+  }), [vehiculos, posiciones, ahora]);
 
   const conteo = useMemo(() => {
     const c = { marcha: 0, detenido: 0, sin: 0, nogps: 0, off: 0 };
@@ -216,10 +217,10 @@ function PanelAdmin() {
     if (!vehiculos.some((v) => v.id === id)) {
       try {
         const v = await get(`/admin/vehiculos/${id}`);
-        const [duennos, pos] = await Promise.all([cargarPropietarios([v.id_usuario]), cargarPosiciones([v])]);
         setVehiculos((prev) => [v, ...prev]);
-        setPropietarios((prev) => ({ ...prev, ...duennos }));
-        setPosiciones((prev) => ({ ...prev, ...pos }));
+        if (v.imei && v.ultimaPosicion) {
+          setPosiciones((prev) => ({ ...prev, [v.imei]: v.ultimaPosicion }));
+        }
       } catch (e) {
         avisar(e.message, "error");
         return;

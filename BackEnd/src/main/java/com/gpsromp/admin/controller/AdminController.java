@@ -15,6 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.gpsromp.admin.dto.ResumenAdminResponse;
+import com.gpsromp.admin.dto.VehiculoAdminResponse;
+import com.gpsromp.admin.service.AdminVehiculoService;
 import com.gpsromp.common.dto.PaginaResponse;
 import com.gpsromp.usuario.dto.*;
 import com.gpsromp.usuario.model.Rol;
@@ -50,6 +52,7 @@ public class AdminController {
 
     private final UsuarioService usuarioService;
     private final VehiculoService vehiculoService;
+    private final AdminVehiculoService adminVehiculoService;
 
     private static final int TAMANO_MAXIMO_PAGINA = 100;
 
@@ -195,10 +198,10 @@ public class AdminController {
 
     // ============================================================ vehículos
 
-    /** Listado de vehículos paginado y filtrado, incluido el filtro por propietario. */
+    /** Listado de vehículos paginado, filtrado y enriquecido con cálculos logísticos y telemetría. */
     @GetMapping("/vehiculos")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PaginaResponse<VehiculoResponse>> listarVehiculos(
+    public ResponseEntity<PaginaResponse<VehiculoAdminResponse>> listarVehiculos(
             @RequestParam(required = false) String busqueda,
             @RequestParam(required = false) Boolean activo,
             @RequestParam(required = false, name = "id_usuario") UUID idUsuario,
@@ -208,16 +211,15 @@ public class AdminController {
             @RequestParam(defaultValue = "DESC") String direccion) {
 
         Pageable pageable = construirPageable(pagina, tamano, ordenarPor, direccion, ORDEN_VEHICULOS);
-        Page<Vehiculo> resultado = vehiculoService.buscar(busqueda, activo, idUsuario, pageable);
+        Page<VehiculoAdminResponse> resultado = adminVehiculoService.buscar(busqueda, activo, idUsuario, pageable);
 
-        return ResponseEntity.ok(PaginaResponse.de(resultado, VehiculoMapper::aResponse));
+        return ResponseEntity.ok(PaginaResponse.de(resultado, v -> v));
     }
 
     @GetMapping("/vehiculos/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<VehiculoResponse> detalleVehiculo(@PathVariable UUID id) {
-        return ResponseEntity.ok(
-                VehiculoMapper.aResponse(vehiculoService.obtenerPorIdOFallar(id)));
+    public ResponseEntity<VehiculoAdminResponse> detalleVehiculo(@PathVariable UUID id) {
+        return ResponseEntity.ok(adminVehiculoService.obtenerPorIdOFallar(id));
     }
 
     /**
@@ -226,19 +228,19 @@ public class AdminController {
      */
     @PutMapping("/vehiculos/{id}/usuario")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<VehiculoResponse> asignarVehiculo(
+    public ResponseEntity<VehiculoAdminResponse> asignarVehiculo(
             @PathVariable UUID id,
             @RequestBody AsignarVehiculoRequest peticion) {
 
-        Vehiculo actualizado = vehiculoService.asignarUsuario(id, peticion.idUsuario());
-        return ResponseEntity.ok(VehiculoMapper.aResponse(actualizado));
+        vehiculoService.asignarUsuario(id, peticion.idUsuario());
+        return ResponseEntity.ok(adminVehiculoService.obtenerPorIdOFallar(id));
     }
 
     @PatchMapping("/vehiculos/{id}/estado")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<VehiculoResponse> cambiarEstadoVehiculo(@PathVariable UUID id) {
-        return ResponseEntity.ok(
-                VehiculoMapper.aResponse(vehiculoService.cambiarEstado(id)));
+    public ResponseEntity<VehiculoAdminResponse> cambiarEstadoVehiculo(@PathVariable UUID id) {
+        vehiculoService.cambiarEstado(id);
+        return ResponseEntity.ok(adminVehiculoService.obtenerPorIdOFallar(id));
     }
 
     @DeleteMapping("/vehiculos/{id}")
