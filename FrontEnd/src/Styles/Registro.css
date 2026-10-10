@@ -105,11 +105,11 @@
 
 @keyframes subrayado-titulo {
     from {
-        width: 0;
+        text-decoration-color: transparent;
     }
 
     to {
-        width: 100%;
+        text-decoration-color: var(--color-primario);
     }
 }
 
@@ -230,16 +230,22 @@
     color: var(--color-primario-tenue);
     display: inline-block;
     position: relative;
+    min-height: 1.1em;
+    /* El subrayado va en el propio texto y no en ::after.
+    react-type-animation dibuja su cursor parpadeante con ::after, y
+    al compartirlo con el subrayado las dos reglas se mezclaban en una
+       barra verde con el cursor colgando sobre el párrafo. */
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+    text-decoration-color: var(--color-primario);
+    animation: subrayado-titulo 1.2s var(--curva-expo) 1s both;
 }
 
+/* Este ::after es el cursor de la librería. Como inline-block
+   no hereda el subrayado del texto. */
 .titulo-acento::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    height: 2px;
-    background: var(--color-primario);
-    animation: subrayado-titulo 1.2s var(--curva-expo) 1s both;
+    display: inline-block;
 }
 
 .descripcion-editorial {

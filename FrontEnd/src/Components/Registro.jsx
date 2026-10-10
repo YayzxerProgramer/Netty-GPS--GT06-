@@ -5,6 +5,14 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { guardarSesion, rutaInicial } from "../Service/sesion";
 import { API_URL } from "../Service/api";
 import { iniciarLoginGithub } from "../Service/GithubService";
+import { TypeAnimation } from "react-type-animation";
+
+/* La regla de movimiento reducido de Base.css solo detiene animaciones CSS.
+Esta es JavaScript, así que se comprueba aquí: con "reducir movimiento"
+   activado en el sistema, el titular se queda fijo. */
+const MOVIMIENTO_REDUCIDO =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 function FondoAtmosferico() {
     const brilloRef1 = useRef(null);
@@ -59,9 +67,32 @@ function ColumnaEditorial() {
             </div>
 
             <h1 className="titulo-principal">
-                La precisión es <br />
-                <span className="titulo-acento">innegociable.</span>
-            </h1>
+    La precisión es <br />
+    {MOVIMIENTO_REDUCIDO ? (
+        <span className="titulo-acento">innegociable.</span>
+    ) : (
+        <>
+            {/* Los lectores de pantalla leen la frase fija una sola vez,
+                en lugar de oír el titular cambiando cada pocos segundos */}
+            <span className="solo-lectores">innegociable.</span>
+            <TypeAnimation
+                sequence={[
+                    "innegociable.", 2000,
+                    "tu ventaja.", 2000,
+                    "tu seguridad.", 2000,
+                    "constante.", 2000,
+                ]}
+                wrapper="span"
+                /* Mismos tiempos que el login */
+                speed={50}
+                deletionSpeed={60}
+                repeat={Infinity}
+                className="titulo-acento"
+                aria-hidden="true"
+            />
+        </>
+    )}
+</h1>
 
             <p className="descripcion-editorial">
                 Únete a una red de monitores de flota profesionales y navegadores

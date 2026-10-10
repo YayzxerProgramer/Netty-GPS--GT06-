@@ -795,3 +795,52 @@
         flex-direction: column;
     }
 }
+
+/* ── Ojo para mostrar / ocultar la contraseña ─────────────── */
+
+/* Hueco a la derecha para que el texto no quede bajo el ojo */
+.caja-entrada__input--con-ojo {
+    padding-right: 52px;
+}
+
+.caja-entrada__ojo {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--tactil-min, 44px);
+    height: var(--tactil-min, 44px);
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    /* Mismo gris que el candado de la izquierda */
+    color: #7f867f;
+    cursor: pointer;
+    transition: color 0.25s ease, background 0.25s ease;
+}
+
+.caja-entrada__ojo:hover {
+    color: #b2cea8;
+    background: rgba(178, 206, 168, 0.08);
+}
+
+.caja-entrada__ojo:focus-visible {
+    outline: 2px solid #b2cea8;
+    outline-offset: -2px;
+}
+
+.caja-entrada__ojo svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Microsoft Edge añade su propio ojo a los campos de contraseña:
+   sin esto, los usuarios de Edge verían dos. */
+.caja-entrada__input::-ms-reveal,
+.caja-entrada__input::-ms-clear {
+    display: none;
+}
