@@ -88,7 +88,7 @@ input {
 
 .pagina-seguridad {
     /* Campos en verde profundo, a juego con la aurora y con /admin. */
-    --color-contenedor-mayor: #132a21;
+    --color-contenedor-mayor: var(--romp-campo);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -96,6 +96,8 @@ input {
     position: relative;
     z-index: 10;
     padding: 1.5rem;
+    min-height: 100dvh;
+    overflow: hidden;
 }
 
 .pagina-seguridad__envoltorio {
@@ -124,7 +126,7 @@ input {
 
 /* Mismo vidrio que las tarjetas de /admin, sobre la aurora compartida. */
 .tarjeta-seguridad {
-    background: rgba(10, 26, 20, 0.58);
+    background: var(--romp-vidrio);
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid rgba(178, 206, 168, 0.12);
@@ -229,9 +231,11 @@ input {
     background-color: var(--color-contenedor-mayor);
     border: 1px solid rgba(67, 73, 68, 0.2);
     border-radius: var(--radio-xl);
-    padding: 1rem 1.25rem;
+    /* Hueco a la derecha para el icono del ojo, que tapaba el texto */
+    padding: 1rem 3rem 1rem 1.25rem;
     color: var(--color-sobre-superficie);
-    font-size: 0.875rem;
+    /* 16px: por debajo, iOS hace zoom al enfocar */
+    font-size: 16px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -286,8 +290,8 @@ input {
 
 .boton-actualizar {
     width: 100%;
-    background: linear-gradient(135deg, var(--color-primario), var(--color-contenedor-primario));
-    color: var(--color-sobre-primario);
+    background: var(--romp-boton-grad);
+    color: var(--romp-sobre-boton);
     font-family: var(--fuente-cuerpo);
     font-weight: 700;
     padding: 1rem 2.5rem;
@@ -342,7 +346,12 @@ input {
 
 .campo-contrasena__toggle {
     position: absolute;
-    right: 10px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -372,4 +381,22 @@ input {
 .modal-icon {
     font-size: 45px;
     color: #00ff88;
+}
+
+@media (max-width: 480px) {
+    .pagina-seguridad {
+        padding: 1rem;
+    }
+
+    .tarjeta-seguridad {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .radar-decorativo {
+        inset: -4rem;
+    }
+
+    .boton-actualizar {
+        padding: 1rem 1.25rem;
+    }
 }

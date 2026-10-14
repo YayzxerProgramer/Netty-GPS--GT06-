@@ -54,7 +54,7 @@ public class SembradorAdmin implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
 
-        if (usuarioRepository.existsByRol(Rol.ADMIN)) {
+        if (usuarioRepository.existsByRol(Rol.ADMINISTRADOR)) {
             log.info("Ya existe al menos un administrador. El sembrador no hace nada.");
             return;
         }
@@ -81,10 +81,10 @@ public class SembradorAdmin implements CommandLineRunner {
 
         usuarioRepository.findByUsuario(adminUsuario).ifPresentOrElse(
                 existente -> {
-                    existente.setRol(Rol.ADMIN);
+                    existente.setRol(Rol.ADMINISTRADOR);
                     existente.setActivo(true);
                     usuarioRepository.save(existente);
-                    log.info("Usuario '{}' promovido a ADMIN.", adminUsuario);
+                    log.info("Usuario '{}' promovido a ADMINISTRADOR.", adminUsuario);
                 },
                 () -> {
                     Usuario admin = new Usuario();
@@ -93,7 +93,7 @@ public class SembradorAdmin implements CommandLineRunner {
                     admin.setUsuario(adminUsuario);
                     admin.setCorreo(adminCorreo);
                     admin.setContrasena(passwordEncoder.encode(adminContrasena));
-                    admin.setRol(Rol.ADMIN);
+                    admin.setRol(Rol.ADMINISTRADOR);
                     admin.setActivo(true);
                     usuarioRepository.save(admin);
                     log.info("Administrador inicial '{}' creado.", adminUsuario);

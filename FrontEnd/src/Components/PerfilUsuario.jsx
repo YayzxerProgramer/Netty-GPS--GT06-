@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../Styles/PerfilUsuario.css";
 import PanelVehiculo from "../Components/PanelVehiculo";
 import FondoAurora from "./FondoAurora";
@@ -8,7 +8,7 @@ import { API_URL } from "../Service/api";
 
 const ENLACES_NAV = [
     { icono: "person", etiqueta: "Perfil" },
-    { icono: "directions_car", etiqueta: "Vehiculos" },
+    { icono: "directions_car", etiqueta: "Vehículos" },
 ];
 
 const ENLACES_PIE_NAV = [
@@ -17,9 +17,55 @@ const ENLACES_PIE_NAV = [
 
 function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
     const navigate = useNavigate();
+    const [abierta, setAbierta] = useState(false);
+
+    // Escape cierra el menú y el fondo no se desplaza mientras está abierto
+    useEffect(() => {
+        if (!abierta) return;
+
+        const alPulsarTecla = (e) => {
+            if (e.key === "Escape") setAbierta(false);
+        };
+
+        document.body.classList.add("sin-scroll");
+        window.addEventListener("keydown", alPulsarTecla);
+
+        return () => {
+            document.body.classList.remove("sin-scroll");
+            window.removeEventListener("keydown", alPulsarTecla);
+        };
+    }, [abierta]);
+
+    const seleccionar = (etiqueta) => {
+        setEnlaceActivo(etiqueta);
+        setAbierta(false);
+    };
+
     return (
         <>
-            <aside className="navegacion-lateral">
+            <button
+                type="button"
+                className="boton-menu-perfil"
+                aria-label={abierta ? "Cerrar menú" : "Abrir menú"}
+                aria-expanded={abierta}
+                aria-controls="navegacion-lateral-perfil"
+                onClick={() => setAbierta((v) => !v)}
+            >
+                <span className="material-symbols-outlined">
+                    {abierta ? "close" : "menu"}
+                </span>
+            </button>
+
+            <div
+                className={`velo-perfil ${abierta ? "velo-perfil--visible" : ""}`}
+                onClick={() => setAbierta(false)}
+                aria-hidden="true"
+            />
+
+            <aside
+                id="navegacion-lateral-perfil"
+                className={`navegacion-lateral ${abierta ? "navegacion-lateral--abierta" : ""}`}
+            >
                 <div className="bloque-usuario">
                     <div className="contenedor-avatar-mini">
                         <span className="material-symbols-outlined">person</span>
@@ -36,7 +82,7 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                             key={etiqueta}
                             href="#"
                             className={`enlace-lateral ${enlaceActivo === etiqueta ? "enlace-lateral--activo" : ""}`}
-                            onClick={(e) => { e.preventDefault(); setEnlaceActivo(etiqueta); }}
+                            onClick={(e) => { e.preventDefault(); seleccionar(etiqueta); }}
                         >
                             <span className="material-symbols-outlined">{icono}</span>
                             {etiqueta}
@@ -44,7 +90,7 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                     ))}
                 </nav>
 
-                <div className="pie-nav-lateral">
+                                <div className="pie-nav-lateral">
                     {/* Un administrador que llega aquí puede volver a su panel. */}
                     {esAdmin() && (
                         <a href="/admin" className="enlace-lateral" onClick={(e) => { e.preventDefault(); navigate("/admin"); }}>
@@ -52,6 +98,22 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                             Panel de administración
                         </a>
                     )}
+
+                    {/* Vuelta al panel de control, justo encima de Cerrar Sesión.
+                        Es un enlace real (href): también se abre en otra pestaña. */}
+                    <a
+                        href="/panel-control"
+                        className="enlace-lateral"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setAbierta(false);
+                            navigate("/panel-control");
+                        }}
+                    >
+                        <span className="material-symbols-outlined">arrow_back</span>
+                        Volver al panel
+                    </a>
+
                     {ENLACES_PIE_NAV.map(({ icono, etiqueta, onClick }) => (
                         <a key={etiqueta} href="#" className="enlace-lateral" onClick={onClick}>
                             <span className="material-symbols-outlined">{icono}</span>
@@ -59,14 +121,25 @@ function NavegacionLateral({ enlaceActivo, setEnlaceActivo }) {
                         </a>
                     ))}
                 </div>
-            </aside >
+            </aside>
         </>
     );
 }
 
-function TarjetaIdentidad({ usuarioData }) {
+function TarjetaIdentidad({ usuarioData, onSubirFoto, subiendoFoto }) {
+    const fileInputRef = useRef(null);
+
     return (
         <div className="tarjeta-identidad panel-vidrio">
+            {/* Input oculto para seleccionar foto de perfil */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                accept="image/png, image/jpeg, image/jpg, image/webp"
+                onChange={onSubirFoto}
+            />
+
             <div className="qr-decorativo" aria-hidden="true">
                 <span className="material-symbols-outlined">qr_code_2</span>
             </div>
@@ -80,12 +153,24 @@ function TarjetaIdentidad({ usuarioData }) {
                         </div>
                     )}
                 </div>
-                <button className="boton-camara" aria-label="Cambiar foto">
-                    <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
+                <button
+                    type="button"
+                    className="boton-camara"
+                    aria-label="Cambiar foto de perfil"
+                    disabled={subiendoFoto}
+                    onClick={() => fileInputRef.current?.click()}
+                    title={subiendoFoto ? "Subiendo foto..." : "Cambiar foto de perfil"}
+                >
+                    <span
+                        className={`material-symbols-outlined ${subiendoFoto ? "icono-giratorio" : ""}`}
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                        {subiendoFoto ? "sync" : "photo_camera"}
+                    </span>
                 </button>
             </div>
             <h3 className="nombre-perfil">{usuarioData?.usuario || "Usuario"}</h3>
-            <p className="rol-perfil">{usuarioData?.rol || "USER"}</p>
+            <p className="rol-perfil">{usuarioData?.rol || "USUARIO"}</p>
             <div className="datos-identidad">
                 <div className="fila-dato">
                     <span className="etiqueta-dato">Estado</span>
@@ -180,22 +265,26 @@ function SeccionFormulario({ usuarioData, setUsuarioData, tipo, setTipo, nuevaCo
 }
 
 function ContenidoPrincipal(props) {
-    const { usuarioData, setUsuarioData, setModalGuardar } = props;
+    const { usuarioData, setUsuarioData, setModalGuardar, onSubirFoto, subiendoFoto } = props;
     return (
         <main className="contenido-principal">
             <div className="contenedor-interior">
                 <div className="encabezado-telemetria-usuario">
                     <div className="bloque-titulo">
-                        <span className="etiqueta-sistema">SYSTEM // USER_PROFILE_CONFIG</span>
+                        <span className="etiqueta-sistema">Sistema // Configuración de perfil</span>
                         <h1 className="titulo-pagina">Configuración de Perfil</h1>
                     </div>
                     <div className="bloque-fecha">
-                        <p className="etiqueta-fecha">STATUS</p>
-                        <p className="valor-fecha">ONLINE</p>
+                        <p className="etiqueta-fecha">Estado</p>
+                        <p className="valor-fecha">En linea</p>
                     </div>
                 </div>
                 <div className="cuadricula-contenido">
-                    <TarjetaIdentidad usuarioData={usuarioData} />
+                    <TarjetaIdentidad
+                        usuarioData={usuarioData}
+                        onSubirFoto={onSubirFoto}
+                        subiendoFoto={subiendoFoto}
+                    />
                     <SeccionFormulario
                         usuarioData={usuarioData} setUsuarioData={setUsuarioData}
                         setModalGuardar={setModalGuardar}
@@ -231,6 +320,7 @@ export default function PerfilUsuario() {
     const [nuevaContrasena, setNuevaContrasena] = useState("");
     const [enlaceActivo, setEnlaceActivo] = useState("Perfil");
     const [modalExito, setModalExito] = useState(false);
+    const [subiendoFoto, setSubiendoFoto] = useState(false);
     // ← estado compartido
 
     const token = localStorage.getItem("token");
@@ -246,6 +336,93 @@ export default function PerfilUsuario() {
             .catch((error) => console.error(error));
     }, []);
 
+    async function manejarSubidaFoto(e) {
+        const archivo = e.target.files?.[0];
+        if (!archivo) return;
+
+        // Limpiar el valor del input para permitir volver a seleccionar la misma imagen
+        e.target.value = "";
+
+        if (!archivo.type.startsWith("image/")) {
+            alert("Solo se admiten archivos de imagen (PNG, JPG, JPEG, WEBP).");
+            return;
+        }
+
+        // Límite de tamaño: 5 MB
+        if (archivo.size > 5 * 1024 * 1024) {
+            alert("La imagen no debe superar los 5MB de tamaño.");
+            return;
+        }
+
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+        if (!cloudName || cloudName === "TU_CLOUD_NAME" || !uploadPreset) {
+            alert("Debes configurar tu VITE_CLOUDINARY_CLOUD_NAME y VITE_CLOUDINARY_UPLOAD_PRESET en el archivo FrontEnd/.env");
+            return;
+        }
+
+        if (!usuarioData?.id) {
+            alert("La información del usuario no está cargada todavía.");
+            return;
+        }
+
+        try {
+            setSubiendoFoto(true);
+
+            // 1. Subida directa a Cloudinary con el preset sin firma
+            const formData = new FormData();
+            formData.append("file", archivo);
+            formData.append("upload_preset", uploadPreset);
+
+            const resCloudinary = await fetch(
+                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+                { method: "POST", body: formData }
+            );
+
+            if (!resCloudinary.ok) {
+                const errJson = await resCloudinary.json().catch(() => ({}));
+                throw new Error(errJson?.error?.message || "Error al subir la imagen a Cloudinary");
+            }
+
+            const dataCloudinary = await resCloudinary.json();
+            const urlSegura = dataCloudinary.secure_url;
+
+            // 2. Actualizar el perfil en el backend
+            const payload = {
+                nombre: usuarioData?.nombre,
+                apellido: usuarioData?.apellido,
+                usuario: usuarioData?.usuario,
+                correo: usuarioData?.correo,
+                telefono: usuarioData?.telefono,
+                activo: usuarioData?.activo ?? true,
+                rol: usuarioData?.rol ?? "USUARIO",
+                imagenUrl: urlSegura,
+            };
+
+            const resBackend = await fetch(`${API_URL}/usuario/${usuarioData.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!resBackend.ok) {
+                throw new Error("La imagen se subió a Cloudinary pero ocurrió un error guardando el perfil en la base de datos.");
+            }
+
+            const usuarioActualizado = await resBackend.json();
+            setUsuarioData(usuarioActualizado);
+        } catch (error) {
+            console.error("Error al actualizar foto de perfil:", error);
+            alert(error.message || "Error al subir la foto de perfil");
+        } finally {
+            setSubiendoFoto(false);
+        }
+    }
+
     function actualizarUsuario() {
         const payload = {
             nombre: usuarioData?.nombre,
@@ -254,7 +431,7 @@ export default function PerfilUsuario() {
             correo: usuarioData?.correo,
             telefono: usuarioData?.telefono,
             activo: usuarioData?.activo ?? true,
-            rol: usuarioData?.rol ?? "USER",
+            rol: usuarioData?.rol ?? "USUARIO",
             imagenUrl: usuarioData?.imagenUrl,
         };
 
@@ -308,6 +485,8 @@ export default function PerfilUsuario() {
                         <ContenidoPrincipal
                             usuarioData={usuarioData} setUsuarioData={setUsuarioData}
                             setModalGuardar={setModalGuardar}
+                            onSubirFoto={manejarSubidaFoto}
+                            subiendoFoto={subiendoFoto}
                             navigate={navigate}
                         />
                     ) : (

@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.gpsromp.usuario.model.Rol;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -26,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
  * existen. Una base creada con una versión anterior del código se queda con el
  * esquema viejo, y eso rompía el panel:
  *
- *  - roles que ya no existen en el enum ("USUARIO"...) → 500 en todo listado;
  *  - vehiculos.imei NOT NULL → no se podía registrar un vehículo sin equipo;
  *  - usuario/correo sin UNIQUE → dos altas simultáneas creaban duplicados y el
  *    login de ambos quedaba roto para siempre.
@@ -49,9 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class NormalizadorEsquema implements CommandLineRunner {
-
-    private static final List<String> ROLES_VALIDOS =
-            List.of(Rol.values()).stream().map(Rol::name).toList();
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate transaccion;
@@ -78,7 +72,6 @@ public class NormalizadorEsquema implements CommandLineRunner {
             return;
         }
 
-        paso("roles heredados", this::normalizarRoles);
         paso("usuarios.rol obligatorio", () -> exigirNoNulo("usuarios", "rol"));
         paso("usuarios.activo obligatorio", this::normalizarActivo);
         paso("usuarios.usuario obligatorio", () -> exigirNoNulo("usuarios", "usuario"));
@@ -92,29 +85,6 @@ public class NormalizadorEsquema implements CommandLineRunner {
     }
 
     // ================================================================= pasos
-
-    /** Lleva cualquier rol que no sea del enum a su equivalente actual. */
-    private void normalizarRoles() {
-        if (!existeColumna("usuarios", "rol")) return;
-
-        List<Map<String, Object>> raros = jdbc.queryForList(
-                "SELECT rol, COUNT(*) AS filas FROM usuarios WHERE rol IS NULL OR rol NOT IN ('ADMIN','USER','VIEWER') GROUP BY rol");
-        if (raros.isEmpty()) return;
-        log.warn("Roles fuera del enum {} encontrados: {}", ROLES_VALIDOS, raros);
-
-        int total = 0;
-        for (Map.Entry<String, Rol> e : Rol.EQUIVALENCIAS_LEGADAS.entrySet()) {
-            total += jdbc.update("UPDATE usuarios SET rol = ? WHERE UPPER(TRIM(rol)) = ?",
-                    e.getValue().name(), e.getKey());
-        }
-        // Roles válidos escritos con minúsculas o espacios.
-        total += jdbc.update("UPDATE usuarios SET rol = UPPER(TRIM(rol)) "
-                + "WHERE rol NOT IN ('ADMIN','USER','VIEWER') AND UPPER(TRIM(rol)) IN ('ADMIN','USER','VIEWER')");
-        // Lo que quede, al rol con menos privilegios. Nunca se concede acceso.
-        total += jdbc.update("UPDATE usuarios SET rol = 'USER' WHERE rol IS NULL OR rol NOT IN ('ADMIN','USER','VIEWER')");
-
-        log.info("Roles normalizados: {} usuarios actualizados.", total);
-    }
 
     /** ServicioDetallesUsuario consulta getActivo(): un null ahí rompe el login. */
     private void normalizarActivo() {

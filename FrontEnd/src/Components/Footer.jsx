@@ -1,39 +1,31 @@
 import "../Styles/Footer.css";
 
+const ENLACES = [
+    { texto: "Política de Privacidad", href: "#" },
+    { texto: "Términos de Servicio", href: "#" },
+    { texto: "Documentación API", href: "#" },
+];
+
 function Footer() {
     return (
         <footer className="pie-pagina">
-
             <div className="contenedor-pie">
 
-                <div className="logo-pie">
-                    ROMP GPS
-                </div>
+                <div className="logo-pie">ROMP GPS</div>
 
-                <div className="enlaces-pie">
-
-                    <a href="#">
-                        Privacy Policy
-                    </a>
-
-                    <a href="#">
-                        Terms of Service
-                    </a>
-
-                    <a href="#">
-                        API Docs
-                    </a>
-
-                </div>
+                <nav className="enlaces-pie" aria-label="Enlaces legales">
+                    {ENLACES.map(({ texto, href }) => (
+                        <a key={texto} href={href}>{texto}</a>
+                    ))}
+                </nav>
 
                 <div className="derechos-pie">
-                    © 2024 ROMP GPS. Precision Navigation.
+                    © {new Date().getFullYear()} ROMP GPS. Navegación de precisión.
                 </div>
 
             </div>
-
         </footer>
-    )
+    );
 }
 
-export default Footer
+export default Footer;

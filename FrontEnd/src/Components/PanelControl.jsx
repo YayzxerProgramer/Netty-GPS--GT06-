@@ -309,8 +309,9 @@ export default function PanelControl() {
                         <span>{usuarioData?.nombre || usuarioData?.usuario || "Usuario"}</span>
                         <small>{activas} {activas === 1 ? "unidad activa" : "unidades activas"}</small>
                     </div>
-                    <button className="pc-boton-salir" onClick={salir}>
-                        <span className="material-symbols-outlined">logout</span>Salir
+                    <button className="pc-boton-salir" onClick={salir} aria-label="Cerrar sesión">
+                        <span className="material-symbols-outlined" aria-hidden="true">logout</span>
+                        <span className="pc-boton-salir__texto">Salir</span>
                     </button>
                 </div>
             </header>

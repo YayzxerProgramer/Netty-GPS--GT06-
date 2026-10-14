@@ -96,7 +96,7 @@ public class SecurityConfig {
 
                         // Solo health e info; el resto de actuator, autenticado.
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        .requestMatchers("/actuator/**").hasAnyRole("ADMINISTRADOR", "ADMIN")
 
                         // El handshake HTTP pasa; la autenticación real la hace
                         // InterceptorAutenticacionStomp sobre el frame CONNECT,
@@ -105,7 +105,7 @@ public class SecurityConfig {
 
                         // Panel administrativo: barrera a nivel de ruta, además
                         // del @PreAuthorize de cada método. Defensa en profundidad.
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasAnyRole("ADMINISTRADOR", "ADMIN")
 
                         .anyRequest().authenticated())
                 .addFilterBefore(filtroLimiteIntentos, UsernamePasswordAuthenticationFilter.class)

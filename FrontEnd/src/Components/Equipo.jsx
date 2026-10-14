@@ -43,7 +43,7 @@ function Equipo() {
                         </span>
 
                         <h2>
-                            Mentes detras del sistema.
+                            Mentes detrás del sistema.
                         </h2>
 
                     </div>

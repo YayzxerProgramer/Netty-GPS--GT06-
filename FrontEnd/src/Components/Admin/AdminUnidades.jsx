@@ -4,8 +4,8 @@ import { Confirmar, InsigniaEstado, Modal, Paginacion, Segmentos, Vacio } from "
 import { useAvisar } from "./avisos";
 import { FormVehiculo, FormVincular } from "./AdminFormularios";
 import {
-  ESTADOS, cargarPosiciones, cargarPropietarios, estadoDe, fecha, haceCuanto,
-  contar, iniciales, nombreCompleto, nombrePropietario, query,
+  ESTADOS, fecha, haceCuanto,
+  contar, iniciales, query,
 } from "./adminUtils";
 
 const FILTRO_ESTADO = [
@@ -26,8 +26,6 @@ export default function AdminUnidades({ busqueda, dialogoInicial, onDialogoAbier
   const pagina = paginaDe.filtros === filtros ? paginaDe.n : 0;
   const setPagina = (n) => setPaginaDe({ filtros, n });
   const [datos, setDatos] = useState(null);
-  const [propietarios, setPropietarios] = useState({});
-  const [posiciones, setPosiciones] = useState({});
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   // "Vincular" desde el resumen llega con su diálogo ya abierto.
@@ -40,12 +38,6 @@ export default function AdminUnidades({ busqueda, dialogoInicial, onDialogoAbier
     try {
       const pag = await get(`/admin/vehiculos${query({ busqueda, activo, pagina, tamano: TAMANO })}`);
       setDatos(pag);
-      const [duennos, pos] = await Promise.all([
-        cargarPropietarios(pag.contenido.map((v) => v.id_usuario)),
-        cargarPosiciones(pag.contenido),
-      ]);
-      setPropietarios(duennos);
-      setPosiciones(pos);
       setAhora(Date.now());
     } catch (e) {
       setError(e.message);
@@ -140,9 +132,10 @@ export default function AdminUnidades({ busqueda, dialogoInicial, onDialogoAbier
             )}
 
             {vehiculos.map((v) => {
-              const duenno = propietarios[v.id_usuario];
-              const pos = v.imei ? posiciones[v.imei] : null;
-              const estado = estadoDe(v, pos, ahora);
+              const duenno = v.propietario;
+              const pos = v.ultimaPosicion;
+              const estado = v.estado || "sin";
+              const nombreDuennio = v.nombrePropietario || "Sin asignar";
               return (
                 <div key={v.id} className="adm-tabla-fila" onClick={() => setDialogo({ tipo: "editar", vehiculo: v })}>
                   <div>
@@ -150,9 +143,9 @@ export default function AdminUnidades({ busqueda, dialogoInicial, onDialogoAbier
                     <div className={`adm-imei ${v.imei ? "" : "adm-tono--nogps"}`}>{v.imei || "SIN GPS"}</div>
                   </div>
                   <div className="adm-propietario">
-                    <span className="adm-iniciales">{duenno ? iniciales(nombreCompleto(duenno)) : "—"}</span>
+                    <span className="adm-iniciales">{duenno ? iniciales(nombreDuennio) : "—"}</span>
                     <span className="adm-celda-doble">
-                      <b className={duenno ? "" : "adm-tenue"}>{nombrePropietario(v.id_usuario, duenno)}</b>
+                      <b className={duenno ? "" : "adm-tenue"}>{nombreDuennio}</b>
                       {duenno && <span>@{duenno.usuario}</span>}
                     </span>
                   </div>
@@ -161,7 +154,7 @@ export default function AdminUnidades({ busqueda, dialogoInicial, onDialogoAbier
                     {v.modelo}
                   </div>
                   <div className="adm-celda-doble">
-                    <InsigniaEstado estado={estado} texto={ESTADOS[estado]} />
+                    <InsigniaEstado estado={estado} texto={ESTADOS[estado] || estado} />
                     {pos && <span className="adm-celda-mono">{haceCuanto(pos.fecha, ahora)}</span>}
                   </div>
                   <div className="adm-alta">{fecha(v.creadoEn)}</div>
@@ -200,9 +193,8 @@ export default function AdminUnidades({ busqueda, dialogoInicial, onDialogoAbier
       {dialogo?.tipo === "vincular" && (
         dialogo.vehiculo
           ? <FormVincular vehiculo={dialogo.vehiculo} propietarioActual={dialogo.propietario} onCerrar={() => setDialogo(null)} onGuardado={tras} />
-          : <ElegirVehiculo onCerrar={() => setDialogo(null)} onElegir={async (v) => {
-              const duennos = await cargarPropietarios([v.id_usuario]);
-              setDialogo({ tipo: "vincular", vehiculo: v, propietario: duennos[v.id_usuario] });
+          : <ElegirVehiculo onCerrar={() => setDialogo(null)} onElegir={(v) => {
+              setDialogo({ tipo: "vincular", vehiculo: v, propietario: v.propietario });
             }} />
       )}
       {dialogo?.tipo === "eliminar" && (

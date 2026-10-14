@@ -114,13 +114,15 @@ public class UsuarioService {
         usuario.setCorreo(peticion.correo());
         usuario.setTelefono(vacioANull(peticion.telefono()));
         usuario.setContrasena(passwordEncoder.encode(peticion.contrasena()));
-        usuario.setRol(Rol.USER);
+        usuario.setRol(Rol.USUARIO);
         usuario.setActivo(true);
 
         return usuarioRepository.save(usuario);
     }
 
-    /** Alta desde el panel. Aquí sí se acepta el rol, porque quien llama es ADMIN. */
+    /**
+     * Alta desde el panel. Aquí sí se acepta el rol, porque quien llama es ADMIN.
+     */
     @Transactional
     public Usuario crearComoAdmin(CrearUsuarioAdminRequest peticion) {
         validarDisponibilidad(peticion.usuario(), peticion.correo());
@@ -145,7 +147,7 @@ public class UsuarioService {
      */
     @Transactional
     public Usuario crearDesdeOauth(Usuario usuario) {
-        usuario.setRol(Rol.USER);
+        usuario.setRol(Rol.USUARIO);
         usuario.setActivo(true);
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
         return usuarioRepository.save(usuario);
@@ -153,7 +155,10 @@ public class UsuarioService {
 
     // ------------------------------------------------------------- mutaciones
 
-    /** Patch de perfil. Los campos null se dejan como estaban. No toca rol ni activo. */
+    /**
+     * Patch de perfil. Los campos null se dejan como estaban. No toca rol ni
+     * activo.
+     */
     @Transactional
     public Usuario actualizar(UUID id, ActualizarUsuarioRequest peticion) {
         Usuario usuario = obtenerPorIdOFallar(id);
@@ -201,7 +206,7 @@ public class UsuarioService {
             return usuario;
         }
 
-        if (usuario.getRol() == Rol.ADMIN) {
+        if (usuario.getRol() == Rol.ADMINISTRADOR) {
             if (usuario.getUsuario().equals(usuarioSolicitante)) {
                 throw new OperacionNoPermitidaException(
                         "No puedes quitarte a ti mismo el rol de administrador");
@@ -226,7 +231,7 @@ public class UsuarioService {
         }
 
         boolean estabaActivo = Boolean.TRUE.equals(usuario.getActivo());
-        if (estabaActivo && usuario.getRol() == Rol.ADMIN) {
+        if (estabaActivo && usuario.getRol() == Rol.ADMINISTRADOR) {
             verificarQueNoEsElUltimoAdmin();
         }
 
@@ -247,7 +252,7 @@ public class UsuarioService {
         if (usuario.getUsuario().equals(usuarioSolicitante)) {
             throw new OperacionNoPermitidaException("No puedes eliminar tu propia cuenta");
         }
-        if (usuario.getRol() == Rol.ADMIN) {
+        if (usuario.getRol() == Rol.ADMINISTRADOR) {
             verificarQueNoEsElUltimoAdmin();
         }
 
@@ -297,7 +302,7 @@ public class UsuarioService {
     }
 
     private void verificarQueNoEsElUltimoAdmin() {
-        if (usuarioRepository.countByRol(Rol.ADMIN) <= 1) {
+        if (usuarioRepository.countByRol(Rol.ADMINISTRADOR) <= 1) {
             throw new OperacionNoPermitidaException(
                     "Debe quedar al menos un administrador activo en el sistema");
         }

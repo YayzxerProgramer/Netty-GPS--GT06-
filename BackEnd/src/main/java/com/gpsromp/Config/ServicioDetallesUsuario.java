@@ -31,16 +31,17 @@ public class ServicioDetallesUsuario implements UserDetailsService {
             throw new UsernameNotFoundException("El usuario está inactivo: " + username);
         }
 
-        // rol es un enum: .name() garantiza la forma exacta "ROLE_ADMIN" / "ROLE_USER".
-        // Cuando era un String libre, un valor como "admin" producía "ROLE_admin"
-        // y hasRole("ADMIN") fallaba en silencio.
-        SimpleGrantedAuthority autoridad = new SimpleGrantedAuthority(
-                "ROLE_" + usuarioEncontrado.getRol().name());
+        // rol es un enum: .name() garantiza la forma exacta "ROLE_ADMINISTRADOR" / "ROLE_USUARIO".
+        java.util.List<SimpleGrantedAuthority> autoridades = new java.util.ArrayList<>();
+        autoridades.add(new SimpleGrantedAuthority("ROLE_" + usuarioEncontrado.getRol().name()));
+        if (usuarioEncontrado.getRol() == com.gpsromp.usuario.model.Rol.ADMINISTRADOR) {
+            autoridades.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
 
         return User.builder()
                 .username(usuarioEncontrado.getUsuario())
                 .password(usuarioEncontrado.getContrasena())
-                .authorities(List.of(autoridad))
+                .authorities(autoridades)
                 .build();
     }
 }

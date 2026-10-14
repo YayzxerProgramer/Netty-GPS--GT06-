@@ -313,7 +313,7 @@ export default function PanelVehiculo() {
             <div className="contenido-principal__envoltorio">
                 <section className="encabezado-dashboard" aria-labelledby="titulo-dashboard">
                     <div className="encabezado-dashboard__info">
-                        <span className="encabezado-dashboard__etiqueta">Telemetry Dashboard</span>
+                        <span className="encabezado-dashboard__etiqueta">Panel de telemetría</span>
                         <h1 className="encabezado-dashboard__titulo" id="titulo-dashboard">
                             Gestión de <span className="encabezado-dashboard__titulo--acento">Unidades</span>
                         </h1>
@@ -355,9 +355,11 @@ export default function PanelVehiculo() {
                                 Cargando vehículos...
                             </p>
                         ) : vehiculos.length === 0 ? (
-                            <p style={{ padding: "1rem", color: "var(--color-texto-secundario)" }}>
-                                No hay vehículos registrados.
-                            </p>
+                            <div className="lista-vehiculos__vacio">
+                                <span className="material-symbols-outlined" aria-hidden="true">directions_car</span>
+                                <p>Aún no tienes vehículos registrados.</p>
+                                <small>Usa «Registrar Nuevo Vehículo» para añadir el primero.</small>
+                            </div>
                         ) : (
                             vehiculos.map((v) => (
                                 <TarjetaVehiculo key={v.id} vehiculo={v} onDelete={eliminarVehiculo} />
@@ -376,10 +378,10 @@ export default function PanelVehiculo() {
             />
 
             <div className="telemetria-decorativa" aria-hidden="true">
-                <span className="telemetria-decorativa__estado">System Status: Ready</span>
+                <span className="telemetria-decorativa__estado">Sistema: Listo</span>
                 <div className="telemetria-decorativa__coordenadas">
                     <div className="telemetria-decorativa__punto" />
-                    <span className="telemetria-decorativa__texto">42.3601° N, 71.0589° W</span>
+                    <span className="telemetria-decorativa__texto">10.4236° N, 75.5478° O</span>
                 </div>
             </div>
         </main>

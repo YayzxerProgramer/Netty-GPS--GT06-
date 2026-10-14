@@ -647,8 +647,8 @@ input {
 
 .formulario__boton-confirmar {
     flex: 1;
-    background: linear-gradient(135deg, var(--color-primario), var(--color-contenedor-primario));
-    color: var(--color-sobre-primario);
+    background: var(--romp-boton-grad);
+    color: var(--romp-sobre-boton);
     font-family: var(--fuente-titular);
     font-weight: 700;
     text-transform: uppercase;
@@ -799,5 +799,76 @@ input {
     .formulario__select {
         appearance: none;
         cursor: pointer;
+    }
+}
+
+/* Estado vacío: antes era una línea suelta alineada bajo la
+   columna "Tipo" de una tabla sin filas. */
+.lista-vehiculos__vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1.5rem;
+    border: 1px dashed rgba(178, 206, 168, 0.18);
+    border-radius: 0.75rem;
+    text-align: center;
+    color: #a7ada5;
+}
+
+.lista-vehiculos__vacio .material-symbols-outlined {
+    font-size: 2.5rem;
+    color: #b2cea8;
+    opacity: 0.6;
+}
+
+.lista-vehiculos__vacio p {
+    color: #e1e7df;
+    font-weight: 600;
+}
+
+.lista-vehiculos__vacio small {
+    font-size: 0.8rem;
+}
+
+/* Sin filas, la cabecera de columnas no tiene nada que encabezar */
+.lista-vehiculos-configuracion:has(.lista-vehiculos__vacio) .lista-vehiculos__cabecera {
+    display: none;
+}
+
+/* .contenido-principal creaba su propia capa (z-index 10) y la ventana
+   (z-index 100) quedaba por debajo del botón de menú (z-index 60). */
+.pagina-perfil .contenido-principal {
+    z-index: auto;
+}
+
+/* La ventana medía 754px: en móviles de 568–740px se salía por arriba,
+   con el botón de cerrar fuera de pantalla, y no se podía desplazar.
+   Ahora el fondo tiene scroll y margin:auto la centra solo cuando cabe. */
+.modal-fondo {
+    align-items: flex-start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.modal-contenido {
+    margin: auto;
+}
+
+.formulario__campo {
+    font-size: 16px;
+}
+
+@media (max-height: 760px) {
+    .modal-contenido { padding: 1.5rem 1.25rem; }
+    .modal-cabecera { margin-bottom: 1.25rem; }
+    .formulario { gap: 1rem; }
+    .formulario__pie { padding-top: 0.75rem; }
+}
+
+/* El texto decorativo fijo pisaba "Cerrar Sesión" de la barra lateral */
+@media (min-width: 1024px) {
+    .pagina-perfil .telemetria-decorativa {
+        left: calc(16rem + 2rem);
     }
 }
