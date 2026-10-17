@@ -9,6 +9,12 @@ const OPCIONES_ROL = [
   { valor: "VIEWER", etiqueta: "Solo lectura" },
 ];
 
+const OPCIONES_PLAN = [
+  { valor: "PERSONAL", etiqueta: "Personal ($24.900)" },
+  { valor: "PRO", etiqueta: "Pro ($44.900)" },
+  { valor: "ENTERPRISE", etiqueta: "Enterprise ($79.900)" },
+];
+
 function Pie({ onCerrar, enviando, texto, formulario }) {
   return (
     <>
@@ -36,6 +42,7 @@ export function FormUsuario({ usuario, onCerrar, onGuardado }) {
     correo: usuario?.correo || "",
     telefono: usuario?.telefono || "",
     rol: usuario?.rol || "USUARIO",
+    plan: usuario?.plan || "PERSONAL",
     contrasena: "",
     activo: usuario?.activo ?? true,
   });
@@ -51,10 +58,13 @@ export function FormUsuario({ usuario, onCerrar, onGuardado }) {
     try {
       let resultado;
       if (editando) {
-        const { nombre, apellido, usuario: nombreUsuario, correo, telefono } = datos;
-        resultado = await put(`/admin/usuarios/${usuario.id}`, { nombre, apellido, usuario: nombreUsuario, correo, telefono });
+        const { nombre, apellido, usuario: nombreUsuario, correo, telefono, plan } = datos;
+        resultado = await put(`/admin/usuarios/${usuario.id}`, { nombre, apellido, usuario: nombreUsuario, correo, telefono, plan });
         if (datos.rol !== usuario.rol) {
           resultado = await patch(`/admin/usuarios/${usuario.id}/rol`, { rol: datos.rol });
+        }
+        if (datos.plan !== usuario.plan) {
+          resultado = await patch(`/admin/usuarios/${usuario.id}/plan`, { plan: datos.plan });
         }
         olvidarPropietario(usuario.id);
       } else {
@@ -102,6 +112,9 @@ export function FormUsuario({ usuario, onCerrar, onGuardado }) {
         )}
         <Campo etiqueta="Rol" error={c.rol} ancho>
           <Segmentos opciones={OPCIONES_ROL} valor={datos.rol} onCambiar={(rol) => setDatos((d) => ({ ...d, rol }))} />
+        </Campo>
+        <Campo etiqueta="Plan comercial" error={c.plan} ancho>
+          <Segmentos opciones={OPCIONES_PLAN} valor={datos.plan} onCambiar={(plan) => setDatos((d) => ({ ...d, plan }))} />
         </Campo>
         {!editando && (
           <label className="adm-interruptor adm-campo--ancho">
